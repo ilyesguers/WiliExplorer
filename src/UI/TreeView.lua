@@ -299,12 +299,12 @@ function TreeView.Create(parent, rootInstance, onBack)
                 end
             end)
         else
-            -- عنصر بدون أبناء - عند الضغط يعرض تفاصيله
-            Item.MouseButton1Click:Connect(function()
-                print("Selected leaf: " .. instance:GetFullName())
-                -- سنضيف عرض التفاصيل لاحقاً
-            end)
-        end
+    -- عنصر بدون أبناء - يفتح FileViewer
+    Item.MouseButton1Click:Connect(function()
+        local FileViewer = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/FileViewer.lua", true))()
+        FileViewer.Open(parent, instance)
+    end)
+end
     end
 
     -- عرض الأبناء المباشرين لـ Root
