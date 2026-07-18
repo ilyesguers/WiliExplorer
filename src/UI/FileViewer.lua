@@ -527,7 +527,83 @@ function FileViewer.Open(mainParent, instance, onClose)
             end)
         end)
     end
+    -- ═══════════════════════════════
+    -- زر SOUND EDITOR (للأصوات)
+    -- ═══════════════════════════════
+    if instance:IsA("Sound") then
+        local SoundBtn = Instance.new("TextButton")
+        SoundBtn.Size = UDim2.new(1, -20, 0, 80)
+        SoundBtn.Position = UDim2.new(0, 10, 0, 80)
+        SoundBtn.Text = "🔊  SOUND EDITOR"
+        SoundBtn.TextColor3 = Color3.fromRGB(11, 13, 26)
+        SoundBtn.TextSize = 22
+        SoundBtn.Font = Enum.Font.GothamBold
+        SoundBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 50)
+        SoundBtn.ZIndex = 92
+        SoundBtn.Parent = Window
+        Instance.new("UICorner", SoundBtn).CornerRadius = UDim.new(0, 12)
+        
+        local SBStroke = Instance.new("UIStroke")
+        SBStroke.Color = Color3.fromRGB(255, 230, 100)
+        SBStroke.Thickness = 2
+        SBStroke.Parent = SoundBtn
+        
+        spawn(function()
+            while SoundBtn.Parent do
+                TweenService:Create(SBStroke, TweenInfo.new(1), {Thickness = 4, Transparency = 0.3}):Play()
+                wait(1)
+                TweenService:Create(SBStroke, TweenInfo.new(1), {Thickness = 2, Transparency = 0}):Play()
+                wait(1)
+            end
+        end)
 
+        SoundBtn.MouseButton1Click:Connect(function()
+            Overlay.Visible = false
+            local SoundEditor = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/SoundEditor.lua", true))()
+            SoundEditor.Open(mainParent, instance, function()
+                Overlay.Visible = true
+            end)
+        end)
+    end
+
+    -- ═══════════════════════════════
+    -- زر IMAGE EDITOR (للصور)
+    -- ═══════════════════════════════
+    if instance:IsA("Decal") or instance:IsA("Texture") or instance:IsA("ImageLabel") or instance:IsA("ImageButton") then
+        local ImageBtn = Instance.new("TextButton")
+        ImageBtn.Size = UDim2.new(1, -20, 0, 80)
+        ImageBtn.Position = UDim2.new(0, 10, 0, 80)
+        ImageBtn.Text = "🖼️  IMAGE EDITOR"
+        ImageBtn.TextColor3 = Color3.fromRGB(11, 13, 26)
+        ImageBtn.TextSize = 22
+        ImageBtn.Font = Enum.Font.GothamBold
+        ImageBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 150)
+        ImageBtn.ZIndex = 92
+        ImageBtn.Parent = Window
+        Instance.new("UICorner", ImageBtn).CornerRadius = UDim.new(0, 12)
+        
+        local IBStroke = Instance.new("UIStroke")
+        IBStroke.Color = Color3.fromRGB(255, 150, 200)
+        IBStroke.Thickness = 2
+        IBStroke.Parent = ImageBtn
+        
+        spawn(function()
+            while ImageBtn.Parent do
+                TweenService:Create(IBStroke, TweenInfo.new(1), {Thickness = 4, Transparency = 0.3}):Play()
+                wait(1)
+                TweenService:Create(IBStroke, TweenInfo.new(1), {Thickness = 2, Transparency = 0}):Play()
+                wait(1)
+            end
+        end)
+
+        ImageBtn.MouseButton1Click:Connect(function()
+            Overlay.Visible = false
+            local ImageEditor = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/ImageEditor.lua", true))()
+            ImageEditor.Open(mainParent, instance, function()
+                Overlay.Visible = true
+            end)
+        end)
+    end
     -- ═══ المحتوى (Info + Children) ═══
     local ContentArea = Instance.new("Frame")
     if info.IsScript then
