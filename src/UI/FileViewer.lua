@@ -3,7 +3,6 @@ local FileViewer = {}
 local FileScanner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Core/FileScanner.lua", true))()
 
 local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
 
 local function CopyToClipboard(text)
     local success = false
@@ -64,39 +63,363 @@ local function ShowNotification(parent, message, color)
     end)
 end
 
+-- ═══════════════════════════════════════════════════════
+-- Value Editor (لتعديل NumberValue, StringValue, BoolValue, IntValue)
+-- ═══════════════════════════════════════════════════════
+function FileViewer.OpenValueEditor(mainParent, instance, onExit)
+    local FullScreen = Instance.new("Frame")
+    FullScreen.Size = UDim2.new(1, 0, 1, 0)
+    FullScreen.BackgroundColor3 = Color3.fromRGB(15, 18, 35)
+    FullScreen.ZIndex = 500
+    FullScreen.Parent = mainParent
+    
+    local TopBar = Instance.new("Frame")
+    TopBar.Size = UDim2.new(1, 0, 0, 60)
+    TopBar.BackgroundColor3 = Color3.fromRGB(20, 25, 55)
+    TopBar.ZIndex = 501
+    TopBar.Parent = FullScreen
+    
+    local Icon = Instance.new("TextLabel")
+    Icon.Size = UDim2.new(0, 50, 0, 50)
+    Icon.Position = UDim2.new(0, 10, 0.5, -25)
+    Icon.Text = "⚙️"
+    Icon.TextSize = 32
+    Icon.BackgroundTransparency = 1
+    Icon.ZIndex = 502
+    Icon.Parent = TopBar
+    
+    local Title = Instance.new("TextLabel")
+    Title.Size = UDim2.new(0, 400, 0, 25)
+    Title.Position = UDim2.new(0, 70, 0, 8)
+    Title.Text = instance.Name
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.TextSize = 18
+    Title.Font = Enum.Font.GothamBold
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.BackgroundTransparency = 1
+    Title.ZIndex = 502
+    Title.Parent = TopBar
+    
+    local Subtitle = Instance.new("TextLabel")
+    Subtitle.Size = UDim2.new(0, 400, 0, 20)
+    Subtitle.Position = UDim2.new(0, 70, 0, 33)
+    Subtitle.Text = instance.ClassName .. " Editor"
+    Subtitle.TextColor3 = Color3.fromRGB(0, 212, 255)
+    Subtitle.TextSize = 13
+    Subtitle.Font = Enum.Font.Gotham
+    Subtitle.TextXAlignment = Enum.TextXAlignment.Left
+    Subtitle.BackgroundTransparency = 1
+    Subtitle.ZIndex = 502
+    Subtitle.Parent = TopBar
+    
+    local ExitBtn = Instance.new("TextButton")
+    ExitBtn.Size = UDim2.new(0, 70, 0, 40)
+    ExitBtn.Position = UDim2.new(1, -80, 0.5, -20)
+    ExitBtn.Text = "✕"
+    ExitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ExitBtn.TextSize = 20
+    ExitBtn.Font = Enum.Font.GothamBold
+    ExitBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 70)
+    ExitBtn.ZIndex = 502
+    ExitBtn.Parent = TopBar
+    Instance.new("UICorner", ExitBtn).CornerRadius = UDim.new(0, 8)
+    
+    ExitBtn.MouseButton1Click:Connect(function()
+        FullScreen:Destroy()
+        if onExit then onExit() end
+    end)
+    
+    -- منطقة التعديل
+    local EditFrame = Instance.new("Frame")
+    EditFrame.Size = UDim2.new(1, -40, 0, 400)
+    EditFrame.Position = UDim2.new(0, 20, 0, 100)
+    EditFrame.BackgroundColor3 = Color3.fromRGB(20, 25, 55)
+    EditFrame.ZIndex = 501
+    EditFrame.Parent = FullScreen
+    Instance.new("UICorner", EditFrame).CornerRadius = UDim.new(0, 15)
+    
+    local ValueLabel = Instance.new("TextLabel")
+    ValueLabel.Size = UDim2.new(1, -20, 0, 30)
+    ValueLabel.Position = UDim2.new(0, 10, 0, 15)
+    ValueLabel.Text = "Current Value:"
+    ValueLabel.TextColor3 = Color3.fromRGB(0, 212, 255)
+    ValueLabel.TextSize = 16
+    ValueLabel.Font = Enum.Font.GothamBold
+    ValueLabel.TextXAlignment = Enum.TextXAlignment.Left
+    ValueLabel.BackgroundTransparency = 1
+    ValueLabel.ZIndex = 502
+    ValueLabel.Parent = EditFrame
+    
+    local CurrentValue = Instance.new("TextLabel")
+    CurrentValue.Size = UDim2.new(1, -20, 0, 40)
+    CurrentValue.Position = UDim2.new(0, 10, 0, 50)
+    CurrentValue.Text = ""
+    CurrentValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CurrentValue.TextSize = 20
+    CurrentValue.Font = Enum.Font.Code
+    CurrentValue.TextXAlignment = Enum.TextXAlignment.Left
+    CurrentValue.BackgroundColor3 = Color3.fromRGB(30, 35, 70)
+    CurrentValue.ZIndex = 502
+    CurrentValue.Parent = EditFrame
+    Instance.new("UICorner", CurrentValue).CornerRadius = UDim.new(0, 8)
+    
+    pcall(function()
+        CurrentValue.Text = "  " .. tostring(instance.Value)
+    end)
+    
+    local NewLabel = Instance.new("TextLabel")
+    NewLabel.Size = UDim2.new(1, -20, 0, 30)
+    NewLabel.Position = UDim2.new(0, 10, 0, 110)
+    NewLabel.Text = "New Value:"
+    NewLabel.TextColor3 = Color3.fromRGB(0, 255, 136)
+    NewLabel.TextSize = 16
+    NewLabel.Font = Enum.Font.GothamBold
+    NewLabel.TextXAlignment = Enum.TextXAlignment.Left
+    NewLabel.BackgroundTransparency = 1
+    NewLabel.ZIndex = 502
+    NewLabel.Parent = EditFrame
+    
+    local ValueInput = Instance.new("TextBox")
+    ValueInput.Size = UDim2.new(1, -20, 0, 50)
+    ValueInput.Position = UDim2.new(0, 10, 0, 145)
+    ValueInput.Text = ""
+    ValueInput.PlaceholderText = "Enter new value..."
+    ValueInput.BackgroundColor3 = Color3.fromRGB(30, 35, 70)
+    ValueInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ValueInput.Font = Enum.Font.Code
+    ValueInput.TextSize = 18
+    ValueInput.ClearTextOnFocus = false
+    ValueInput.TextXAlignment = Enum.TextXAlignment.Left
+    ValueInput.ZIndex = 502
+    ValueInput.Parent = EditFrame
+    Instance.new("UICorner", ValueInput).CornerRadius = UDim.new(0, 8)
+    
+    local ISPad = Instance.new("UIPadding")
+    ISPad.PaddingLeft = UDim.new(0, 10)
+    ISPad.Parent = ValueInput
+    
+    -- تعبئة تلقائية بالقيمة الحالية
+    pcall(function()
+        ValueInput.Text = tostring(instance.Value)
+    end)
+    
+    -- زر Apply
+    local ApplyBtn = Instance.new("TextButton")
+    ApplyBtn.Size = UDim2.new(0.45, -15, 0, 55)
+    ApplyBtn.Position = UDim2.new(0, 10, 0, 220)
+    ApplyBtn.Text = "✅ APPLY VALUE"
+    ApplyBtn.TextColor3 = Color3.fromRGB(11, 13, 26)
+    ApplyBtn.TextSize = 18
+    ApplyBtn.Font = Enum.Font.GothamBold
+    ApplyBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 136)
+    ApplyBtn.ZIndex = 502
+    ApplyBtn.Parent = EditFrame
+    Instance.new("UICorner", ApplyBtn).CornerRadius = UDim.new(0, 10)
+    
+    -- زر Reset
+    local ResetBtn = Instance.new("TextButton")
+    ResetBtn.Size = UDim2.new(0.45, -15, 0, 55)
+    ResetBtn.Position = UDim2.new(0.5, 5, 0, 220)
+    ResetBtn.Text = "🔄 RESET"
+    ResetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ResetBtn.TextSize = 18
+    ResetBtn.Font = Enum.Font.GothamBold
+    ResetBtn.BackgroundColor3 = Color3.fromRGB(255, 150, 50)
+    ResetBtn.ZIndex = 502
+    ResetBtn.Parent = EditFrame
+    Instance.new("UICorner", ResetBtn).CornerRadius = UDim.new(0, 10)
+    
+    -- Quick Values (قيم سريعة للأرقام)
+    if instance:IsA("NumberValue") or instance:IsA("IntValue") then
+        local QuickLabel = Instance.new("TextLabel")
+        QuickLabel.Size = UDim2.new(1, -20, 0, 25)
+        QuickLabel.Position = UDim2.new(0, 10, 0, 290)
+        QuickLabel.Text = "⚡ Quick Values:"
+        QuickLabel.TextColor3 = Color3.fromRGB(255, 200, 50)
+        QuickLabel.TextSize = 14
+        QuickLabel.Font = Enum.Font.GothamBold
+        QuickLabel.TextXAlignment = Enum.TextXAlignment.Left
+        QuickLabel.BackgroundTransparency = 1
+        QuickLabel.ZIndex = 502
+        QuickLabel.Parent = EditFrame
+        
+        local QuickBar = Instance.new("Frame")
+        QuickBar.Size = UDim2.new(1, -20, 0, 40)
+        QuickBar.Position = UDim2.new(0, 10, 0, 320)
+        QuickBar.BackgroundTransparency = 1
+        QuickBar.ZIndex = 502
+        QuickBar.Parent = EditFrame
+        
+        local QLayout = Instance.new("UIListLayout")
+        QLayout.FillDirection = Enum.FillDirection.Horizontal
+        QLayout.Padding = UDim.new(0, 8)
+        QLayout.Parent = QuickBar
+        
+        local quickValues = {"0", "1", "100", "999", "9999", "999999"}
+        for _, val in ipairs(quickValues) do
+            local QBtn = Instance.new("TextButton")
+            QBtn.Size = UDim2.new(0, 90, 1, 0)
+            QBtn.Text = val
+            QBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            QBtn.TextSize = 14
+            QBtn.Font = Enum.Font.GothamBold
+            QBtn.BackgroundColor3 = Color3.fromRGB(50, 60, 100)
+            QBtn.ZIndex = 503
+            QBtn.Parent = QuickBar
+            Instance.new("UICorner", QBtn).CornerRadius = UDim.new(0, 8)
+            
+            QBtn.MouseButton1Click:Connect(function()
+                ValueInput.Text = val
+            end)
+        end
+    end
+    
+    -- BoolValue - أزرار True/False
+    if instance:IsA("BoolValue") then
+        local BoolFrame = Instance.new("Frame")
+        BoolFrame.Size = UDim2.new(1, -20, 0, 60)
+        BoolFrame.Position = UDim2.new(0, 10, 0, 320)
+        BoolFrame.BackgroundTransparency = 1
+        BoolFrame.ZIndex = 502
+        BoolFrame.Parent = EditFrame
+        
+        local TrueBtn = Instance.new("TextButton")
+        TrueBtn.Size = UDim2.new(0.45, -10, 1, 0)
+        TrueBtn.Position = UDim2.new(0, 0, 0, 0)
+        TrueBtn.Text = "✅ TRUE"
+        TrueBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        TrueBtn.TextSize = 20
+        TrueBtn.Font = Enum.Font.GothamBold
+        TrueBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+        TrueBtn.ZIndex = 503
+        TrueBtn.Parent = BoolFrame
+        Instance.new("UICorner", TrueBtn).CornerRadius = UDim.new(0, 10)
+        
+        local FalseBtn = Instance.new("TextButton")
+        FalseBtn.Size = UDim2.new(0.45, -10, 1, 0)
+        FalseBtn.Position = UDim2.new(0.5, 10, 0, 0)
+        FalseBtn.Text = "❌ FALSE"
+        FalseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        FalseBtn.TextSize = 20
+        FalseBtn.Font = Enum.Font.GothamBold
+        FalseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 70)
+        FalseBtn.ZIndex = 503
+        FalseBtn.Parent = BoolFrame
+        Instance.new("UICorner", FalseBtn).CornerRadius = UDim.new(0, 10)
+        
+        TrueBtn.MouseButton1Click:Connect(function()
+            ValueInput.Text = "true"
+        end)
+        
+        FalseBtn.MouseButton1Click:Connect(function()
+            ValueInput.Text = "false"
+        end)
+    end
+    
+    -- تطبيق القيمة
+    ApplyBtn.MouseButton1Click:Connect(function()
+        local newVal = ValueInput.Text
+        local success = false
+        local errorMsg = ""
+        
+        pcall(function()
+            if instance:IsA("NumberValue") or instance:IsA("IntValue") then
+                local num = tonumber(newVal)
+                if num then
+                    instance.Value = num
+                    success = true
+                else
+                    errorMsg = "Must be a number"
+                end
+            elseif instance:IsA("BoolValue") then
+                if newVal:lower() == "true" then
+                    instance.Value = true
+                    success = true
+                elseif newVal:lower() == "false" then
+                    instance.Value = false
+                    success = true
+                else
+                    errorMsg = "Must be true or false"
+                end
+            elseif instance:IsA("StringValue") then
+                instance.Value = newVal
+                success = true
+            elseif instance:IsA("ObjectValue") then
+                errorMsg = "ObjectValue cannot be edited via text"
+            else
+                instance.Value = newVal
+                success = true
+            end
+        end)
+        
+        if success then
+            ShowNotification(FullScreen, "✅ Value changed! (Client-side)", Color3.fromRGB(0, 200, 100))
+            pcall(function()
+                CurrentValue.Text = "  " .. tostring(instance.Value)
+            end)
+            
+            -- تحذير إذا كانت القيمة على السيرفر
+            wait(2)
+            ShowNotification(FullScreen, "⚠️ Note: Server may reset this value", Color3.fromRGB(255, 200, 50))
+        else
+            ShowNotification(FullScreen, "❌ " .. (errorMsg or "Failed to set"), Color3.fromRGB(200, 50, 70))
+        end
+    end)
+    
+    ResetBtn.MouseButton1Click:Connect(function()
+        pcall(function()
+            ValueInput.Text = tostring(instance.Value)
+        end)
+    end)
+    
+    -- معلومات إضافية
+    local InfoText = Instance.new("TextLabel")
+    InfoText.Size = UDim2.new(1, -40, 0, 100)
+    InfoText.Position = UDim2.new(0, 20, 0, 520)
+    InfoText.Text = "ℹ️ How it works:\n\n• Changes apply to YOUR client only\n• Server may sync back the original value\n• For lasting changes, use Remote Events\n• Some values (like Speed) are client-side and will work!"
+    InfoText.TextColor3 = Color3.fromRGB(180, 190, 220)
+    InfoText.TextSize = 13
+    InfoText.Font = Enum.Font.Gotham
+    InfoText.TextXAlignment = Enum.TextXAlignment.Left
+    InfoText.TextYAlignment = Enum.TextYAlignment.Top
+    InfoText.TextWrapped = true
+    InfoText.BackgroundTransparency = 1
+    InfoText.ZIndex = 501
+    InfoText.Parent = FullScreen
+end
+
+-- ═══════════════════════════════════════════════════════
+-- Code Editor (محسن)
+-- ═══════════════════════════════════════════════════════
 function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     local FullScreen = Instance.new("Frame")
-    FullScreen.Name = "CodeEditorFullscreen"
     FullScreen.Size = UDim2.new(1, 0, 1, 0)
-    FullScreen.Position = UDim2.new(0, 0, 0, 0)
     FullScreen.BackgroundColor3 = Color3.fromRGB(15, 18, 35)
-    FullScreen.BorderSizePixel = 0
     FullScreen.ZIndex = 500
     FullScreen.Parent = mainParent
     
     -- الشريط العلوي
     local TopBar = Instance.new("Frame")
     TopBar.Size = UDim2.new(1, 0, 0, 55)
-    TopBar.BackgroundColor3 = Color3.fromRGB(20, 25, 50)
-    TopBar.BorderSizePixel = 0
+    TopBar.BackgroundColor3 = Color3.fromRGB(20, 25, 55)
     TopBar.ZIndex = 501
     TopBar.Parent = FullScreen
     
     local Icon = Instance.new("TextLabel")
-    Icon.Size = UDim2.new(0, 45, 0, 45)
-    Icon.Position = UDim2.new(0, 10, 0.5, -22)
+    Icon.Size = UDim2.new(0, 40, 0, 40)
+    Icon.Position = UDim2.new(0, 8, 0.5, -20)
     Icon.Text = "📜"
-    Icon.TextSize = 28
+    Icon.TextSize = 24
     Icon.BackgroundTransparency = 1
     Icon.ZIndex = 502
     Icon.Parent = TopBar
     
     local ScriptName = Instance.new("TextLabel")
-    ScriptName.Size = UDim2.new(0, 200, 0, 22)
-    ScriptName.Position = UDim2.new(0, 60, 0, 8)
+    ScriptName.Size = UDim2.new(0, 180, 0, 22)
+    ScriptName.Position = UDim2.new(0, 55, 0, 6)
     ScriptName.Text = instance.Name
     ScriptName.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ScriptName.TextSize = 16
+    ScriptName.TextSize = 15
     ScriptName.Font = Enum.Font.GothamBold
     ScriptName.TextXAlignment = Enum.TextXAlignment.Left
     ScriptName.TextTruncate = Enum.TextTruncate.AtEnd
@@ -105,10 +428,10 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     ScriptName.Parent = TopBar
     
     local InfoLabel = Instance.new("TextLabel")
-    InfoLabel.Size = UDim2.new(0, 300, 0, 18)
-    InfoLabel.Position = UDim2.new(0, 60, 0, 30)
+    InfoLabel.Size = UDim2.new(0, 280, 0, 18)
+    InfoLabel.Position = UDim2.new(0, 55, 0, 28)
     InfoLabel.TextColor3 = Color3.fromRGB(0, 212, 255)
-    InfoLabel.TextSize = 12
+    InfoLabel.TextSize = 11
     InfoLabel.Font = Enum.Font.Gotham
     InfoLabel.TextXAlignment = Enum.TextXAlignment.Left
     InfoLabel.BackgroundTransparency = 1
@@ -121,35 +444,32 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
         return count
     end
     
-    local totalLines = CountLines(sourceData.source)
-    local methodText = sourceData.method or "unknown"
-    
     -- تحديد نوع السكريبت
-    local scriptType = "Unknown"
     local canModify = false
+    local scriptType = "Unknown"
     
     pcall(function()
         if instance:IsA("LocalScript") then
-            scriptType = "LocalScript ✅ (Editable)"
+            scriptType = "LocalScript ✅"
             canModify = true
         elseif instance:IsA("ModuleScript") then
-            scriptType = "ModuleScript ⚠️ (Client-side only)"
+            scriptType = "ModuleScript ✅"
             canModify = true
         elseif instance:IsA("Script") then
-            scriptType = "Server Script ❌ (Read-only)"
+            scriptType = "ServerScript ❌"
             canModify = false
         end
     end)
     
-    InfoLabel.Text = scriptType .. " • " .. totalLines .. " lines"
+    InfoLabel.Text = scriptType .. " • " .. CountLines(sourceData.source) .. " lines"
     
-    -- أزرار العلوية
+    -- الأزرار العلوية (مبسطة)
     local PasteBtn = Instance.new("TextButton")
-    PasteBtn.Size = UDim2.new(0, 75, 0, 38)
-    PasteBtn.Position = UDim2.new(1, -400, 0.5, -19)
-    PasteBtn.Text = "📥 Paste"
+    PasteBtn.Size = UDim2.new(0, 70, 0, 36)
+    PasteBtn.Position = UDim2.new(1, -390, 0.5, -18)
+    PasteBtn.Text = "📥"
     PasteBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    PasteBtn.TextSize = 12
+    PasteBtn.TextSize = 20
     PasteBtn.Font = Enum.Font.GothamBold
     PasteBtn.BackgroundColor3 = Color3.fromRGB(100, 150, 200)
     PasteBtn.ZIndex = 502
@@ -157,11 +477,11 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     Instance.new("UICorner", PasteBtn).CornerRadius = UDim.new(0, 8)
     
     local CopyBtn = Instance.new("TextButton")
-    CopyBtn.Size = UDim2.new(0, 75, 0, 38)
-    CopyBtn.Position = UDim2.new(1, -320, 0.5, -19)
-    CopyBtn.Text = "📋 Copy"
+    CopyBtn.Size = UDim2.new(0, 70, 0, 36)
+    CopyBtn.Position = UDim2.new(1, -315, 0.5, -18)
+    CopyBtn.Text = "📋"
     CopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    CopyBtn.TextSize = 12
+    CopyBtn.TextSize = 20
     CopyBtn.Font = Enum.Font.GothamBold
     CopyBtn.BackgroundColor3 = Color3.fromRGB(0, 152, 219)
     CopyBtn.ZIndex = 502
@@ -169,8 +489,8 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     Instance.new("UICorner", CopyBtn).CornerRadius = UDim.new(0, 8)
     
     local RunBtn = Instance.new("TextButton")
-    RunBtn.Size = UDim2.new(0, 75, 0, 38)
-    RunBtn.Position = UDim2.new(1, -240, 0.5, -19)
+    RunBtn.Size = UDim2.new(0, 70, 0, 36)
+    RunBtn.Position = UDim2.new(1, -240, 0.5, -18)
     RunBtn.Text = "▶️ Run"
     RunBtn.TextColor3 = Color3.fromRGB(11, 13, 26)
     RunBtn.TextSize = 13
@@ -181,8 +501,8 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     Instance.new("UICorner", RunBtn).CornerRadius = UDim.new(0, 8)
     
     local SaveBtn = Instance.new("TextButton")
-    SaveBtn.Size = UDim2.new(0, 85, 0, 38)
-    SaveBtn.Position = UDim2.new(1, -155, 0.5, -19)
+    SaveBtn.Size = UDim2.new(0, 85, 0, 36)
+    SaveBtn.Position = UDim2.new(1, -165, 0.5, -18)
     SaveBtn.Text = "💾 Save"
     SaveBtn.TextColor3 = Color3.fromRGB(11, 13, 26)
     SaveBtn.TextSize = 14
@@ -193,8 +513,8 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     Instance.new("UICorner", SaveBtn).CornerRadius = UDim.new(0, 8)
     
     local ExitBtn = Instance.new("TextButton")
-    ExitBtn.Size = UDim2.new(0, 65, 0, 38)
-    ExitBtn.Position = UDim2.new(1, -75, 0.5, -19)
+    ExitBtn.Size = UDim2.new(0, 65, 0, 36)
+    ExitBtn.Position = UDim2.new(1, -75, 0.5, -18)
     ExitBtn.Text = "✕"
     ExitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     ExitBtn.TextSize = 18
@@ -204,59 +524,44 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     ExitBtn.Parent = TopBar
     Instance.new("UICorner", ExitBtn).CornerRadius = UDim.new(0, 8)
     
-    -- تحذير للسكريبتات السيرفر
-    if not canModify then
-        local WarnBar = Instance.new("Frame")
-        WarnBar.Size = UDim2.new(1, 0, 0, 35)
-        WarnBar.Position = UDim2.new(0, 0, 0, 55)
-        WarnBar.BackgroundColor3 = Color3.fromRGB(150, 100, 50)
-        WarnBar.ZIndex = 501
-        WarnBar.Parent = FullScreen
-        
-        local WarnLabel = Instance.new("TextLabel")
-        WarnLabel.Size = UDim2.new(1, -20, 1, 0)
-        WarnLabel.Position = UDim2.new(0, 10, 0, 0)
-        WarnLabel.Text = "⚠️ Server Script - Cannot save to game. Use 'Run' to execute as LocalScript"
-        WarnLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        WarnLabel.TextSize = 13
-        WarnLabel.Font = Enum.Font.GothamBold
-        WarnLabel.TextXAlignment = Enum.TextXAlignment.Left
-        WarnLabel.BackgroundTransparency = 1
-        WarnLabel.ZIndex = 502
-        WarnLabel.Parent = WarnBar
-    end
+    -- منطقة الكود (البسيطة - بدون ScrollingFrame معقد)
+    local CodeContainer = Instance.new("Frame")
+    CodeContainer.Size = UDim2.new(1, -20, 1, -75)
+    CodeContainer.Position = UDim2.new(0, 10, 0, 65)
+    CodeContainer.BackgroundColor3 = Color3.fromRGB(20, 25, 45)
+    CodeContainer.BorderSizePixel = 0
+    CodeContainer.ZIndex = 501
+    CodeContainer.Parent = FullScreen
+    Instance.new("UICorner", CodeContainer).CornerRadius = UDim.new(0, 12)
     
-    -- منطقة الكود
-    local codeTopOffset = canModify and 55 or 90
-    
-    local CodeScroll = Instance.new("ScrollingFrame")
-    CodeScroll.Size = UDim2.new(1, 0, 1, -codeTopOffset)
-    CodeScroll.Position = UDim2.new(0, 0, 0, codeTopOffset)
-    CodeScroll.BackgroundColor3 = Color3.fromRGB(15, 18, 35)
-    CodeScroll.BorderSizePixel = 0
-    CodeScroll.ScrollBarThickness = 10
-    CodeScroll.ScrollBarImageColor3 = Color3.fromRGB(0, 212, 255)
-    CodeScroll.ScrollingDirection = Enum.ScrollingDirection.XY
-    CodeScroll.CanvasSize = UDim2.new(0, 2000, 0, 3000)
-    CodeScroll.ZIndex = 501
-    CodeScroll.Parent = FullScreen
+    local CScroll = Instance.new("ScrollingFrame")
+    CScroll.Size = UDim2.new(1, -10, 1, -10)
+    CScroll.Position = UDim2.new(0, 5, 0, 5)
+    CScroll.BackgroundColor3 = Color3.fromRGB(20, 25, 45)
+    CScroll.BorderSizePixel = 0
+    CScroll.ScrollBarThickness = 8
+    CScroll.ScrollBarImageColor3 = Color3.fromRGB(0, 212, 255)
+    CScroll.CanvasSize = UDim2.new(0, 0, 0, 5000)
+    CScroll.ZIndex = 502
+    CScroll.Parent = CodeContainer
+    Instance.new("UICorner", CScroll).CornerRadius = UDim.new(0, 10)
     
     local CodeBox = Instance.new("TextBox")
-    CodeBox.Size = UDim2.new(0, 2000, 0, 3000)
-    CodeBox.Position = UDim2.new(0, 15, 0, 15)
-    CodeBox.BackgroundColor3 = Color3.fromRGB(15, 18, 35)
+    CodeBox.Size = UDim2.new(1, -20, 0, 5000)
+    CodeBox.Position = UDim2.new(0, 10, 0, 10)
+    CodeBox.BackgroundColor3 = Color3.fromRGB(20, 25, 45)
     CodeBox.TextColor3 = Color3.fromRGB(220, 230, 255)
     CodeBox.Font = Enum.Font.Code
-    CodeBox.TextSize = 15
+    CodeBox.TextSize = 14
     CodeBox.TextXAlignment = Enum.TextXAlignment.Left
     CodeBox.TextYAlignment = Enum.TextYAlignment.Top
-    CodeBox.TextWrapped = false
+    CodeBox.TextWrapped = true
     CodeBox.ClearTextOnFocus = false
     CodeBox.MultiLine = true
-    CodeBox.Text = sourceData.source or ""
     CodeBox.TextEditable = true
-    CodeBox.ZIndex = 502
-    CodeBox.Parent = CodeScroll
+    CodeBox.Text = sourceData.source or "-- No source available"
+    CodeBox.ZIndex = 503
+    CodeBox.Parent = CScroll
     
     if not sourceData.success then
         CodeBox.TextColor3 = Color3.fromRGB(255, 150, 150)
@@ -264,32 +569,20 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     
     -- تحديث الحجم بشكل آمن
     local function UpdateSize()
-        local text = CodeBox.Text
-        local lines = CountLines(text)
-        local longestLine = 0
-        
-        for line in text:gmatch("[^\n]+") do
-            if #line > longestLine then
-                longestLine = #line
-            end
-        end
-        
-        local width = math.max(2000, longestLine * 10)
-        local height = math.max(3000, lines * 20 + 200)
-        
-        CodeBox.Size = UDim2.new(0, width, 0, height)
-        CodeScroll.CanvasSize = UDim2.new(0, width + 30, 0, height + 30)
-        
-        InfoLabel.Text = scriptType .. " • " .. lines .. " lines"
+        local textBounds = CodeBox.TextBounds
+        local newHeight = math.max(textBounds.Y + 100, 1000)
+        CodeBox.Size = UDim2.new(1, -20, 0, newHeight)
+        CScroll.CanvasSize = UDim2.new(0, 0, 0, newHeight + 40)
+        InfoLabel.Text = scriptType .. " • " .. CountLines(CodeBox.Text) .. " lines"
     end
     
-    -- تتبع التعديلات
-    local isModified = false
+    UpdateSize()
+    
     local originalText = sourceData.source or ""
+    local isModified = false
     
     CodeBox:GetPropertyChangedSignal("Text"):Connect(function()
         UpdateSize()
-        
         if CodeBox.Text ~= originalText then
             isModified = true
             SaveBtn.Text = "💾 Save*"
@@ -301,181 +594,135 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
         end
     end)
     
-    UpdateSize()
-    
-    -- زر النسخ
+    -- الأزرار
     CopyBtn.MouseButton1Click:Connect(function()
         if CopyToClipboard(CodeBox.Text) then
-            ShowNotification(FullScreen, "✅ Code copied to clipboard!", Color3.fromRGB(0, 200, 100))
-        else
-            ShowNotification(FullScreen, "❌ Copy failed", Color3.fromRGB(200, 50, 70))
+            ShowNotification(FullScreen, "✅ Copied to clipboard!", Color3.fromRGB(0, 200, 100))
         end
     end)
     
-    -- زر اللصق
     PasteBtn.MouseButton1Click:Connect(function()
         local pastedText = PasteFromClipboard()
         if pastedText and pastedText ~= "" then
-            CodeBox.Text = CodeBox.Text .. "\n" .. pastedText
-            ShowNotification(FullScreen, "✅ Pasted from clipboard!", Color3.fromRGB(0, 200, 100))
+            CodeBox.Text = pastedText
+            ShowNotification(FullScreen, "✅ Pasted!", Color3.fromRGB(0, 200, 100))
         else
-            ShowNotification(FullScreen, "⚠️ Clipboard is empty", Color3.fromRGB(255, 200, 50))
+            ShowNotification(FullScreen, "⚠️ Clipboard empty", Color3.fromRGB(255, 200, 50))
         end
     end)
     
-    -- زر تشغيل الكود (Execute)
     RunBtn.MouseButton1Click:Connect(function()
-        local code = CodeBox.Text
         local success, err = pcall(function()
-            local func = loadstring(code)
+            local func = loadstring(CodeBox.Text)
             if func then
                 func()
             end
         end)
         
         if success then
-            ShowNotification(FullScreen, "✅ Code executed successfully!", Color3.fromRGB(0, 200, 100))
+            ShowNotification(FullScreen, "✅ Code executed!", Color3.fromRGB(0, 200, 100))
         else
-            ShowNotification(FullScreen, "❌ Error: " .. tostring(err):sub(1, 100), Color3.fromRGB(200, 50, 70))
+            ShowNotification(FullScreen, "❌ " .. tostring(err):sub(1, 80), Color3.fromRGB(200, 50, 70))
         end
     end)
     
-    -- زر الحفظ
     SaveBtn.MouseButton1Click:Connect(function()
         if not canModify then
-            ShowNotification(FullScreen, "⚠️ Cannot save Server Scripts. Use Run to execute", Color3.fromRGB(255, 200, 50))
+            ShowNotification(FullScreen, "⚠️ Use Run for Server Scripts", Color3.fromRGB(255, 200, 50))
             return
         end
         
-        local saveResult = FileScanner.SetSource(instance, CodeBox.Text)
-        if saveResult.success then
-            ShowNotification(FullScreen, "✅ Saved! Method: " .. saveResult.method, Color3.fromRGB(0, 200, 100))
+        local r = FileScanner.SetSource(instance, CodeBox.Text)
+        if r.success then
+            ShowNotification(FullScreen, "✅ Saved via " .. r.method, Color3.fromRGB(0, 200, 100))
             originalText = CodeBox.Text
             isModified = false
-            SaveBtn.Text = "💾 Saved"
-            SaveBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 136)
-            
-            -- محاولة إعادة تشغيل السكريبت
-            if instance:IsA("LocalScript") then
-                pcall(function()
-                    instance.Disabled = true
-                    wait(0.1)
-                    instance.Disabled = false
-                end)
-                ShowNotification(FullScreen, "🔄 Script reloaded!", Color3.fromRGB(100, 200, 255))
-            end
-            
-            wait(2)
             SaveBtn.Text = "💾 Save"
+            SaveBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 136)
         else
-            ShowNotification(FullScreen, "❌ Save failed: " .. saveResult.error, Color3.fromRGB(200, 50, 70))
+            ShowNotification(FullScreen, "❌ " .. r.error, Color3.fromRGB(200, 50, 70))
         end
     end)
     
-    -- زر الخروج
     ExitBtn.MouseButton1Click:Connect(function()
         if isModified then
-            local Confirm = Instance.new("Frame")
-            Confirm.Size = UDim2.new(1, 0, 1, 0)
-            Confirm.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-            Confirm.BackgroundTransparency = 0.5
-            Confirm.ZIndex = 600
-            Confirm.Parent = FullScreen
+            local Conf = Instance.new("Frame")
+            Conf.Size = UDim2.new(1, 0, 1, 0)
+            Conf.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+            Conf.BackgroundTransparency = 0.5
+            Conf.ZIndex = 700
+            Conf.Parent = FullScreen
             
-            local Dialog = Instance.new("Frame")
-            Dialog.Size = UDim2.new(0, 380, 0, 180)
-            Dialog.Position = UDim2.new(0.5, -190, 0.5, -90)
-            Dialog.BackgroundColor3 = Color3.fromRGB(25, 30, 60)
-            Dialog.ZIndex = 601
-            Dialog.Parent = Confirm
-            Instance.new("UICorner", Dialog).CornerRadius = UDim.new(0, 15)
+            local D = Instance.new("Frame")
+            D.Size = UDim2.new(0, 350, 0, 180)
+            D.Position = UDim2.new(0.5, -175, 0.5, -90)
+            D.BackgroundColor3 = Color3.fromRGB(25, 30, 60)
+            D.ZIndex = 701
+            D.Parent = Conf
+            Instance.new("UICorner", D).CornerRadius = UDim.new(0, 15)
             
-            local DStroke = Instance.new("UIStroke")
-            DStroke.Color = Color3.fromRGB(255, 200, 50)
-            DStroke.Thickness = 2
-            DStroke.Parent = Dialog
+            local T = Instance.new("TextLabel")
+            T.Size = UDim2.new(1, -20, 0, 30)
+            T.Position = UDim2.new(0, 10, 0, 20)
+            T.Text = "⚠️ Unsaved Changes"
+            T.TextColor3 = Color3.fromRGB(255, 200, 50)
+            T.TextSize = 18
+            T.Font = Enum.Font.GothamBold
+            T.BackgroundTransparency = 1
+            T.ZIndex = 702
+            T.Parent = D
             
-            local Title = Instance.new("TextLabel")
-            Title.Size = UDim2.new(1, -20, 0, 30)
-            Title.Position = UDim2.new(0, 10, 0, 15)
-            Title.Text = "⚠️ Unsaved Changes"
-            Title.TextColor3 = Color3.fromRGB(255, 200, 50)
-            Title.TextSize = 18
-            Title.Font = Enum.Font.GothamBold
-            Title.BackgroundTransparency = 1
-            Title.ZIndex = 602
-            Title.Parent = Dialog
+            local SE = Instance.new("TextButton")
+            SE.Size = UDim2.new(0, 100, 0, 40)
+            SE.Position = UDim2.new(0, 15, 1, -55)
+            SE.Text = "💾 Save"
+            SE.TextColor3 = Color3.fromRGB(11, 13, 26)
+            SE.TextSize = 13
+            SE.Font = Enum.Font.GothamBold
+            SE.BackgroundColor3 = Color3.fromRGB(0, 255, 136)
+            SE.ZIndex = 702
+            SE.Parent = D
+            Instance.new("UICorner", SE).CornerRadius = UDim.new(0, 8)
             
-            local Msg = Instance.new("TextLabel")
-            Msg.Size = UDim2.new(1, -20, 0, 40)
-            Msg.Position = UDim2.new(0, 10, 0, 50)
-            Msg.Text = "You have unsaved changes. What do you want to do?"
-            Msg.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Msg.TextSize = 13
-            Msg.Font = Enum.Font.Gotham
-            Msg.TextWrapped = true
-            Msg.BackgroundTransparency = 1
-            Msg.ZIndex = 602
-            Msg.Parent = Dialog
+            local DC = Instance.new("TextButton")
+            DC.Size = UDim2.new(0, 100, 0, 40)
+            DC.Position = UDim2.new(0.5, -50, 1, -55)
+            DC.Text = "🗑️ Discard"
+            DC.TextColor3 = Color3.fromRGB(255, 255, 255)
+            DC.TextSize = 13
+            DC.Font = Enum.Font.GothamBold
+            DC.BackgroundColor3 = Color3.fromRGB(200, 50, 70)
+            DC.ZIndex = 702
+            DC.Parent = D
+            Instance.new("UICorner", DC).CornerRadius = UDim.new(0, 8)
             
-            local SaveExit = Instance.new("TextButton")
-            SaveExit.Size = UDim2.new(0, 110, 0, 40)
-            SaveExit.Position = UDim2.new(0, 15, 1, -55)
-            SaveExit.Text = "💾 Save & Exit"
-            SaveExit.TextColor3 = Color3.fromRGB(11, 13, 26)
-            SaveExit.TextSize = 12
-            SaveExit.Font = Enum.Font.GothamBold
-            SaveExit.BackgroundColor3 = Color3.fromRGB(0, 255, 136)
-            SaveExit.ZIndex = 602
-            SaveExit.Parent = Dialog
-            Instance.new("UICorner", SaveExit).CornerRadius = UDim.new(0, 8)
+            local CN = Instance.new("TextButton")
+            CN.Size = UDim2.new(0, 100, 0, 40)
+            CN.Position = UDim2.new(1, -115, 1, -55)
+            CN.Text = "Cancel"
+            CN.TextColor3 = Color3.fromRGB(255, 255, 255)
+            CN.TextSize = 13
+            CN.Font = Enum.Font.GothamBold
+            CN.BackgroundColor3 = Color3.fromRGB(80, 90, 130)
+            CN.ZIndex = 702
+            CN.Parent = D
+            Instance.new("UICorner", CN).CornerRadius = UDim.new(0, 8)
             
-            local Discard = Instance.new("TextButton")
-            Discard.Size = UDim2.new(0, 110, 0, 40)
-            Discard.Position = UDim2.new(0, 135, 1, -55)
-            Discard.Text = "🗑️ Discard"
-            Discard.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Discard.TextSize = 12
-            Discard.Font = Enum.Font.GothamBold
-            Discard.BackgroundColor3 = Color3.fromRGB(200, 50, 70)
-            Discard.ZIndex = 602
-            Discard.Parent = Dialog
-            Instance.new("UICorner", Discard).CornerRadius = UDim.new(0, 8)
-            
-            local Cancel = Instance.new("TextButton")
-            Cancel.Size = UDim2.new(0, 100, 0, 40)
-            Cancel.Position = UDim2.new(1, -115, 1, -55)
-            Cancel.Text = "Cancel"
-            Cancel.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Cancel.TextSize = 12
-            Cancel.Font = Enum.Font.GothamBold
-            Cancel.BackgroundColor3 = Color3.fromRGB(80, 90, 130)
-            Cancel.ZIndex = 602
-            Cancel.Parent = Dialog
-            Instance.new("UICorner", Cancel).CornerRadius = UDim.new(0, 8)
-            
-            SaveExit.MouseButton1Click:Connect(function()
+            SE.MouseButton1Click:Connect(function()
                 if canModify then
-                    local r = FileScanner.SetSource(instance, CodeBox.Text)
-                    if r.success then
-                        FullScreen:Destroy()
-                        if onExit then onExit() end
-                    else
-                        Confirm:Destroy()
-                    end
-                else
-                    FullScreen:Destroy()
-                    if onExit then onExit() end
+                    FileScanner.SetSource(instance, CodeBox.Text)
                 end
-            end)
-            
-            Discard.MouseButton1Click:Connect(function()
                 FullScreen:Destroy()
                 if onExit then onExit() end
             end)
             
-            Cancel.MouseButton1Click:Connect(function()
-                Confirm:Destroy()
+            DC.MouseButton1Click:Connect(function()
+                FullScreen:Destroy()
+                if onExit then onExit() end
+            end)
+            
+            CN.MouseButton1Click:Connect(function()
+                Conf:Destroy()
             end)
         else
             FullScreen:Destroy()
@@ -484,6 +731,9 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     end)
 end
 
+-- ═══════════════════════════════════════════════════════
+-- الواجهة الأساسية
+-- ═══════════════════════════════════════════════════════
 function FileViewer.Open(mainParent, instance, onClose)
     local info = FileScanner.GetInfo(instance)
     
@@ -602,6 +852,17 @@ function FileViewer.Open(mainParent, instance, onClose)
             overlay.Visible = false
             local ImageEditor = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/ImageEditor.lua", true))()
             ImageEditor.Open(mainParent, instance, function()
+                overlay.Visible = true
+            end)
+        end
+    elseif instance:IsA("ValueBase") then
+        -- زر لتعديل الـ Values (NumberValue, StringValue, BoolValue, IntValue)
+        hasBigButton = true
+        buttonColor = Color3.fromRGB(100, 200, 255)
+        buttonText = "⚙️  EDIT VALUE"
+        buttonAction = function(overlay)
+            overlay.Visible = false
+            FileViewer.OpenValueEditor(mainParent, instance, function()
                 overlay.Visible = true
             end)
         end
@@ -810,7 +1071,6 @@ function FileViewer.Open(mainParent, instance, onClose)
     local children = FileScanner.GetChildren(instance)
     for i, child in ipairs(children) do
         local cInfo = FileScanner.GetInfo(child)
-        
         local ChItem = Instance.new("TextButton")
         ChItem.Size = UDim2.new(1, -10, 0, 50)
         ChItem.BackgroundColor3 = Color3.fromRGB(20, 25, 55)
