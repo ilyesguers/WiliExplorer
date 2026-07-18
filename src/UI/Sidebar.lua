@@ -163,19 +163,31 @@ function Sidebar.Create(parent)
             }):Play()
         end)
 
-        Card.MouseButton1Click:Connect(function()
-            -- تأثير النقر
-            TweenService:Create(Card, TweenInfo.new(0.1), {
-                Size = UDim2.new(0.5, -12, 0, 86)
-            }):Play()
-            wait(0.1)
-            TweenService:Create(Card, TweenInfo.new(0.1), {
-                Size = UDim2.new(0.5, -8, 0, 90)
-            }):Play()
-            
-            print("Opening: " .. serviceName)
-            -- سنضيف فتح المتصفح الداخلي هنا لاحقاً
+       Card.MouseButton1Click:Connect(function()
+    TweenService:Create(Card, TweenInfo.new(0.1), {
+        Size = UDim2.new(0.5, -12, 0, 86)
+    }):Play()
+    wait(0.1)
+    TweenService:Create(Card, TweenInfo.new(0.1), {
+        Size = UDim2.new(0.5, -8, 0, 90)
+    }):Play()
+    
+    -- فتح TreeView
+    local service = nil
+    pcall(function() service = game:GetService(serviceName) end)
+    
+    if service then
+        parent:ClearAllChildren()
+        local TreeView = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/TreeView.lua", true))()
+        TreeView.Create(parent, service, function()
+            -- عند الضغط على Back
+            parent:ClearAllChildren()
+            Sidebar.Create(parent)
         end)
+    else
+        print("Failed to get service: " .. serviceName)
+    end
+end) 
 
         return Card
     end
