@@ -159,16 +159,22 @@ function TreeView.Create(parent, rootInstance, onBack)
         Arrow.ZIndex = 27
         Arrow.Parent = Item
 
-        -- الأيقونة
-        local Icon = Instance.new("TextLabel")
-        Icon.Size = UDim2.new(0, 30, 1, 0)
-        Icon.Position = UDim2.new(0, indent + 25, 0, 0)
-        Icon.Text = info.Icon
-        Icon.TextSize = 20
-        Icon.Font = Enum.Font.Gotham
-        Icon.BackgroundTransparency = 1
-        Icon.ZIndex = 27
-        Icon.Parent = Item
+    -- الأيقونة (قابلة للنقر لفتح Viewer)
+local IconBtn = Instance.new("TextButton")
+IconBtn.Size = UDim2.new(0, 30, 1, 0)
+IconBtn.Position = UDim2.new(0, indent + 25, 0, 0)
+IconBtn.Text = info.Icon
+IconBtn.TextSize = 20
+IconBtn.Font = Enum.Font.Gotham
+IconBtn.BackgroundTransparency = 1
+IconBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+IconBtn.ZIndex = 28
+IconBtn.Parent = Item
+
+IconBtn.MouseButton1Click:Connect(function()
+    local FileViewer = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/FileViewer.lua", true))()
+    FileViewer.Open(parent, instance)
+end)
 
         -- الاسم
         local Name = Instance.new("TextLabel")
