@@ -67,12 +67,18 @@ end
 -- Value Editor (لتعديل NumberValue, StringValue, BoolValue, IntValue)
 -- ═══════════════════════════════════════════════════════
 function FileViewer.OpenValueEditor(mainParent, instance, onExit)
+    -- تخزين حالة الـ Freeze
+    if not _G.WiliFrozenValues then
+        _G.WiliFrozenValues = {}
+    end
+    
     local FullScreen = Instance.new("Frame")
     FullScreen.Size = UDim2.new(1, 0, 1, 0)
     FullScreen.BackgroundColor3 = Color3.fromRGB(15, 18, 35)
     FullScreen.ZIndex = 500
     FullScreen.Parent = mainParent
     
+    -- ═══ الشريط العلوي ═══
     local TopBar = Instance.new("Frame")
     TopBar.Size = UDim2.new(1, 0, 0, 60)
     TopBar.BackgroundColor3 = Color3.fromRGB(20, 25, 55)
@@ -129,6 +135,561 @@ function FileViewer.OpenValueEditor(mainParent, instance, onExit)
         if onExit then onExit() end
     end)
     
+    -- ═══ ScrollingFrame للمحتوى ═══
+    local ScrollFrame = Instance.new("ScrollingFrame")
+    ScrollFrame.Size = UDim2.new(1, -20, 1, -80)
+    ScrollFrame.Position = UDim2.new(0, 10, 0, 70)
+    ScrollFrame.BackgroundTransparency = 1
+    ScrollFrame.BorderSizePixel = 0
+    ScrollFrame.ScrollBarThickness = 8
+    ScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 212, 255)
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 900)
+    ScrollFrame.ZIndex = 501
+    ScrollFrame.Parent = FullScreen
+    
+    local Layout = Instance.new("UIListLayout")
+    Layout.Padding = UDim.new(0, 12)
+    Layout.Parent = ScrollFrame
+    
+    local LPad = Instance.new("UIPadding")
+    LPad.PaddingTop = UDim.new(0, 5)
+    LPad.PaddingLeft = UDim.new(0, 10)
+    LPad.PaddingRight = UDim.new(0, 10)
+    LPad.Parent = ScrollFrame
+    
+    -- ═══ بطاقة القيمة الحالية ═══
+    local CurrentCard = Instance.new("Frame")
+    CurrentCard.Size = UDim2.new(1, -20, 0, 100)
+    CurrentCard.BackgroundColor3 = Color3.fromRGB(20, 25, 55)
+    CurrentCard.LayoutOrder = 1
+    CurrentCard.ZIndex = 502
+    CurrentCard.Parent = ScrollFrame
+    Instance.new("UICorner", CurrentCard).CornerRadius = UDim.new(0, 12)
+    
+    local CurLabel = Instance.new("TextLabel")
+    CurLabel.Size = UDim2.new(1, -20, 0, 25)
+    CurLabel.Position = UDim2.new(0, 10, 0, 10)
+    CurLabel.Text = "📊 Current Value (Live):"
+    CurLabel.TextColor3 = Color3.fromRGB(0, 212, 255)
+    CurLabel.TextSize = 14
+    CurLabel.Font = Enum.Font.GothamBold
+    CurLabel.TextXAlignment = Enum.TextXAlignment.Left
+    CurLabel.BackgroundTransparency = 1
+    CurLabel.ZIndex = 503
+    CurLabel.Parent = CurrentCard
+    
+    local CurValueBox = Instance.new("TextLabel")
+    CurValueBox.Size = UDim2.new(1, -20, 0, 45)
+    CurValueBox.Position = UDim2.new(0, 10, 0, 40)
+    CurValueBox.Text = ""
+    CurValueBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CurValueBox.TextSize = 22
+    CurValueBox.Font = Enum.Font.Code
+    CurValueBox.TextXAlignment = Enum.TextXAlignment.Left
+    CurValueBox.BackgroundColor3 = Color3.fromRGB(30, 35, 70)
+    CurValueBox.ZIndex = 503
+    CurValueBox.Parent = CurrentCard
+    Instance.new("UICorner", CurValueBox).CornerRadius = UDim.new(0, 8)
+    
+    local CVPad = Instance.new("UIPadding")
+    CVPad.PaddingLeft = UDim.new(0, 12)
+    CVPad.Parent = CurValueBox
+    
+    -- تحديث القيمة الحالية باستمرار
+    local function UpdateCurrentValue()
+        pcall(function()
+            CurValueBox.Text = tostring(instance.Value)
+        end)
+    end
+    UpdateCurrentValue()
+    
+    -- ═══ بطاقة القيمة الجديدة ═══
+    local NewCard = Instance.new("Frame")
+    NewCard.Size = UDim2.new(1, -20, 0, 110)
+    NewCard.BackgroundColor3 = Color3.fromRGB(20, 25, 55)
+    NewCard.LayoutOrder = 2
+    NewCard.ZIndex = 502
+    NewCard.Parent = ScrollFrame
+    Instance.new("UICorner", NewCard).CornerRadius = UDim.new(0, 12)
+    
+    local NewLabel = Instance.new("TextLabel")
+    NewLabel.Size = UDim2.new(1, -20, 0, 25)
+    NewLabel.Position = UDim2.new(0, 10, 0, 10)
+    NewLabel.Text = "✏️ New Value:"
+    NewLabel.TextColor3 = Color3.fromRGB(0, 255, 136)
+    NewLabel.TextSize = 14
+    NewLabel.Font = Enum.Font.GothamBold
+    NewLabel.TextXAlignment = Enum.TextXAlignment.Left
+    NewLabel.BackgroundTransparency = 1
+    NewLabel.ZIndex = 503
+    NewLabel.Parent = NewCard
+    
+    local ValueInput = Instance.new("TextBox")
+    ValueInput.Size = UDim2.new(1, -20, 0, 50)
+    ValueInput.Position = UDim2.new(0, 10, 0, 45)
+    ValueInput.Text = ""
+    ValueInput.PlaceholderText = "Enter new value..."
+    ValueInput.BackgroundColor3 = Color3.fromRGB(30, 35, 70)
+    ValueInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ValueInput.Font = Enum.Font.Code
+    ValueInput.TextSize = 20
+    ValueInput.ClearTextOnFocus = false
+    ValueInput.TextEditable = true
+    ValueInput.TextXAlignment = Enum.TextXAlignment.Left
+    ValueInput.ZIndex = 503
+    ValueInput.Parent = NewCard
+    Instance.new("UICorner", ValueInput).CornerRadius = UDim.new(0, 8)
+    
+    local IIPad = Instance.new("UIPadding")
+    IIPad.PaddingLeft = UDim.new(0, 12)
+    IIPad.Parent = ValueInput
+    
+    pcall(function()
+        ValueInput.Text = tostring(instance.Value)
+    end)
+    
+    -- ═══ صف الأزرار الرئيسية (Apply + Reset) ═══
+    local MainBtns = Instance.new("Frame")
+    MainBtns.Size = UDim2.new(1, -20, 0, 55)
+    MainBtns.BackgroundTransparency = 1
+    MainBtns.LayoutOrder = 3
+    MainBtns.ZIndex = 502
+    MainBtns.Parent = ScrollFrame
+    
+    local ApplyBtn = Instance.new("TextButton")
+    ApplyBtn.Size = UDim2.new(0.65, -5, 1, 0)
+    ApplyBtn.Position = UDim2.new(0, 0, 0, 0)
+    ApplyBtn.Text = "✅ APPLY VALUE"
+    ApplyBtn.TextColor3 = Color3.fromRGB(11, 13, 26)
+    ApplyBtn.TextSize = 18
+    ApplyBtn.Font = Enum.Font.GothamBold
+    ApplyBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 136)
+    ApplyBtn.ZIndex = 503
+    ApplyBtn.Parent = MainBtns
+    Instance.new("UICorner", ApplyBtn).CornerRadius = UDim.new(0, 10)
+    
+    local ResetBtn = Instance.new("TextButton")
+    ResetBtn.Size = UDim2.new(0.35, -5, 1, 0)
+    ResetBtn.Position = UDim2.new(0.65, 5, 0, 0)
+    ResetBtn.Text = "🔄 Reset"
+    ResetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ResetBtn.TextSize = 15
+    ResetBtn.Font = Enum.Font.GothamBold
+    ResetBtn.BackgroundColor3 = Color3.fromRGB(255, 150, 50)
+    ResetBtn.ZIndex = 503
+    ResetBtn.Parent = MainBtns
+    Instance.new("UICorner", ResetBtn).CornerRadius = UDim.new(0, 10)
+    
+    -- ═══ الميزات المتقدمة (خانات صغيرة) ═══
+    local AdvancedTitle = Instance.new("TextLabel")
+    AdvancedTitle.Size = UDim2.new(1, -20, 0, 30)
+    AdvancedTitle.Text = "🔥 Advanced Features"
+    AdvancedTitle.TextColor3 = Color3.fromRGB(255, 200, 50)
+    AdvancedTitle.TextSize = 16
+    AdvancedTitle.Font = Enum.Font.GothamBold
+    AdvancedTitle.TextXAlignment = Enum.TextXAlignment.Left
+    AdvancedTitle.BackgroundTransparency = 1
+    AdvancedTitle.LayoutOrder = 4
+    AdvancedTitle.ZIndex = 502
+    AdvancedTitle.Parent = ScrollFrame
+    
+    -- ═══ Grid للميزات ═══
+    local FeaturesGrid = Instance.new("Frame")
+    FeaturesGrid.Size = UDim2.new(1, -20, 0, 130)
+    FeaturesGrid.BackgroundTransparency = 1
+    FeaturesGrid.LayoutOrder = 5
+    FeaturesGrid.ZIndex = 502
+    FeaturesGrid.Parent = ScrollFrame
+    
+    local Grid = Instance.new("UIGridLayout")
+    Grid.CellSize = UDim2.new(0.5, -5, 0, 60)
+    Grid.CellPadding = UDim2.new(0, 10, 0, 10)
+    Grid.SortOrder = Enum.SortOrder.LayoutOrder
+    Grid.Parent = FeaturesGrid
+    
+    -- دالة إنشاء ميزة صغيرة
+    local function CreateFeature(icon, name, description, defaultColor, order)
+        local Feature = Instance.new("TextButton")
+        Feature.LayoutOrder = order
+        Feature.BackgroundColor3 = Color3.fromRGB(30, 35, 65)
+        Feature.Text = ""
+        Feature.AutoButtonColor = false
+        Feature.ZIndex = 503
+        Feature.Parent = FeaturesGrid
+        Instance.new("UICorner", Feature).CornerRadius = UDim.new(0, 10)
+        
+        local Stroke = Instance.new("UIStroke")
+        Stroke.Color = defaultColor
+        Stroke.Thickness = 1
+        Stroke.Transparency = 0.6
+        Stroke.Parent = Feature
+        
+        local IconLbl = Instance.new("TextLabel")
+        IconLbl.Size = UDim2.new(0, 35, 1, 0)
+        IconLbl.Position = UDim2.new(0, 5, 0, 0)
+        IconLbl.Text = icon
+        IconLbl.TextSize = 20
+        IconLbl.BackgroundTransparency = 1
+        IconLbl.ZIndex = 504
+        IconLbl.Parent = Feature
+        
+        local NameLbl = Instance.new("TextLabel")
+        NameLbl.Size = UDim2.new(1, -50, 0, 20)
+        NameLbl.Position = UDim2.new(0, 42, 0, 8)
+        NameLbl.Text = name
+        NameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+        NameLbl.TextSize = 13
+        NameLbl.Font = Enum.Font.GothamBold
+        NameLbl.TextXAlignment = Enum.TextXAlignment.Left
+        NameLbl.BackgroundTransparency = 1
+        NameLbl.ZIndex = 504
+        NameLbl.Parent = Feature
+        
+        local DescLbl = Instance.new("TextLabel")
+        DescLbl.Size = UDim2.new(1, -50, 0, 15)
+        DescLbl.Position = UDim2.new(0, 42, 0, 28)
+        DescLbl.Text = description
+        DescLbl.TextColor3 = Color3.fromRGB(150, 170, 200)
+        DescLbl.TextSize = 10
+        DescLbl.Font = Enum.Font.Gotham
+        DescLbl.TextXAlignment = Enum.TextXAlignment.Left
+        DescLbl.TextTruncate = Enum.TextTruncate.AtEnd
+        DescLbl.BackgroundTransparency = 1
+        DescLbl.ZIndex = 504
+        DescLbl.Parent = Feature
+        
+        local Status = Instance.new("TextLabel")
+        Status.Size = UDim2.new(1, -50, 0, 12)
+        Status.Position = UDim2.new(0, 42, 1, -15)
+        Status.Text = "OFF"
+        Status.TextColor3 = Color3.fromRGB(150, 150, 150)
+        Status.TextSize = 10
+        Status.Font = Enum.Font.GothamBold
+        Status.TextXAlignment = Enum.TextXAlignment.Left
+        Status.BackgroundTransparency = 1
+        Status.ZIndex = 504
+        Status.Parent = Feature
+        
+        return Feature, Status, Stroke
+    end
+    
+    -- ═══ Feature 1: FREEZE VALUE ═══
+    local FreezeBtn, FreezeStatus, FreezeStroke = CreateFeature("🧊", "Freeze Value", "Prevent changes", Color3.fromRGB(100, 200, 255), 1)
+    local freezeConnection = nil
+    local frozenValue = nil
+    
+    FreezeBtn.MouseButton1Click:Connect(function()
+        if _G.WiliFrozenValues[instance] then
+            -- Unfreeze
+            _G.WiliFrozenValues[instance] = nil
+            if freezeConnection then
+                freezeConnection:Disconnect()
+                freezeConnection = nil
+            end
+            FreezeBtn.BackgroundColor3 = Color3.fromRGB(30, 35, 65)
+            FreezeStatus.Text = "OFF"
+            FreezeStatus.TextColor3 = Color3.fromRGB(150, 150, 150)
+            FreezeStroke.Transparency = 0.6
+            ShowNotification(FullScreen, "❄️ Freeze DISABLED", Color3.fromRGB(150, 150, 150))
+        else
+            -- Freeze
+            pcall(function()
+                frozenValue = instance.Value
+            end)
+            _G.WiliFrozenValues[instance] = frozenValue
+            
+            freezeConnection = instance:GetPropertyChangedSignal("Value"):Connect(function()
+                pcall(function()
+                    if instance.Value ~= frozenValue then
+                        instance.Value = frozenValue
+                    end
+                end)
+            end)
+            
+            FreezeBtn.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
+            FreezeStatus.Text = "🧊 FROZEN"
+            FreezeStatus.TextColor3 = Color3.fromRGB(100, 200, 255)
+            FreezeStroke.Transparency = 0
+            FreezeStroke.Thickness = 2
+            ShowNotification(FullScreen, "🧊 Value FROZEN at: " .. tostring(frozenValue), Color3.fromRGB(100, 200, 255))
+        end
+    end)
+    
+    -- تحديث الحالة عند فتح النافذة
+    if _G.WiliFrozenValues[instance] then
+        frozenValue = _G.WiliFrozenValues[instance]
+        FreezeBtn.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
+        FreezeStatus.Text = "🧊 FROZEN"
+        FreezeStatus.TextColor3 = Color3.fromRGB(100, 200, 255)
+        FreezeStroke.Transparency = 0
+        FreezeStroke.Thickness = 2
+    end
+    
+    -- ═══ Feature 2: AUTO FIRE REMOTE ═══
+    local AutoBtn, AutoStatus, AutoStroke = CreateFeature("🔄", "Auto Update", "Every 0.5s", Color3.fromRGB(255, 200, 50), 2)
+    local autoConnection = nil
+    local autoValue = nil
+    
+    AutoBtn.MouseButton1Click:Connect(function()
+        if autoConnection then
+            autoConnection:Disconnect()
+            autoConnection = nil
+            AutoBtn.BackgroundColor3 = Color3.fromRGB(30, 35, 65)
+            AutoStatus.Text = "OFF"
+            AutoStatus.TextColor3 = Color3.fromRGB(150, 150, 150)
+            AutoStroke.Transparency = 0.6
+            ShowNotification(FullScreen, "⏹️ Auto Update STOPPED", Color3.fromRGB(150, 150, 150))
+        else
+            autoValue = ValueInput.Text
+            autoConnection = game:GetService("RunService").Heartbeat:Connect(function()
+                pcall(function()
+                    if instance:IsA("NumberValue") or instance:IsA("IntValue") then
+                        local num = tonumber(autoValue)
+                        if num then instance.Value = num end
+                    elseif instance:IsA("BoolValue") then
+                        instance.Value = (autoValue:lower() == "true")
+                    else
+                        instance.Value = autoValue
+                    end
+                end)
+            end)
+            AutoBtn.BackgroundColor3 = Color3.fromRGB(200, 150, 50)
+            AutoStatus.Text = "🔄 RUNNING"
+            AutoStatus.TextColor3 = Color3.fromRGB(255, 200, 50)
+            AutoStroke.Transparency = 0
+            AutoStroke.Thickness = 2
+            ShowNotification(FullScreen, "🔄 Auto Update ACTIVE", Color3.fromRGB(255, 200, 50))
+        end
+    end)
+    
+    -- ═══ Feature 3: BYPASS (Deep Override) ═══
+    local BypassBtn, BypassStatus, BypassStroke = CreateFeature("⚡", "Deep Bypass", "Force override", Color3.fromRGB(255, 100, 150), 3)
+    local bypassConnection = nil
+    
+    BypassBtn.MouseButton1Click:Connect(function()
+        if bypassConnection then
+            bypassConnection:Disconnect()
+            bypassConnection = nil
+            BypassBtn.BackgroundColor3 = Color3.fromRGB(30, 35, 65)
+            BypassStatus.Text = "OFF"
+            BypassStatus.TextColor3 = Color3.fromRGB(150, 150, 150)
+            BypassStroke.Transparency = 0.6
+            ShowNotification(FullScreen, "⏹️ Bypass STOPPED", Color3.fromRGB(150, 150, 150))
+        else
+            local targetVal = ValueInput.Text
+            bypassConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                pcall(function()
+                    -- محاولة setscriptable
+                    if setscriptable then
+                        setscriptable(instance, "Value", true)
+                    end
+                    
+                    -- تعديل مباشر
+                    if instance:IsA("NumberValue") or instance:IsA("IntValue") then
+                        local num = tonumber(targetVal)
+                        if num and instance.Value ~= num then 
+                            instance.Value = num 
+                        end
+                    elseif instance:IsA("BoolValue") then
+                        local b = (targetVal:lower() == "true")
+                        if instance.Value ~= b then
+                            instance.Value = b
+                        end
+                    else
+                        if instance.Value ~= targetVal then
+                            instance.Value = targetVal
+                        end
+                    end
+                end)
+            end)
+            BypassBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 100)
+            BypassStatus.Text = "⚡ ACTIVE"
+            BypassStatus.TextColor3 = Color3.fromRGB(255, 100, 150)
+            BypassStroke.Transparency = 0
+            BypassStroke.Thickness = 2
+            ShowNotification(FullScreen, "⚡ DEEP BYPASS ACTIVATED!", Color3.fromRGB(255, 100, 150))
+        end
+    end)
+    
+    -- ═══ Feature 4: COPY VALUE ═══
+    local CopyBtn, CopyStatus, CopyStroke = CreateFeature("📋", "Copy Value", "To clipboard", Color3.fromRGB(150, 200, 255), 4)
+    CopyStatus.Text = "Ready"
+    
+    CopyBtn.MouseButton1Click:Connect(function()
+        pcall(function()
+            if CopyToClipboard(tostring(instance.Value)) then
+                CopyStatus.Text = "✅ COPIED"
+                CopyStatus.TextColor3 = Color3.fromRGB(0, 255, 136)
+                ShowNotification(FullScreen, "📋 Value copied!", Color3.fromRGB(0, 200, 100))
+                wait(1.5)
+                CopyStatus.Text = "Ready"
+                CopyStatus.TextColor3 = Color3.fromRGB(150, 150, 150)
+            end
+        end)
+    end)
+    
+    -- ═══ Quick Values (للأرقام) ═══
+    if instance:IsA("NumberValue") or instance:IsA("IntValue") then
+        local QuickTitle = Instance.new("TextLabel")
+        QuickTitle.Size = UDim2.new(1, -20, 0, 25)
+        QuickTitle.Text = "⚡ Quick Values"
+        QuickTitle.TextColor3 = Color3.fromRGB(255, 200, 50)
+        QuickTitle.TextSize = 14
+        QuickTitle.Font = Enum.Font.GothamBold
+        QuickTitle.TextXAlignment = Enum.TextXAlignment.Left
+        QuickTitle.BackgroundTransparency = 1
+        QuickTitle.LayoutOrder = 6
+        QuickTitle.ZIndex = 502
+        QuickTitle.Parent = ScrollFrame
+        
+        local QuickFrame = Instance.new("Frame")
+        QuickFrame.Size = UDim2.new(1, -20, 0, 45)
+        QuickFrame.BackgroundTransparency = 1
+        QuickFrame.LayoutOrder = 7
+        QuickFrame.ZIndex = 502
+        QuickFrame.Parent = ScrollFrame
+        
+        local QLayout = Instance.new("UIListLayout")
+        QLayout.FillDirection = Enum.FillDirection.Horizontal
+        QLayout.Padding = UDim.new(0, 8)
+        QLayout.Parent = QuickFrame
+        
+        local quickValues = {"0", "1", "100", "999", "9999", "999999"}
+        for _, val in ipairs(quickValues) do
+            local QBtn = Instance.new("TextButton")
+            QBtn.Size = UDim2.new(0, 95, 1, 0)
+            QBtn.Text = val
+            QBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            QBtn.TextSize = 14
+            QBtn.Font = Enum.Font.GothamBold
+            QBtn.BackgroundColor3 = Color3.fromRGB(50, 60, 100)
+            QBtn.ZIndex = 503
+            QBtn.Parent = QuickFrame
+            Instance.new("UICorner", QBtn).CornerRadius = UDim.new(0, 8)
+            
+            QBtn.MouseButton1Click:Connect(function()
+                ValueInput.Text = val
+            end)
+        end
+    end
+    
+    -- ═══ BoolValue Buttons ═══
+    if instance:IsA("BoolValue") then
+        local BoolTitle = Instance.new("TextLabel")
+        BoolTitle.Size = UDim2.new(1, -20, 0, 25)
+        BoolTitle.Text = "☑️ Quick Toggle"
+        BoolTitle.TextColor3 = Color3.fromRGB(255, 200, 50)
+        BoolTitle.TextSize = 14
+        BoolTitle.Font = Enum.Font.GothamBold
+        BoolTitle.TextXAlignment = Enum.TextXAlignment.Left
+        BoolTitle.BackgroundTransparency = 1
+        BoolTitle.LayoutOrder = 6
+        BoolTitle.ZIndex = 502
+        BoolTitle.Parent = ScrollFrame
+        
+        local BoolFrame = Instance.new("Frame")
+        BoolFrame.Size = UDim2.new(1, -20, 0, 60)
+        BoolFrame.BackgroundTransparency = 1
+        BoolFrame.LayoutOrder = 7
+        BoolFrame.ZIndex = 502
+        BoolFrame.Parent = ScrollFrame
+        
+        local TBtn = Instance.new("TextButton")
+        TBtn.Size = UDim2.new(0.5, -5, 1, 0)
+        TBtn.Position = UDim2.new(0, 0, 0, 0)
+        TBtn.Text = "✅ TRUE"
+        TBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        TBtn.TextSize = 20
+        TBtn.Font = Enum.Font.GothamBold
+        TBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+        TBtn.ZIndex = 503
+        TBtn.Parent = BoolFrame
+        Instance.new("UICorner", TBtn).CornerRadius = UDim.new(0, 10)
+        
+        local FBtn = Instance.new("TextButton")
+        FBtn.Size = UDim2.new(0.5, -5, 1, 0)
+        FBtn.Position = UDim2.new(0.5, 5, 0, 0)
+        FBtn.Text = "❌ FALSE"
+        FBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        FBtn.TextSize = 20
+        FBtn.Font = Enum.Font.GothamBold
+        FBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 70)
+        FBtn.ZIndex = 503
+        FBtn.Parent = BoolFrame
+        Instance.new("UICorner", FBtn).CornerRadius = UDim.new(0, 10)
+        
+        TBtn.MouseButton1Click:Connect(function() ValueInput.Text = "true" end)
+        FBtn.MouseButton1Click:Connect(function() ValueInput.Text = "false" end)
+    end
+    
+    -- ═══ Live Update للقيمة الحالية ═══
+    local liveUpdate = instance:GetPropertyChangedSignal("Value"):Connect(function()
+        UpdateCurrentValue()
+    end)
+    
+    -- ═══ Apply Button Logic ═══
+    ApplyBtn.MouseButton1Click:Connect(function()
+        local newVal = ValueInput.Text
+        local success = false
+        
+        pcall(function()
+            if instance:IsA("NumberValue") or instance:IsA("IntValue") then
+                local num = tonumber(newVal)
+                if num then
+                    instance.Value = num
+                    success = true
+                end
+            elseif instance:IsA("BoolValue") then
+                if newVal:lower() == "true" then
+                    instance.Value = true
+                    success = true
+                elseif newVal:lower() == "false" then
+                    instance.Value = false
+                    success = true
+                end
+            elseif instance:IsA("StringValue") then
+                instance.Value = newVal
+                success = true
+            end
+        end)
+        
+        if success then
+            -- تحديث القيمة المجمدة
+            if _G.WiliFrozenValues[instance] then
+                pcall(function()
+                    frozenValue = instance.Value
+                    _G.WiliFrozenValues[instance] = frozenValue
+                end)
+            end
+            ShowNotification(FullScreen, "✅ Value APPLIED!", Color3.fromRGB(0, 200, 100))
+        else
+            ShowNotification(FullScreen, "❌ Invalid value type", Color3.fromRGB(200, 50, 70))
+        end
+    end)
+    
+    ResetBtn.MouseButton1Click:Connect(function()
+        pcall(function()
+            ValueInput.Text = tostring(instance.Value)
+        end)
+        ShowNotification(FullScreen, "🔄 Reset done", Color3.fromRGB(255, 200, 50))
+    end)
+    
+    -- ═══ تحديث ScrollingFrame Size ═══
+    Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 30)
+    end)
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 30)
+    
+    -- ═══ تنظيف عند الخروج ═══
+    FullScreen.AncestryChanged:Connect(function()
+        if not FullScreen.Parent then
+            if liveUpdate then liveUpdate:Disconnect() end
+            if autoConnection then autoConnection:Disconnect() end
+            if bypassConnection then bypassConnection:Disconnect() end
+            -- Freeze يبقى نشطاً حتى بعد الخروج!
+        end
+    end)
+end    
     -- منطقة التعديل
     local EditFrame = Instance.new("Frame")
     EditFrame.Size = UDim2.new(1, -40, 0, 400)
