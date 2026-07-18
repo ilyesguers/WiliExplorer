@@ -2,6 +2,8 @@ local MainFrame = {}
 
 local KeySystem = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Security/KeySystem.lua", true))()
 
+local Stars = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Theme/Stars.lua", true))()
+
 function MainFrame.Create()
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "WiliExplorerUI"
@@ -23,6 +25,7 @@ function MainFrame.Create()
     Frame.Position = UDim2.new(0.5, -225, 0.5, -175)
     Frame.BackgroundColor3 = Color3.fromRGB(11, 13, 26)
     Frame.BorderSizePixel = 0
+    Frame.ClipsDescendants = true
     Frame.Parent = ScreenGui
     
     local Corner = Instance.new("UICorner")
@@ -34,17 +37,45 @@ function MainFrame.Create()
     Stroke.Thickness = 2
     Stroke.Parent = Frame
 
+    -- تدرج فضائي في الخلفية
+    local Gradient = Instance.new("UIGradient")
+    Gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(11, 13, 26)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(17, 20, 50)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 15, 60))
+    })
+    Gradient.Rotation = 135
+    Gradient.Parent = Frame
+
+    -- 🌟 إضافة النجوم في الخلفية
+    Stars.Create(Frame, 50)
+
+    -- حاوية المحتوى (فوق النجوم)
+    local Content = Instance.new("Frame")
+    Content.Name = "Content"
+    Content.Size = UDim2.new(1, 0, 1, 0)
+    Content.BackgroundTransparency = 1
+    Content.ZIndex = 5
+    Content.Parent = Frame
+
     -- العنوان
     local Title = Instance.new("TextLabel")
     Title.Text = "WiliExplorer VIP"
     Title.Size = UDim2.new(1, 0, 0, 50)
     Title.TextColor3 = Color3.fromRGB(0, 212, 255)
-    Title.TextSize = 24
+    Title.TextSize = 28
     Title.Font = Enum.Font.GothamBold
     Title.BackgroundTransparency = 1
-    Title.Parent = Frame
+    Title.ZIndex = 6
+    Title.Parent = Content
 
-    -- النص الفرعي
+    -- توهج للعنوان
+    local TitleStroke = Instance.new("UIStroke")
+    TitleStroke.Color = Color3.fromRGB(0, 245, 255)
+    TitleStroke.Thickness = 1
+    TitleStroke.Transparency = 0.7
+    TitleStroke.Parent = Title
+
     local SubTitle = Instance.new("TextLabel")
     SubTitle.Text = "Enter your Cosmic Key"
     SubTitle.Size = UDim2.new(1, 0, 0, 20)
@@ -53,7 +84,8 @@ function MainFrame.Create()
     SubTitle.TextSize = 14
     SubTitle.Font = Enum.Font.Gotham
     SubTitle.BackgroundTransparency = 1
-    SubTitle.Parent = Frame
+    SubTitle.ZIndex = 6
+    SubTitle.Parent = Content
 
     -- صندوق المفتاح
     local KeyInput = Instance.new("TextBox")
@@ -67,7 +99,8 @@ function MainFrame.Create()
     KeyInput.Font = Enum.Font.Code
     KeyInput.TextSize = 16
     KeyInput.ClearTextOnFocus = false
-    KeyInput.Parent = Frame
+    KeyInput.ZIndex = 6
+    KeyInput.Parent = Content
     
     local KeyCorner = Instance.new("UICorner")
     KeyCorner.CornerRadius = UDim.new(0, 8)
@@ -89,13 +122,22 @@ function MainFrame.Create()
     LoginBtn.Font = Enum.Font.GothamBold
     LoginBtn.TextSize = 18
     LoginBtn.AutoButtonColor = true
-    LoginBtn.Parent = Frame
+    LoginBtn.ZIndex = 6
+    LoginBtn.Parent = Content
 
     local BtnCorner = Instance.new("UICorner")
     BtnCorner.CornerRadius = UDim.new(0, 10)
     BtnCorner.Parent = LoginBtn
 
-    -- رسالة الحالة (خطأ/نجاح)
+    local BtnGradient = Instance.new("UIGradient")
+    BtnGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 212, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 152, 219))
+    })
+    BtnGradient.Rotation = 90
+    BtnGradient.Parent = LoginBtn
+
+    -- رسالة الحالة
     local StatusLabel = Instance.new("TextLabel")
     StatusLabel.Text = ""
     StatusLabel.Size = UDim2.new(1, 0, 0, 30)
@@ -104,9 +146,9 @@ function MainFrame.Create()
     StatusLabel.TextSize = 14
     StatusLabel.Font = Enum.Font.GothamBold
     StatusLabel.BackgroundTransparency = 1
-    StatusLabel.Parent = Frame
+    StatusLabel.ZIndex = 6
+    StatusLabel.Parent = Content
 
-    -- معلومات الخطة (تظهر عند النجاح)
     local PlanLabel = Instance.new("TextLabel")
     PlanLabel.Text = ""
     PlanLabel.Size = UDim2.new(1, 0, 0, 20)
@@ -115,9 +157,10 @@ function MainFrame.Create()
     PlanLabel.TextSize = 12
     PlanLabel.Font = Enum.Font.Gotham
     PlanLabel.BackgroundTransparency = 1
-    PlanLabel.Parent = Frame
+    PlanLabel.ZIndex = 6
+    PlanLabel.Parent = Content
 
-    -- منطق زر التحقق
+    -- التحقق من المفتاح
     LoginBtn.MouseButton1Click:Connect(function()
         local key = KeyInput.Text
         
@@ -140,7 +183,6 @@ function MainFrame.Create()
             
             wait(2)
             
-            -- سيتم فتح متصفح الملفات هنا لاحقاً
             StatusLabel.Text = "File Explorer coming next!"
         else
             StatusLabel.Text = "Error: " .. tostring(data)
@@ -153,7 +195,7 @@ function MainFrame.Create()
         end
     end)
 
-    print("UI Created Successfully!")
+    print("UI Created with Stars!")
     return ScreenGui
 end
 
