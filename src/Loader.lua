@@ -53,3 +53,9 @@ print("✅ Core modules loaded!")
 
 -- Placeholder start
 print("🌌 WiliExplorer initialized successfully!")
+-- في نهاية ملف Loader.lua
+local MainFrame = LoadModule("UI/MainFrame.lua")
+if MainFrame then
+    MainFrame.Create()
+    print("🚀 WiliExplorer GUI is now visible!")
+end
