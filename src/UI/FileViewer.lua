@@ -62,7 +62,6 @@ end
 -- ⭐ المحرر الكامل (Fullscreen Code Editor)
 -- ═══════════════════════════════════════════════════════
 function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
-    -- خلفية سوداء كاملة
     local FullScreen = Instance.new("Frame")
     FullScreen.Name = "CodeEditorFullscreen"
     FullScreen.Size = UDim2.new(1, 0, 1, 0)
@@ -72,7 +71,6 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     FullScreen.ZIndex = 500
     FullScreen.Parent = mainParent
     
-    -- ═══ الشريط العلوي ═══
     local TopBar = Instance.new("Frame")
     TopBar.Size = UDim2.new(1, 0, 0, 55)
     TopBar.BackgroundColor3 = Color3.fromRGB(15, 18, 40)
@@ -88,7 +86,6 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     TopStroke.ZIndex = 502
     TopStroke.Parent = TopBar
     
-    -- الأيقونة
     local Icon = Instance.new("TextLabel")
     Icon.Size = UDim2.new(0, 45, 0, 45)
     Icon.Position = UDim2.new(0, 10, 0.5, -22)
@@ -98,7 +95,6 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     Icon.ZIndex = 502
     Icon.Parent = TopBar
     
-    -- اسم السكريبت
     local ScriptName = Instance.new("TextLabel")
     ScriptName.Size = UDim2.new(0.5, 0, 0, 22)
     ScriptName.Position = UDim2.new(0, 60, 0, 8)
@@ -112,7 +108,6 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     ScriptName.ZIndex = 502
     ScriptName.Parent = TopBar
     
-    -- معلومات
     local InfoLabel = Instance.new("TextLabel")
     InfoLabel.Size = UDim2.new(0.5, 0, 0, 18)
     InfoLabel.Position = UDim2.new(0, 60, 0, 30)
@@ -124,7 +119,6 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     InfoLabel.ZIndex = 502
     InfoLabel.Parent = TopBar
     
-    -- حساب عدد الأسطر
     local function CountLines(text)
         local count = 1
         for _ in text:gmatch("\n") do count = count + 1 end
@@ -145,7 +139,6 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     
     InfoLabel.Text = instance.ClassName .. " • " .. totalLines .. " lines • " .. methodText
     
-    -- زر النسخ (في الأعلى)
     local CopyTopBtn = Instance.new("TextButton")
     CopyTopBtn.Size = UDim2.new(0, 90, 0, 38)
     CopyTopBtn.Position = UDim2.new(1, -300, 0.5, -19)
@@ -158,7 +151,6 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     CopyTopBtn.Parent = TopBar
     Instance.new("UICorner", CopyTopBtn).CornerRadius = UDim.new(0, 8)
     
-    -- زر الحفظ (بارز)
     local SaveBtn = Instance.new("TextButton")
     SaveBtn.Size = UDim2.new(0, 90, 0, 38)
     SaveBtn.Position = UDim2.new(1, -200, 0.5, -19)
@@ -171,7 +163,6 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     SaveBtn.Parent = TopBar
     Instance.new("UICorner", SaveBtn).CornerRadius = UDim.new(0, 8)
     
-    -- زر الخروج
     local ExitBtn = Instance.new("TextButton")
     ExitBtn.Size = UDim2.new(0, 90, 0, 38)
     ExitBtn.Position = UDim2.new(1, -100, 0.5, -19)
@@ -184,7 +175,6 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     ExitBtn.Parent = TopBar
     Instance.new("UICorner", ExitBtn).CornerRadius = UDim.new(0, 8)
     
-    -- ═══ منطقة الكود (Fullscreen) ═══
     local CodeScroll = Instance.new("ScrollingFrame")
     CodeScroll.Size = UDim2.new(1, 0, 1, -55)
     CodeScroll.Position = UDim2.new(0, 0, 0, 55)
@@ -195,7 +185,6 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     CodeScroll.ZIndex = 501
     CodeScroll.Parent = FullScreen
     
-    -- صندوق الكود
     local CodeBox = Instance.new("TextBox")
     CodeBox.Size = UDim2.new(1, -20, 0, 5000)
     CodeBox.Position = UDim2.new(0, 10, 0, 10)
@@ -216,14 +205,11 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
         CodeBox.TextColor3 = Color3.fromRGB(255, 150, 150)
     end
     
-    -- تحديث الحجم تلقائياً
     local function UpdateSize()
         local bounds = CodeBox.TextBounds
         local newHeight = math.max(bounds.Y + 100, 1000)
         CodeBox.Size = UDim2.new(1, -20, 0, newHeight)
         CodeScroll.CanvasSize = UDim2.new(0, 0, 0, newHeight + 50)
-        
-        -- تحديث عداد الأسطر
         local lines = CountLines(CodeBox.Text)
         InfoLabel.Text = instance.ClassName .. " • " .. lines .. " lines • " .. methodText
     end
@@ -232,7 +218,6 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
     CodeBox:GetPropertyChangedSignal("Text"):Connect(UpdateSize)
     CodeBox:GetPropertyChangedSignal("TextBounds"):Connect(UpdateSize)
     
-    -- ═══ حالة الحفظ ═══
     local isModified = false
     local originalText = sourceData.source
     
@@ -248,7 +233,6 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
         end
     end)
     
-    -- ═══ زر النسخ ═══
     CopyTopBtn.MouseButton1Click:Connect(function()
         if CopyToClipboard(CodeBox.Text) then
             ShowNotification(FullScreen, "✅ Code copied to clipboard!", Color3.fromRGB(0, 200, 100))
@@ -257,10 +241,8 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
         end
     end)
     
-    -- ═══ زر الحفظ ═══
     SaveBtn.MouseButton1Click:Connect(function()
         local saveResult = FileScanner.SetSource(instance, CodeBox.Text)
-        
         if saveResult.success then
             ShowNotification(FullScreen, "✅ Saved via " .. saveResult.method, Color3.fromRGB(0, 200, 100))
             originalText = CodeBox.Text
@@ -274,10 +256,8 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
         end
     end)
     
-    -- ═══ زر الخروج (مع تحذير لو فيه تعديلات) ═══
     ExitBtn.MouseButton1Click:Connect(function()
         if isModified then
-            -- نافذة تأكيد
             local Confirm = Instance.new("Frame")
             Confirm.Size = UDim2.new(1, 0, 1, 0)
             Confirm.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -298,15 +278,6 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
             DStroke.Thickness = 2
             DStroke.Parent = Dialog
             
-            local WarnIcon = Instance.new("TextLabel")
-            WarnIcon.Size = UDim2.new(1, 0, 0, 40)
-            WarnIcon.Position = UDim2.new(0, 0, 0, 15)
-            WarnIcon.Text = "⚠️"
-            WarnIcon.TextSize = 32
-            WarnIcon.BackgroundTransparency = 1
-            WarnIcon.ZIndex = 602
-            WarnIcon.Parent = Dialog
-            
             local WarnTitle = Instance.new("TextLabel")
             WarnTitle.Size = UDim2.new(1, -20, 0, 25)
             WarnTitle.Position = UDim2.new(0, 10, 0, 55)
@@ -318,19 +289,6 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
             WarnTitle.ZIndex = 602
             WarnTitle.Parent = Dialog
             
-            local WarnText = Instance.new("TextLabel")
-            WarnText.Size = UDim2.new(1, -20, 0, 30)
-            WarnText.Position = UDim2.new(0, 10, 0, 85)
-            WarnText.Text = "Do you want to save before exiting?"
-            WarnText.TextColor3 = Color3.fromRGB(255, 255, 255)
-            WarnText.TextSize = 13
-            WarnText.Font = Enum.Font.Gotham
-            WarnText.TextWrapped = true
-            WarnText.BackgroundTransparency = 1
-            WarnText.ZIndex = 602
-            WarnText.Parent = Dialog
-            
-            -- زر الحفظ والخروج
             local SaveExitBtn = Instance.new("TextButton")
             SaveExitBtn.Size = UDim2.new(0, 100, 0, 35)
             SaveExitBtn.Position = UDim2.new(0, 15, 1, -50)
@@ -343,7 +301,6 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
             SaveExitBtn.Parent = Dialog
             Instance.new("UICorner", SaveExitBtn).CornerRadius = UDim.new(0, 8)
             
-            -- زر الخروج بدون حفظ
             local DiscardBtn = Instance.new("TextButton")
             DiscardBtn.Size = UDim2.new(0, 110, 0, 35)
             DiscardBtn.Position = UDim2.new(0, 120, 1, -50)
@@ -356,7 +313,6 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
             DiscardBtn.Parent = Dialog
             Instance.new("UICorner", DiscardBtn).CornerRadius = UDim.new(0, 8)
             
-            -- زر إلغاء
             local CancelBtn = Instance.new("TextButton")
             CancelBtn.Size = UDim2.new(0, 90, 0, 35)
             CancelBtn.Position = UDim2.new(1, -105, 1, -50)
@@ -398,7 +354,7 @@ function FileViewer.OpenCodeEditor(mainParent, instance, sourceData, onExit)
 end
 
 -- ═══════════════════════════════════════════════════════
--- الواجهة الأساسية (Info + Children)
+-- الواجهة الأساسية (Info + Children + Dynamic Buttons)
 -- ═══════════════════════════════════════════════════════
 function FileViewer.Open(mainParent, instance, onClose)
     local info = FileScanner.GetInfo(instance)
@@ -427,7 +383,6 @@ function FileViewer.Open(mainParent, instance, onClose)
     WStroke.Thickness = 2
     WStroke.Parent = Window
 
-    -- Header
     local Header = Instance.new("Frame")
     Header.Size = UDim2.new(1, 0, 0, 70)
     Header.BackgroundColor3 = Color3.fromRGB(15, 20, 45)
@@ -485,8 +440,14 @@ function FileViewer.Open(mainParent, instance, onClose)
         if onClose then onClose() end
     end)
 
-    -- ═══ زر VIEW CODE بارز (لو سكريبت) ═══
+    -- ═══════════════════════════════
+    -- الأزرار الكبيرة الديناميكية (Code / Sound / Image)
+    -- ═══════════════════════════════
+    local hasBigButton = false
+
+    -- زر CODE
     if info.IsScript then
+        hasBigButton = true
         local BigCodeBtn = Instance.new("TextButton")
         BigCodeBtn.Size = UDim2.new(1, -20, 0, 80)
         BigCodeBtn.Position = UDim2.new(0, 10, 0, 80)
@@ -504,7 +465,6 @@ function FileViewer.Open(mainParent, instance, onClose)
         BCStroke.Thickness = 2
         BCStroke.Parent = BigCodeBtn
         
-        -- تأثير نبض
         spawn(function()
             while BigCodeBtn.Parent do
                 TweenService:Create(BCStroke, TweenInfo.new(1), {Thickness = 4, Transparency = 0.3}):Play()
@@ -516,21 +476,16 @@ function FileViewer.Open(mainParent, instance, onClose)
         
         BigCodeBtn.MouseButton1Click:Connect(function()
             local sourceData = FileScanner.GetSource(instance)
-            
-            -- إخفاء النافذة الحالية
             Overlay.Visible = false
-            
-            -- فتح المحرر الكامل
             FileViewer.OpenCodeEditor(mainParent, instance, sourceData, function()
-                -- عند الخروج من المحرر: أظهر النافذة
                 Overlay.Visible = true
             end)
         end)
     end
-    -- ═══════════════════════════════
-    -- زر SOUND EDITOR (للأصوات)
-    -- ═══════════════════════════════
+
+    -- زر SOUND
     if instance:IsA("Sound") then
+        hasBigButton = true
         local SoundBtn = Instance.new("TextButton")
         SoundBtn.Size = UDim2.new(1, -20, 0, 80)
         SoundBtn.Position = UDim2.new(0, 10, 0, 80)
@@ -542,12 +497,12 @@ function FileViewer.Open(mainParent, instance, onClose)
         SoundBtn.ZIndex = 92
         SoundBtn.Parent = Window
         Instance.new("UICorner", SoundBtn).CornerRadius = UDim.new(0, 12)
-        
+
         local SBStroke = Instance.new("UIStroke")
         SBStroke.Color = Color3.fromRGB(255, 230, 100)
         SBStroke.Thickness = 2
         SBStroke.Parent = SoundBtn
-        
+
         spawn(function()
             while SoundBtn.Parent do
                 TweenService:Create(SBStroke, TweenInfo.new(1), {Thickness = 4, Transparency = 0.3}):Play()
@@ -566,10 +521,9 @@ function FileViewer.Open(mainParent, instance, onClose)
         end)
     end
 
-    -- ═══════════════════════════════
-    -- زر IMAGE EDITOR (للصور)
-    -- ═══════════════════════════════
+    -- زر IMAGE
     if instance:IsA("Decal") or instance:IsA("Texture") or instance:IsA("ImageLabel") or instance:IsA("ImageButton") then
+        hasBigButton = true
         local ImageBtn = Instance.new("TextButton")
         ImageBtn.Size = UDim2.new(1, -20, 0, 80)
         ImageBtn.Position = UDim2.new(0, 10, 0, 80)
@@ -581,12 +535,12 @@ function FileViewer.Open(mainParent, instance, onClose)
         ImageBtn.ZIndex = 92
         ImageBtn.Parent = Window
         Instance.new("UICorner", ImageBtn).CornerRadius = UDim.new(0, 12)
-        
+
         local IBStroke = Instance.new("UIStroke")
         IBStroke.Color = Color3.fromRGB(255, 150, 200)
         IBStroke.Thickness = 2
         IBStroke.Parent = ImageBtn
-        
+
         spawn(function()
             while ImageBtn.Parent do
                 TweenService:Create(IBStroke, TweenInfo.new(1), {Thickness = 4, Transparency = 0.3}):Play()
@@ -604,9 +558,12 @@ function FileViewer.Open(mainParent, instance, onClose)
             end)
         end)
     end
-    -- ═══ المحتوى (Info + Children) ═══
+
+    -- ═══════════════════════════════
+    -- ضبط مساحة المحتوى
+    -- ═══════════════════════════════
     local ContentArea = Instance.new("Frame")
-    if info.IsScript then
+    if hasBigButton then
         ContentArea.Size = UDim2.new(1, -20, 1, -260)
         ContentArea.Position = UDim2.new(0, 10, 0, 170)
     else
@@ -619,7 +576,6 @@ function FileViewer.Open(mainParent, instance, onClose)
     ContentArea.Parent = Window
     Instance.new("UICorner", ContentArea).CornerRadius = UDim.new(0, 10)
 
-    -- تبويبات
     local TabBar = Instance.new("Frame")
     TabBar.Size = UDim2.new(1, 0, 0, 40)
     TabBar.BackgroundColor3 = Color3.fromRGB(15, 20, 45)
@@ -821,7 +777,6 @@ function FileViewer.Open(mainParent, instance, onClose)
         CClass.ZIndex = 95
         CClass.Parent = ChItem
         
-        -- شارة إذا كان سكريبت
         if cInfo.IsScript then
             local Badge = Instance.new("TextLabel")
             Badge.Size = UDim2.new(0, 50, 0, 22)
@@ -844,7 +799,6 @@ function FileViewer.Open(mainParent, instance, onClose)
 
     ChildrenContent.CanvasSize = UDim2.new(0, 0, 0, ChLayout.AbsoluteContentSize.Y + 20)
 
-    -- إنشاء التبويبات
     tabs["Info"] = {button = CreateTab("Info", "ℹ️", 1), content = InfoContent}
     if info.Children > 0 then
         tabs["Children"] = {button = CreateTab("Children", "📂", 2), content = ChildrenContent}
