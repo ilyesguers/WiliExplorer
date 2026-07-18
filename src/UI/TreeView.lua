@@ -6,9 +6,9 @@ local Language = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilye
 local TweenService = game:GetService("TweenService")
 
 function TreeView.Create(parent, rootInstance, onBack)
-    -- ═══════════════════════════════
-    -- الشريط العلوي (Back + Search)
-    -- ═══════════════════════════════
+    -- ===================================
+    -- الشريط العلوي
+    -- ===================================
     local TopBar = Instance.new("Frame")
     TopBar.Size = UDim2.new(1, -20, 0, 55)
     TopBar.Position = UDim2.new(0, 10, 0, 10)
@@ -17,18 +17,17 @@ function TreeView.Create(parent, rootInstance, onBack)
     TopBar.ZIndex = 25
     TopBar.Parent = parent
     Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 12)
-    
+
     local TStroke = Instance.new("UIStroke")
     TStroke.Color = Color3.fromRGB(0, 212, 255)
     TStroke.Thickness = 1
     TStroke.Transparency = 0.5
     TStroke.Parent = TopBar
 
-    -- زر الرجوع
     local BackBtn = Instance.new("TextButton")
     BackBtn.Size = UDim2.new(0, 80, 0, 35)
     BackBtn.Position = UDim2.new(0, 10, 0.5, -17)
-    BackBtn.Text = "← " .. Language.Get("Back")
+    BackBtn.Text = "< " .. Language.Get("Back")
     BackBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     BackBtn.TextSize = 14
     BackBtn.Font = Enum.Font.GothamBold
@@ -37,7 +36,6 @@ function TreeView.Create(parent, rootInstance, onBack)
     BackBtn.Parent = TopBar
     Instance.new("UICorner", BackBtn).CornerRadius = UDim.new(0, 8)
 
-    -- عنوان الخدمة
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Size = UDim2.new(0, 200, 0, 20)
     TitleLabel.Position = UDim2.new(0, 100, 0, 5)
@@ -50,7 +48,6 @@ function TreeView.Create(parent, rootInstance, onBack)
     TitleLabel.ZIndex = 26
     TitleLabel.Parent = TopBar
 
-    -- عداد العناصر
     local CountLabel = Instance.new("TextLabel")
     CountLabel.Size = UDim2.new(0, 200, 0, 15)
     CountLabel.Position = UDim2.new(0, 100, 0, 28)
@@ -63,13 +60,13 @@ function TreeView.Create(parent, rootInstance, onBack)
     CountLabel.ZIndex = 26
     CountLabel.Parent = TopBar
 
-    -- ═══════════════════════════════
+    -- ===================================
     -- شريط البحث
-    -- ═══════════════════════════════
+    -- ===================================
     local SearchBox = Instance.new("TextBox")
     SearchBox.Size = UDim2.new(1, -20, 0, 40)
     SearchBox.Position = UDim2.new(0, 10, 0, 75)
-    SearchBox.PlaceholderText = "🔎 " .. Language.Get("Search")
+    SearchBox.PlaceholderText = "Search files..."
     SearchBox.Text = ""
     SearchBox.BackgroundColor3 = Color3.fromRGB(20, 25, 55)
     SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -80,16 +77,16 @@ function TreeView.Create(parent, rootInstance, onBack)
     SearchBox.ZIndex = 25
     SearchBox.Parent = parent
     Instance.new("UICorner", SearchBox).CornerRadius = UDim.new(0, 10)
-    
+
     local SStroke = Instance.new("UIStroke")
     SStroke.Color = Color3.fromRGB(0, 212, 255)
     SStroke.Thickness = 1
     SStroke.Transparency = 0.6
     SStroke.Parent = SearchBox
 
-    -- ═══════════════════════════════
-    -- منطقة الشجرة (ScrollingFrame)
-    -- ═══════════════════════════════
+    -- ===================================
+    -- منطقة الشجرة
+    -- ===================================
     local Scroll = Instance.new("ScrollingFrame")
     Scroll.Size = UDim2.new(1, -20, 1, -135)
     Scroll.Position = UDim2.new(0, 10, 0, 125)
@@ -107,79 +104,152 @@ function TreeView.Create(parent, rootInstance, onBack)
     Layout.SortOrder = Enum.SortOrder.LayoutOrder
     Layout.Parent = Scroll
 
-    local Padding = Instance.new("UIPadding")
-    Padding.PaddingTop = UDim.new(0, 5)
-    Padding.PaddingLeft = UDim.new(0, 5)
-    Padding.PaddingRight = UDim.new(0, 5)
-    Padding.PaddingBottom = UDim.new(0, 5)
-    Padding.Parent = Scroll
+    local ScrollPad = Instance.new("UIPadding")
+    ScrollPad.PaddingTop = UDim.new(0, 5)
+    ScrollPad.PaddingLeft = UDim.new(0, 5)
+    ScrollPad.PaddingRight = UDim.new(0, 5)
+    ScrollPad.PaddingBottom = UDim.new(0, 5)
+    ScrollPad.Parent = Scroll
 
-    -- ═══════════════════════════════
-    -- تتبع العناصر المفتوحة
-    -- ═══════════════════════════════
-    local expandedItems = {}
-    local allItemFrames = {}
+    -- ===================================
+    -- تتبع المتغيرات
+    -- ===================================
+    local allItems = {}
+    local expandedFolders = {}
+    local globalOrder = 0
 
-    -- ═══════════════════════════════
+    -- ===================================
+    -- دالة تحديد لون حسب النوع
+    -- ===================================
+    local function GetTypeColor(className)
+        if className:find("Script") or className == "ModuleScript" then
+            return Color3.fromRGB(0, 255, 136)
+        elseif className:find("Part") or className == "Model" or className == "UnionOperation" then
+            return Color3.fromRGB(0, 212, 255)
+        elseif className:find("Sound") then
+            return Color3.fromRGB(255, 200, 50)
+        elseif className:find("Decal") or className:find("Texture") or className:find("Image") then
+            return Color3.fromRGB(255, 100, 150)
+        elseif className:find("Gui") or className:find("Frame") or className:find("Text") then
+            return Color3.fromRGB(200, 150, 255)
+        elseif className:find("Light") or className == "Lighting" then
+            return Color3.fromRGB(255, 255, 100)
+        elseif className:find("Value") then
+            return Color3.fromRGB(150, 200, 255)
+        elseif className == "Folder" then
+            return Color3.fromRGB(255, 200, 50)
+        elseif className:find("Remote") or className:find("Bindable") then
+            return Color3.fromRGB(255, 150, 50)
+        else
+            return Color3.fromRGB(180, 190, 210)
+        end
+    end
+
+    -- ===================================
+    -- دالة فحص إمكانية القراءة
+    -- ===================================
+    local function GetReadStatus(instance)
+        local status = {
+            canRead = true,
+            canReadSource = false,
+            isProtected = false,
+            readableProps = 0
+        }
+
+        -- فحص السكريبتات
+        if instance:IsA("BaseScript") or instance:IsA("ModuleScript") then
+            local ok, src = pcall(function()
+                return instance.Source
+            end)
+            if ok and src and #src > 0 then
+                status.canReadSource = true
+            else
+                status.isProtected = true
+            end
+        end
+
+        -- عد الخصائص القابلة للقراءة
+        local testProps = {"Name", "ClassName", "Position", "Size", "Color", "Transparency", "Value", "Text", "SoundId", "Image"}
+        for _, prop in ipairs(testProps) do
+            pcall(function()
+                local val = instance[prop]
+                if val ~= nil then
+                    status.readableProps = status.readableProps + 1
+                end
+            end)
+        end
+
+        return status
+    end
+
+    -- ===================================
     -- إنشاء عنصر في الشجرة
-    -- ═══════════════════════════════
+    -- ===================================
     local function CreateTreeItem(instance, depth, order)
         local info = FileScanner.GetInfo(instance)
         local hasChildren = info.Children > 0
-        
+        local typeColor = GetTypeColor(info.ClassName)
+        local readStatus = GetReadStatus(instance)
+
         local Item = Instance.new("TextButton")
-        Item.Size = UDim2.new(1, -10, 0, 40)
+        Item.Name = "TreeItem_" .. order
+        Item.Size = UDim2.new(1, -10, 0, 55)
         Item.BackgroundColor3 = Color3.fromRGB(20, 25, 55)
-        Item.BackgroundTransparency = 0.3
+        Item.BackgroundTransparency = 0.2
         Item.Text = ""
         Item.AutoButtonColor = false
         Item.LayoutOrder = order
         Item.ZIndex = 26
         Item.Parent = Scroll
-        Instance.new("UICorner", Item).CornerRadius = UDim.new(0, 8)
+        Instance.new("UICorner", Item).CornerRadius = UDim.new(0, 10)
 
         local IStroke = Instance.new("UIStroke")
-        IStroke.Color = Color3.fromRGB(0, 212, 255)
+        IStroke.Color = typeColor
         IStroke.Thickness = 1
-        IStroke.Transparency = 0.8
+        IStroke.Transparency = 0.7
         IStroke.Parent = Item
 
-        -- المسافة (indent) حسب العمق
-        local indent = depth * 20
-        
+        -- خط المسافة البادئة
+        local indent = depth * 25
+
+        if depth > 0 then
+            local IndentLine = Instance.new("Frame")
+            IndentLine.Size = UDim2.new(0, 2, 1, -10)
+            IndentLine.Position = UDim2.new(0, indent - 10, 0, 5)
+            IndentLine.BackgroundColor3 = typeColor
+            IndentLine.BackgroundTransparency = 0.7
+            IndentLine.BorderSizePixel = 0
+            IndentLine.ZIndex = 27
+            IndentLine.Parent = Item
+        end
+
         -- سهم الفتح/الإغلاق
         local Arrow = Instance.new("TextLabel")
-        Arrow.Size = UDim2.new(0, 20, 1, 0)
-        Arrow.Position = UDim2.new(0, indent + 5, 0, 0)
-        Arrow.Text = hasChildren and "▶" or " "
-        Arrow.TextColor3 = Color3.fromRGB(0, 212, 255)
-        Arrow.TextSize = 12
+        Arrow.Size = UDim2.new(0, 20, 0, 20)
+        Arrow.Position = UDim2.new(0, indent + 5, 0.5, -10)
+        Arrow.Text = hasChildren and "+" or ""
+        Arrow.TextColor3 = typeColor
+        Arrow.TextSize = 18
         Arrow.Font = Enum.Font.GothamBold
         Arrow.BackgroundTransparency = 1
         Arrow.ZIndex = 27
         Arrow.Parent = Item
 
-    -- الأيقونة (قابلة للنقر لفتح Viewer)
-local IconBtn = Instance.new("TextButton")
-IconBtn.Size = UDim2.new(0, 30, 1, 0)
-IconBtn.Position = UDim2.new(0, indent + 25, 0, 0)
-IconBtn.Text = info.Icon
-IconBtn.TextSize = 20
-IconBtn.Font = Enum.Font.Gotham
-IconBtn.BackgroundTransparency = 1
-IconBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-IconBtn.ZIndex = 28
-IconBtn.Parent = Item
-
-IconBtn.MouseButton1Click:Connect(function()
-    local FileViewer = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/FileViewer.lua", true))()
-    FileViewer.Open(parent, instance)
-end)
+        -- الأيقونة
+        local Icon = Instance.new("TextLabel")
+        Icon.Size = UDim2.new(0, 30, 0, 30)
+        Icon.Position = UDim2.new(0, indent + 28, 0.5, -15)
+        Icon.Text = info.Icon
+        Icon.TextSize = 22
+        Icon.Font = Enum.Font.Gotham
+        Icon.BackgroundTransparency = 1
+        Icon.ZIndex = 27
+        Icon.Parent = Item
 
         -- الاسم
         local Name = Instance.new("TextLabel")
-        Name.Size = UDim2.new(1, -indent - 130, 0, 20)
-        Name.Position = UDim2.new(0, indent + 55, 0, 2)
+        Name.Size = UDim2.new(1, -indent - 180, 0, 20)
+        Name.Position = UDim2.new(0, indent + 62, 0, 5)
         Name.Text = info.Name
         Name.TextColor3 = Color3.fromRGB(255, 255, 255)
         Name.TextSize = 14
@@ -190,163 +260,394 @@ end)
         Name.ZIndex = 27
         Name.Parent = Item
 
-        -- النوع
-        local Type = Instance.new("TextLabel")
-        Type.Size = UDim2.new(1, -indent - 130, 0, 15)
-        Type.Position = UDim2.new(0, indent + 55, 0, 22)
-        Type.Text = info.ClassName .. (info.Children > 0 and " • " .. info.Children .. " " .. Language.Get("Items") or "")
-        Type.TextColor3 = Color3.fromRGB(150, 170, 200)
-        Type.TextSize = 11
-        Type.Font = Enum.Font.Gotham
-        Type.TextXAlignment = Enum.TextXAlignment.Left
-        Type.TextTruncate = Enum.TextTruncate.AtEnd
-        Type.BackgroundTransparency = 1
-        Type.ZIndex = 27
-        Type.Parent = Item
+        -- النوع + عدد الأبناء
+        local TypeLabel = Instance.new("TextLabel")
+        TypeLabel.Size = UDim2.new(1, -indent - 180, 0, 15)
+        TypeLabel.Position = UDim2.new(0, indent + 62, 0, 27)
+        local typeText = info.ClassName
+        if hasChildren then
+            typeText = typeText .. " | " .. info.Children .. " children | " .. info.Descendants .. " total"
+        end
+        TypeLabel.Text = typeText
+        TypeLabel.TextColor3 = Color3.fromRGB(150, 170, 200)
+        TypeLabel.TextSize = 11
+        TypeLabel.Font = Enum.Font.Gotham
+        TypeLabel.TextXAlignment = Enum.TextXAlignment.Left
+        TypeLabel.TextTruncate = Enum.TextTruncate.AtEnd
+        TypeLabel.BackgroundTransparency = 1
+        TypeLabel.ZIndex = 27
+        TypeLabel.Parent = Item
 
-        -- شارة السكريبت
+        -- شارة حسب النوع
+        local badgeText = ""
+        local badgeColor = Color3.fromRGB(100, 100, 100)
+
         if info.IsScript then
-            local ScriptBadge = Instance.new("TextLabel")
-            ScriptBadge.Size = UDim2.new(0, 50, 0, 20)
-            ScriptBadge.Position = UDim2.new(1, -60, 0.5, -10)
-            ScriptBadge.Text = "CODE"
-            ScriptBadge.TextColor3 = Color3.fromRGB(11, 13, 26)
-            ScriptBadge.TextSize = 10
-            ScriptBadge.Font = Enum.Font.GothamBold
-            ScriptBadge.BackgroundColor3 = Color3.fromRGB(0, 255, 136)
-            ScriptBadge.ZIndex = 27
-            ScriptBadge.Parent = Item
-            Instance.new("UICorner", ScriptBadge).CornerRadius = UDim.new(0, 5)
+            if readStatus.canReadSource then
+                badgeText = "CODE"
+                badgeColor = Color3.fromRGB(0, 255, 136)
+            else
+                badgeText = "LOCKED"
+                badgeColor = Color3.fromRGB(255, 80, 80)
+            end
+        elseif instance:IsA("Sound") then
+            badgeText = "SOUND"
+            badgeColor = Color3.fromRGB(255, 200, 50)
+        elseif instance:IsA("Decal") or instance:IsA("Texture") then
+            badgeText = "IMAGE"
+            badgeColor = Color3.fromRGB(255, 100, 150)
+        elseif instance:IsA("BasePart") then
+            badgeText = "PART"
+            badgeColor = Color3.fromRGB(0, 180, 255)
+        elseif instance:IsA("GuiObject") then
+            badgeText = "GUI"
+            badgeColor = Color3.fromRGB(200, 150, 255)
+        elseif hasChildren then
+            badgeText = "FOLDER"
+            badgeColor = Color3.fromRGB(255, 200, 50)
+        elseif instance:IsA("ValueBase") then
+            badgeText = "VALUE"
+            badgeColor = Color3.fromRGB(150, 200, 255)
+        elseif instance:IsA("RemoteEvent") or instance:IsA("RemoteFunction") then
+            badgeText = "REMOTE"
+            badgeColor = Color3.fromRGB(255, 150, 50)
         end
 
-        -- تأثيرات
+        if badgeText ~= "" then
+            local Badge = Instance.new("TextLabel")
+            Badge.Size = UDim2.new(0, 60, 0, 22)
+            Badge.Position = UDim2.new(1, -70, 0.5, -11)
+            Badge.Text = badgeText
+            Badge.TextColor3 = Color3.fromRGB(11, 13, 26)
+            Badge.TextSize = 10
+            Badge.Font = Enum.Font.GothamBold
+            Badge.BackgroundColor3 = badgeColor
+            Badge.ZIndex = 28
+            Badge.Parent = Item
+            Instance.new("UICorner", Badge).CornerRadius = UDim.new(0, 6)
+        end
+
+        -- شارة القراءة (يمكن قراءته / محمي)
+        local StatusDot = Instance.new("Frame")
+        StatusDot.Size = UDim2.new(0, 8, 0, 8)
+        StatusDot.Position = UDim2.new(1, -80, 0.5, -4)
+        if readStatus.isProtected then
+            StatusDot.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+        elseif readStatus.canReadSource then
+            StatusDot.BackgroundColor3 = Color3.fromRGB(0, 255, 136)
+        else
+            StatusDot.BackgroundColor3 = Color3.fromRGB(0, 212, 255)
+        end
+        StatusDot.BorderSizePixel = 0
+        StatusDot.ZIndex = 28
+        StatusDot.Parent = Item
+        Instance.new("UICorner", StatusDot).CornerRadius = UDim.new(1, 0)
+
+        -- تأثيرات Hover
         Item.MouseEnter:Connect(function()
             TweenService:Create(Item, TweenInfo.new(0.15), {
-                BackgroundColor3 = Color3.fromRGB(35, 45, 90)
+                BackgroundColor3 = Color3.fromRGB(35, 45, 90),
+                BackgroundTransparency = 0
             }):Play()
-            TweenService:Create(IStroke, TweenInfo.new(0.15), {Transparency = 0.3}):Play()
+            TweenService:Create(IStroke, TweenInfo.new(0.15), {
+                Transparency = 0.2,
+                Thickness = 2
+            }):Play()
         end)
         Item.MouseLeave:Connect(function()
             TweenService:Create(Item, TweenInfo.new(0.15), {
-                BackgroundColor3 = Color3.fromRGB(20, 25, 55)
+                BackgroundColor3 = Color3.fromRGB(20, 25, 55),
+                BackgroundTransparency = 0.2
             }):Play()
-            TweenService:Create(IStroke, TweenInfo.new(0.15), {Transparency = 0.8}):Play()
+            TweenService:Create(IStroke, TweenInfo.new(0.15), {
+                Transparency = 0.7,
+                Thickness = 1
+            }):Play()
         end)
 
         return Item, Arrow, hasChildren
     end
 
-    -- ═══════════════════════════════
-    -- إعادة رسم الشجرة
-    -- ═══════════════════════════════
-    local currentOrder = 0
-    
-    local function RenderTree(instance, depth)
-        currentOrder = currentOrder + 1
-        local myOrder = currentOrder
-        local Item, Arrow, hasChildren = CreateTreeItem(instance, depth, myOrder)
-        
-        table.insert(allItemFrames, {frame = Item, instance = instance, depth = depth})
+    -- ===================================
+    -- ترتيب الأبناء
+    -- ===================================
+    local function SortChildren(children)
+        table.sort(children, function(a, b)
+            local aFolder = #a:GetChildren() > 0
+            local bFolder = #b:GetChildren() > 0
+            if aFolder ~= bFolder then return aFolder end
+            return a.Name:lower() < b.Name:lower()
+        end)
+        return children
+    end
 
-        if hasChildren then
-            Item.MouseButton1Click:Connect(function()
-                local isExpanded = expandedItems[instance] or false
-                expandedItems[instance] = not isExpanded
+    -- ===================================
+    -- رسم الشجرة
+    -- ===================================
+    local function RenderChildren(parentInstance, depth)
+        local children = FileScanner.GetChildren(parentInstance)
+        children = SortChildren(children)
 
-                if not isExpanded then
-                    -- فتح
-                    Arrow.Text = "▼"
-                    local children = FileScanner.GetChildren(instance)
-                    -- ترتيب: مجلدات أولاً، ثم أبجدياً
-                    table.sort(children, function(a, b)
-                        local aHas = #a:GetChildren() > 0
-                        local bHas = #b:GetChildren() > 0
-                        if aHas ~= bHas then return aHas end
-                        return a.Name < b.Name
-                    end)
-                    
-                    -- إدراج العناصر بعد الحالي
-                    for _, child in ipairs(children) do
-                        RenderTree(child, depth + 1)
-                    end
-                    
-                    Scroll.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 20)
-                else
-                    -- إغلاق - نحذف كل الأبناء بعده
-                    Arrow.Text = "▶"
-                    local i = 1
-                    while i <= #allItemFrames do
-                        local entry = allItemFrames[i]
-                        if entry.depth > depth then
-                            local check = entry.instance
-                            local isDescendant = false
-                            local parent = check.Parent
-                            while parent do
-                                if parent == instance then
-                                    isDescendant = true
-                                    break
+        for _, child in ipairs(children) do
+            globalOrder = globalOrder + 1
+            local myOrder = globalOrder
+
+            local Item, Arrow, hasChildren = CreateTreeItem(child, depth, myOrder)
+
+            local entry = {
+                frame = Item,
+                instance = child,
+                depth = depth,
+                order = myOrder,
+                expanded = false,
+                childFrames = {}
+            }
+            table.insert(allItems, entry)
+
+            if hasChildren then
+                -- النقر يفتح/يغلق المجلد
+                Item.MouseButton1Click:Connect(function()
+                    if entry.expanded then
+                        -- اغلاق: احذف كل الأبناء المعروضين
+                        entry.expanded = false
+                        Arrow.Text = "+"
+                        Arrow.TextColor3 = GetTypeColor(child.ClassName)
+
+                        -- حذف كل الأبناء التابعين
+                        local function RemoveDescendantFrames(inst)
+                            local i = 1
+                            while i <= #allItems do
+                                local e = allItems[i]
+                                local isChild = false
+                                pcall(function()
+                                    local p = e.instance.Parent
+                                    while p do
+                                        if p == inst then
+                                            isChild = true
+                                            break
+                                        end
+                                        p = p.Parent
+                                    end
+                                end)
+
+                                if isChild then
+                                    e.frame:Destroy()
+                                    expandedFolders[e.instance] = nil
+                                    table.remove(allItems, i)
+                                else
+                                    i = i + 1
                                 end
-                                parent = parent.Parent
                             end
-                            
-                            if isDescendant then
-                                entry.frame:Destroy()
-                                expandedItems[entry.instance] = nil
-                                table.remove(allItemFrames, i)
-                            else
-                                i = i + 1
-                            end
-                        else
-                            i = i + 1
                         end
+
+                        RemoveDescendantFrames(child)
+                        expandedFolders[child] = nil
+
+                        Scroll.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 20)
+                    else
+                        -- فتح: أضف الأبناء المباشرين
+                        entry.expanded = true
+                        Arrow.Text = "-"
+                        Arrow.TextColor3 = Color3.fromRGB(0, 255, 136)
+                        expandedFolders[child] = true
+
+                        -- أضف الأبناء
+                        local subChildren = FileScanner.GetChildren(child)
+                        subChildren = SortChildren(subChildren)
+
+                        for _, subChild in ipairs(subChildren) do
+                            globalOrder = globalOrder + 1
+                            local subOrder = globalOrder
+
+                            local SubItem, SubArrow, subHasChildren = CreateTreeItem(subChild, depth + 1, subOrder)
+
+                            local subEntry = {
+                                frame = SubItem,
+                                instance = subChild,
+                                depth = depth + 1,
+                                order = subOrder,
+                                expanded = false,
+                                childFrames = {}
+                            }
+                            table.insert(allItems, subEntry)
+
+                            if subHasChildren then
+                                SubItem.MouseButton1Click:Connect(function()
+                                    if subEntry.expanded then
+                                        subEntry.expanded = false
+                                        SubArrow.Text = "+"
+                                        SubArrow.TextColor3 = GetTypeColor(subChild.ClassName)
+
+                                        local function RemoveSubDescendants(inst)
+                                            local j = 1
+                                            while j <= #allItems do
+                                                local se = allItems[j]
+                                                local isSub = false
+                                                pcall(function()
+                                                    local pp = se.instance.Parent
+                                                    while pp do
+                                                        if pp == inst then
+                                                            isSub = true
+                                                            break
+                                                        end
+                                                        pp = pp.Parent
+                                                    end
+                                                end)
+
+                                                if isSub then
+                                                    se.frame:Destroy()
+                                                    expandedFolders[se.instance] = nil
+                                                    table.remove(allItems, j)
+                                                else
+                                                    j = j + 1
+                                                end
+                                            end
+                                        end
+
+                                        RemoveSubDescendants(subChild)
+                                        expandedFolders[subChild] = nil
+                                        Scroll.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 20)
+                                    else
+                                        subEntry.expanded = true
+                                        SubArrow.Text = "-"
+                                        SubArrow.TextColor3 = Color3.fromRGB(0, 255, 136)
+                                        expandedFolders[subChild] = true
+
+                                        local deepChildren = FileScanner.GetChildren(subChild)
+                                        deepChildren = SortChildren(deepChildren)
+
+                                        for _, deepChild in ipairs(deepChildren) do
+                                            globalOrder = globalOrder + 1
+                                            local deepOrder = globalOrder
+
+                                            local DeepItem, DeepArrow, deepHasChildren = CreateTreeItem(deepChild, depth + 2, deepOrder)
+
+                                            local deepEntry = {
+                                                frame = DeepItem,
+                                                instance = deepChild,
+                                                depth = depth + 2,
+                                                order = deepOrder,
+                                                expanded = false,
+                                                childFrames = {}
+                                            }
+                                            table.insert(allItems, deepEntry)
+
+                                            if deepHasChildren then
+                                                DeepItem.MouseButton1Click:Connect(function()
+                                                    if deepEntry.expanded then
+                                                        deepEntry.expanded = false
+                                                        DeepArrow.Text = "+"
+
+                                                        local k = 1
+                                                        while k <= #allItems do
+                                                            local de = allItems[k]
+                                                            local isDeepChild = false
+                                                            pcall(function()
+                                                                local dp = de.instance.Parent
+                                                                while dp do
+                                                                    if dp == deepChild then
+                                                                        isDeepChild = true
+                                                                        break
+                                                                    end
+                                                                    dp = dp.Parent
+                                                                end
+                                                            end)
+
+                                                            if isDeepChild then
+                                                                de.frame:Destroy()
+                                                                table.remove(allItems, k)
+                                                            else
+                                                                k = k + 1
+                                                            end
+                                                        end
+
+                                                        Scroll.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 20)
+                                                    else
+                                                        deepEntry.expanded = true
+                                                        DeepArrow.Text = "-"
+
+                                                        local deepest = FileScanner.GetChildren(deepChild)
+                                                        deepest = SortChildren(deepest)
+
+                                                        for _, dd in ipairs(deepest) do
+                                                            globalOrder = globalOrder + 1
+                                                            local ddItem = CreateTreeItem(dd, depth + 3, globalOrder)
+                                                            table.insert(allItems, {
+                                                                frame = ddItem,
+                                                                instance = dd,
+                                                                depth = depth + 3,
+                                                                order = globalOrder,
+                                                                expanded = false
+                                                            })
+
+                                                            -- فتح FileViewer عند النقر
+                                                            ddItem.MouseButton1Click:Connect(function()
+                                                                local FileViewer = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/FileViewer.lua", true))()
+                                                                FileViewer.Open(parent.Parent, dd)
+                                                            end)
+                                                        end
+
+                                                        Scroll.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 20)
+                                                    end
+                                                end)
+                                            else
+                                                DeepItem.MouseButton1Click:Connect(function()
+                                                    local FileViewer = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/FileViewer.lua", true))()
+                                                    FileViewer.Open(parent.Parent, deepChild)
+                                                end)
+                                            end
+                                        end
+
+                                        Scroll.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 20)
+                                    end
+                                end)
+                            else
+                                -- عنصر بدون أبناء - يفتح FileViewer
+                                SubItem.MouseButton1Click:Connect(function()
+                                    local FileViewer = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/FileViewer.lua", true))()
+                                    FileViewer.Open(parent.Parent, subChild)
+                                end)
+                            end
+                        end
+
+                        Scroll.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 20)
                     end
-                    
-                    Scroll.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 20)
-                end
-            end)
-        else
-    -- عنصر بدون أبناء - يفتح FileViewer
-    Item.MouseButton1Click:Connect(function()
-        local FileViewer = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/FileViewer.lua", true))()
-        FileViewer.Open(parent, instance)
-    end)
-end
+                end)
+            else
+                -- عنصر نهائي (بدون أبناء) - يفتح FileViewer
+                Item.MouseButton1Click:Connect(function()
+                    local FileViewer = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/FileViewer.lua", true))()
+                    FileViewer.Open(parent.Parent, child)
+                end)
+            end
+        end
     end
 
-    -- عرض الأبناء المباشرين لـ Root
-    local rootChildren = FileScanner.GetChildren(rootInstance)
-    table.sort(rootChildren, function(a, b)
-        local aHas = #a:GetChildren() > 0
-        local bHas = #b:GetChildren() > 0
-        if aHas ~= bHas then return aHas end
-        return a.Name < b.Name
-    end)
-    
-    for _, child in ipairs(rootChildren) do
-        RenderTree(child, 0)
-    end
-
+    -- ===================================
+    -- عرض المستوى الأول
+    -- ===================================
+    RenderChildren(rootInstance, 0)
     Scroll.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 20)
 
-    -- ═══════════════════════════════
+    -- ===================================
     -- البحث
-    -- ═══════════════════════════════
+    -- ===================================
     SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
         local query = SearchBox.Text:lower()
-        for _, entry in ipairs(allItemFrames) do
+        for _, entry in ipairs(allItems) do
             if query == "" then
                 entry.frame.Visible = true
             else
                 local name = entry.instance.Name:lower()
                 local className = entry.instance.ClassName:lower()
-                entry.frame.Visible = name:find(query) ~= nil or className:find(query) ~= nil
+                entry.frame.Visible = (name:find(query) ~= nil) or (className:find(query) ~= nil)
             end
         end
     end)
 
-    -- ═══════════════════════════════
+    -- ===================================
     -- زر الرجوع
-    -- ═══════════════════════════════
+    -- ===================================
     BackBtn.MouseButton1Click:Connect(function()
         parent:ClearAllChildren()
         if onBack then onBack() end
