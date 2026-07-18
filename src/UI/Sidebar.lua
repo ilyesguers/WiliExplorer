@@ -48,7 +48,7 @@ function Sidebar.Create(parent)
     HSub.Parent = Header
 
     -- ═══════════════════════════════
-    -- قائمة الخدمات (Grid)
+    -- قائمة الخدمات (Scroll)
     -- ═══════════════════════════════
     local Scroll = Instance.new("ScrollingFrame")
     Scroll.Size = UDim2.new(1, -20, 1, -95)
@@ -60,16 +60,168 @@ function Sidebar.Create(parent)
     Scroll.ZIndex = 20
     Scroll.Parent = parent
 
+    -- ═══════════════════════════════
+    -- زر Smart Analyzer الكبير (فوق كل شيء)
+    -- ═══════════════════════════════
+    local AnalyzerCard = Instance.new("TextButton")
+    AnalyzerCard.Name = "SmartAnalyzer"
+    AnalyzerCard.Size = UDim2.new(1, -10, 0, 100)
+    AnalyzerCard.Position = UDim2.new(0, 5, 0, 5)
+    AnalyzerCard.BackgroundColor3 = Color3.fromRGB(255, 200, 50)
+    AnalyzerCard.Text = ""
+    AnalyzerCard.AutoButtonColor = false
+    AnalyzerCard.ZIndex = 22
+    AnalyzerCard.Parent = Scroll
+    Instance.new("UICorner", AnalyzerCard).CornerRadius = UDim.new(0, 15)
+    
+    -- تدرج ذهبي
+    local AGrad = Instance.new("UIGradient")
+    AGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 220, 100)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 150, 50))
+    })
+    AGrad.Rotation = 135
+    AGrad.Parent = AnalyzerCard
+    
+    -- Stroke متوهج
+    local AStroke = Instance.new("UIStroke")
+    AStroke.Color = Color3.fromRGB(255, 255, 255)
+    AStroke.Thickness = 2
+    AStroke.Transparency = 0.5
+    AStroke.Parent = AnalyzerCard
+    
+    -- توهج نبضي
+    spawn(function()
+        while AnalyzerCard.Parent do
+            TweenService:Create(AStroke, TweenInfo.new(1.5), {Thickness = 4, Transparency = 0.2}):Play()
+            wait(1.5)
+            TweenService:Create(AStroke, TweenInfo.new(1.5), {Thickness = 2, Transparency = 0.5}):Play()
+            wait(1.5)
+        end
+    end)
+    
+    local AIcon = Instance.new("TextLabel")
+    AIcon.Size = UDim2.new(0, 60, 0, 60)
+    AIcon.Position = UDim2.new(0, 15, 0.5, -30)
+    AIcon.Text = "🧠"
+    AIcon.TextSize = 42
+    AIcon.BackgroundTransparency = 1
+    AIcon.ZIndex = 23
+    AIcon.Parent = AnalyzerCard
+    
+    local AName = Instance.new("TextLabel")
+    AName.Size = UDim2.new(1, -90, 0, 28)
+    AName.Position = UDim2.new(0, 80, 0, 15)
+    AName.Text = "SMART ANALYZER"
+    AName.TextColor3 = Color3.fromRGB(11, 13, 26)
+    AName.TextSize = 20
+    AName.Font = Enum.Font.GothamBold
+    AName.TextXAlignment = Enum.TextXAlignment.Left
+    AName.BackgroundTransparency = 1
+    AName.ZIndex = 23
+    AName.Parent = AnalyzerCard
+    
+    local ADesc = Instance.new("TextLabel")
+    ADesc.Size = UDim2.new(1, -90, 0, 20)
+    ADesc.Position = UDim2.new(0, 80, 0, 42)
+    ADesc.Text = "🔍 Scan game automatically"
+    ADesc.TextColor3 = Color3.fromRGB(50, 40, 20)
+    ADesc.TextSize = 12
+    ADesc.Font = Enum.Font.GothamBold
+    ADesc.TextXAlignment = Enum.TextXAlignment.Left
+    ADesc.BackgroundTransparency = 1
+    ADesc.ZIndex = 23
+    ADesc.Parent = AnalyzerCard
+    
+    local ABadge = Instance.new("TextLabel")
+    ABadge.Size = UDim2.new(0, 50, 0, 18)
+    ABadge.Position = UDim2.new(1, -60, 0, 65)
+    ABadge.Text = "AI"
+    ABadge.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ABadge.TextSize = 12
+    ABadge.Font = Enum.Font.GothamBold
+    ABadge.BackgroundColor3 = Color3.fromRGB(200, 50, 100)
+    ABadge.ZIndex = 24
+    ABadge.Parent = AnalyzerCard
+    Instance.new("UICorner", ABadge).CornerRadius = UDim.new(0, 6)
+    
+    AnalyzerCard.MouseEnter:Connect(function()
+        TweenService:Create(AnalyzerCard, TweenInfo.new(0.2), {Size = UDim2.new(1, -5, 0, 105)}):Play()
+    end)
+    AnalyzerCard.MouseLeave:Connect(function()
+        TweenService:Create(AnalyzerCard, TweenInfo.new(0.2), {Size = UDim2.new(1, -10, 0, 100)}):Play()
+    end)
+    
+    AnalyzerCard.MouseButton1Click:Connect(function()
+        TweenService:Create(AnalyzerCard, TweenInfo.new(0.1), {Size = UDim2.new(1, -15, 0, 95)}):Play()
+        wait(0.1)
+        TweenService:Create(AnalyzerCard, TweenInfo.new(0.1), {Size = UDim2.new(1, -10, 0, 100)}):Play()
+        
+        local success, SmartMenu = pcall(function()
+            return loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/SmartMenu.lua", true))()
+        end)
+        
+        if success and SmartMenu then
+            SmartMenu.Open(parent.Parent)
+        else
+            warn("Failed to load SmartMenu")
+        end
+    end)
+
+    -- ═══════════════════════════════
+    -- فاصل + عنوان "Services"
+    -- ═══════════════════════════════
+    local Divider = Instance.new("Frame")
+    Divider.Size = UDim2.new(1, -10, 0, 35)
+    Divider.Position = UDim2.new(0, 5, 0, 115)
+    Divider.BackgroundTransparency = 1
+    Divider.ZIndex = 22
+    Divider.Parent = Scroll
+    
+    local DLine = Instance.new("Frame")
+    DLine.Size = UDim2.new(0.3, 0, 0, 1)
+    DLine.Position = UDim2.new(0, 0, 0.5, 0)
+    DLine.BackgroundColor3 = Color3.fromRGB(0, 212, 255)
+    DLine.BackgroundTransparency = 0.5
+    DLine.BorderSizePixel = 0
+    DLine.ZIndex = 23
+    DLine.Parent = Divider
+    
+    local DText = Instance.new("TextLabel")
+    DText.Size = UDim2.new(0.4, 0, 1, 0)
+    DText.Position = UDim2.new(0.3, 0, 0, 0)
+    DText.Text = "📁 GAME SERVICES"
+    DText.TextColor3 = Color3.fromRGB(0, 212, 255)
+    DText.TextSize = 12
+    DText.Font = Enum.Font.GothamBold
+    DText.BackgroundTransparency = 1
+    DText.ZIndex = 23
+    DText.Parent = Divider
+    
+    local DLine2 = Instance.new("Frame")
+    DLine2.Size = UDim2.new(0.3, 0, 0, 1)
+    DLine2.Position = UDim2.new(0.7, 0, 0.5, 0)
+    DLine2.BackgroundColor3 = Color3.fromRGB(0, 212, 255)
+    DLine2.BackgroundTransparency = 0.5
+    DLine2.BorderSizePixel = 0
+    DLine2.ZIndex = 23
+    DLine2.Parent = Divider
+
+    -- ═══════════════════════════════
+    -- Grid للخدمات
+    -- ═══════════════════════════════
+    local ServicesFrame = Instance.new("Frame")
+    ServicesFrame.Size = UDim2.new(1, -10, 0, 700)
+    ServicesFrame.Position = UDim2.new(0, 5, 0, 155)
+    ServicesFrame.BackgroundTransparency = 1
+    ServicesFrame.ZIndex = 20
+    ServicesFrame.Parent = Scroll
+
     local Grid = Instance.new("UIGridLayout")
     Grid.CellSize = UDim2.new(0.5, -8, 0, 90)
     Grid.CellPadding = UDim2.new(0, 10, 0, 10)
     Grid.SortOrder = Enum.SortOrder.LayoutOrder
-    Grid.Parent = Scroll
-
-    local Padding = Instance.new("UIPadding")
-    Padding.PaddingTop = UDim.new(0, 5)
-    Padding.PaddingBottom = UDim.new(0, 5)
-    Padding.Parent = Scroll
+    Grid.Parent = ServicesFrame
 
     -- ═══════════════════════════════
     -- دالة إنشاء بطاقة خدمة
@@ -82,7 +234,7 @@ function Sidebar.Create(parent)
         Card.AutoButtonColor = false
         Card.LayoutOrder = order
         Card.ZIndex = 21
-        Card.Parent = Scroll
+        Card.Parent = ServicesFrame
         Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 15)
 
         local CStroke = Instance.new("UIStroke")
@@ -91,7 +243,6 @@ function Sidebar.Create(parent)
         CStroke.Transparency = 0.5
         CStroke.Parent = Card
 
-        -- تدرج
         local CGrad = Instance.new("UIGradient")
         CGrad.Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 30, 65)),
@@ -100,7 +251,6 @@ function Sidebar.Create(parent)
         CGrad.Rotation = 135
         CGrad.Parent = Card
 
-        -- الأيقونة
         local Icon = Instance.new("TextLabel")
         Icon.Size = UDim2.new(1, 0, 0, 40)
         Icon.Position = UDim2.new(0, 0, 0, 10)
@@ -111,7 +261,6 @@ function Sidebar.Create(parent)
         Icon.ZIndex = 22
         Icon.Parent = Card
 
-        -- الاسم
         local Name = Instance.new("TextLabel")
         Name.Size = UDim2.new(1, -10, 0, 20)
         Name.Position = UDim2.new(0, 5, 0, 50)
@@ -124,7 +273,6 @@ function Sidebar.Create(parent)
         Name.ZIndex = 22
         Name.Parent = Card
 
-        -- عدد العناصر
         local Count = Instance.new("TextLabel")
         Count.Size = UDim2.new(1, -10, 0, 15)
         Count.Position = UDim2.new(0, 5, 1, -20)
@@ -143,7 +291,6 @@ function Sidebar.Create(parent)
         Count.ZIndex = 22
         Count.Parent = Card
 
-        -- تأثير Hover
         Card.MouseEnter:Connect(function()
             TweenService:Create(Card, TweenInfo.new(0.2), {
                 BackgroundColor3 = Color3.fromRGB(30, 40, 80)
@@ -163,31 +310,29 @@ function Sidebar.Create(parent)
             }):Play()
         end)
 
-       Card.MouseButton1Click:Connect(function()
-    TweenService:Create(Card, TweenInfo.new(0.1), {
-        Size = UDim2.new(0.5, -12, 0, 86)
-    }):Play()
-    wait(0.1)
-    TweenService:Create(Card, TweenInfo.new(0.1), {
-        Size = UDim2.new(0.5, -8, 0, 90)
-    }):Play()
-    
-    -- فتح TreeView
-    local service = nil
-    pcall(function() service = game:GetService(serviceName) end)
-    
-    if service then
-        parent:ClearAllChildren()
-        local TreeView = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/TreeView.lua", true))()
-        TreeView.Create(parent, service, function()
-            -- عند الضغط على Back
-            parent:ClearAllChildren()
-            Sidebar.Create(parent)
+        Card.MouseButton1Click:Connect(function()
+            TweenService:Create(Card, TweenInfo.new(0.1), {
+                Size = UDim2.new(0.5, -12, 0, 86)
+            }):Play()
+            wait(0.1)
+            TweenService:Create(Card, TweenInfo.new(0.1), {
+                Size = UDim2.new(0.5, -8, 0, 90)
+            }):Play()
+            
+            local service = nil
+            pcall(function() service = game:GetService(serviceName) end)
+            
+            if service then
+                parent:ClearAllChildren()
+                local TreeView = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/TreeView.lua", true))()
+                TreeView.Create(parent, service, function()
+                    parent:ClearAllChildren()
+                    Sidebar.Create(parent)
+                end)
+            else
+                print("Failed to get service: " .. serviceName)
+            end
         end)
-    else
-        print("Failed to get service: " .. serviceName)
-    end
-end) 
 
         return Card
     end
@@ -215,7 +360,7 @@ end)
     end
 
     -- تحديث حجم Canvas
-    Scroll.CanvasSize = UDim2.new(0, 0, 0, math.ceil(#services / 2) * 100 + 20)
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, 155 + math.ceil(#services / 2) * 100 + 40)
 end
 
 return Sidebar
