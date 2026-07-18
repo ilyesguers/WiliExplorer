@@ -5,9 +5,6 @@ local Language = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilye
 
 local TweenService = game:GetService("TweenService")
 
--- ═══════════════════════════════
--- دالة نسخ للحافظة
--- ═══════════════════════════════
 local function CopyToClipboard(text)
     local success = false
     pcall(function()
@@ -22,15 +19,12 @@ local function CopyToClipboard(text)
     return success
 end
 
--- ═══════════════════════════════
--- دالة إشعار سريع
--- ═══════════════════════════════
 local function ShowNotification(parent, message, color)
     local Notif = Instance.new("Frame")
-    Notif.Size = UDim2.new(0, 250, 0, 50)
-    Notif.Position = UDim2.new(0.5, -125, 0, -60)
+    Notif.Size = UDim2.new(0, 280, 0, 50)
+    Notif.Position = UDim2.new(0.5, -140, 0, -60)
     Notif.BackgroundColor3 = color or Color3.fromRGB(0, 200, 100)
-    Notif.ZIndex = 100
+    Notif.ZIndex = 200
     Notif.Parent = parent
     Instance.new("UICorner", Notif).CornerRadius = UDim.new(0, 10)
     
@@ -47,44 +41,40 @@ local function ShowNotification(parent, message, color)
     Label.TextSize = 14
     Label.Font = Enum.Font.GothamBold
     Label.BackgroundTransparency = 1
-    Label.ZIndex = 101
+    Label.ZIndex = 201
     Label.Parent = Notif
     
     TweenService:Create(Notif, TweenInfo.new(0.3), {
-        Position = UDim2.new(0.5, -125, 0, 10)
+        Position = UDim2.new(0.5, -140, 0, 10)
     }):Play()
     
-    wait(2)
-    
-    TweenService:Create(Notif, TweenInfo.new(0.3), {
-        Position = UDim2.new(0.5, -125, 0, -60)
-    }):Play()
-    
-    wait(0.3)
-    Notif:Destroy()
+    spawn(function()
+        wait(2.5)
+        TweenService:Create(Notif, TweenInfo.new(0.3), {
+            Position = UDim2.new(0.5, -140, 0, -60)
+        }):Play()
+        wait(0.3)
+        Notif:Destroy()
+    end)
 end
 
--- ═══════════════════════════════
--- الدالة الرئيسية
--- ═══════════════════════════════
 function FileViewer.Open(mainParent, instance, onClose)
     local info = FileScanner.GetInfo(instance)
     
-    -- الخلفية المعتمة
+    -- الخلفية
     local Overlay = Instance.new("Frame")
     Overlay.Name = "FileViewerOverlay"
     Overlay.Size = UDim2.new(1, 0, 1, 0)
-    Overlay.Position = UDim2.new(0, 0, 0, 0)
     Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    Overlay.BackgroundTransparency = 0.5
+    Overlay.BackgroundTransparency = 0.4
     Overlay.BorderSizePixel = 0
     Overlay.ZIndex = 90
     Overlay.Parent = mainParent
 
-    -- النافذة الرئيسية
+    -- النافذة
     local Window = Instance.new("Frame")
-    Window.Size = UDim2.new(0.95, 0, 0.9, 0)
-    Window.Position = UDim2.new(0.025, 0, 0.05, 0)
+    Window.Size = UDim2.new(0.96, 0, 0.92, 0)
+    Window.Position = UDim2.new(0.02, 0, 0.04, 0)
     Window.BackgroundColor3 = Color3.fromRGB(11, 13, 26)
     Window.BorderSizePixel = 0
     Window.ClipsDescendants = true
@@ -109,28 +99,28 @@ function FileViewer.Open(mainParent, instance, onClose)
     -- الشريط العلوي
     -- ═══════════════════════════════
     local Header = Instance.new("Frame")
-    Header.Size = UDim2.new(1, 0, 0, 60)
+    Header.Size = UDim2.new(1, 0, 0, 65)
     Header.BackgroundColor3 = Color3.fromRGB(15, 20, 45)
     Header.BackgroundTransparency = 0.3
     Header.ZIndex = 92
     Header.Parent = Window
 
     local IconLabel = Instance.new("TextLabel")
-    IconLabel.Size = UDim2.new(0, 50, 0, 50)
-    IconLabel.Position = UDim2.new(0, 10, 0.5, -25)
+    IconLabel.Size = UDim2.new(0, 55, 0, 55)
+    IconLabel.Position = UDim2.new(0, 10, 0.5, -27)
     IconLabel.Text = info.Icon
-    IconLabel.TextSize = 32
+    IconLabel.TextSize = 36
     IconLabel.Font = Enum.Font.GothamBold
     IconLabel.BackgroundTransparency = 1
     IconLabel.ZIndex = 93
     IconLabel.Parent = Header
 
     local NameLabel = Instance.new("TextLabel")
-    NameLabel.Size = UDim2.new(1, -130, 0, 22)
-    NameLabel.Position = UDim2.new(0, 65, 0, 10)
+    NameLabel.Size = UDim2.new(1, -140, 0, 24)
+    NameLabel.Position = UDim2.new(0, 70, 0, 10)
     NameLabel.Text = info.Name
     NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    NameLabel.TextSize = 18
+    NameLabel.TextSize = 20
     NameLabel.Font = Enum.Font.GothamBold
     NameLabel.TextXAlignment = Enum.TextXAlignment.Left
     NameLabel.TextTruncate = Enum.TextTruncate.AtEnd
@@ -139,8 +129,8 @@ function FileViewer.Open(mainParent, instance, onClose)
     NameLabel.Parent = Header
 
     local ClassLabel = Instance.new("TextLabel")
-    ClassLabel.Size = UDim2.new(1, -130, 0, 18)
-    ClassLabel.Position = UDim2.new(0, 65, 0, 32)
+    ClassLabel.Size = UDim2.new(1, -140, 0, 18)
+    ClassLabel.Position = UDim2.new(0, 70, 0, 36)
     ClassLabel.Text = info.ClassName .. " • " .. info.Descendants .. " " .. Language.Get("Items")
     ClassLabel.TextColor3 = Color3.fromRGB(0, 212, 255)
     ClassLabel.TextSize = 13
@@ -150,18 +140,17 @@ function FileViewer.Open(mainParent, instance, onClose)
     ClassLabel.ZIndex = 93
     ClassLabel.Parent = Header
 
-    -- زر الإغلاق
     local CloseBtn = Instance.new("TextButton")
-    CloseBtn.Size = UDim2.new(0, 40, 0, 40)
-    CloseBtn.Position = UDim2.new(1, -50, 0.5, -20)
+    CloseBtn.Size = UDim2.new(0, 45, 0, 45)
+    CloseBtn.Position = UDim2.new(1, -55, 0.5, -22)
     CloseBtn.Text = "✕"
     CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    CloseBtn.TextSize = 18
+    CloseBtn.TextSize = 20
     CloseBtn.Font = Enum.Font.GothamBold
     CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 70)
     CloseBtn.ZIndex = 93
     CloseBtn.Parent = Header
-    Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 10)
 
     CloseBtn.MouseButton1Click:Connect(function()
         Overlay:Destroy()
@@ -169,11 +158,11 @@ function FileViewer.Open(mainParent, instance, onClose)
     end)
 
     -- ═══════════════════════════════
-    -- شريط التبويبات (Tabs)
+    -- شريط التبويبات
     -- ═══════════════════════════════
     local TabBar = Instance.new("Frame")
-    TabBar.Size = UDim2.new(1, -20, 0, 40)
-    TabBar.Position = UDim2.new(0, 10, 0, 70)
+    TabBar.Size = UDim2.new(1, -20, 0, 45)
+    TabBar.Position = UDim2.new(0, 10, 0, 75)
     TabBar.BackgroundColor3 = Color3.fromRGB(15, 20, 45)
     TabBar.BackgroundTransparency = 0.4
     TabBar.ZIndex = 92
@@ -192,10 +181,9 @@ function FileViewer.Open(mainParent, instance, onClose)
     TabPadding.PaddingBottom = UDim.new(0, 5)
     TabPadding.Parent = TabBar
 
-    -- منطقة المحتوى
     local ContentArea = Instance.new("Frame")
-    ContentArea.Size = UDim2.new(1, -20, 1, -180)
-    ContentArea.Position = UDim2.new(0, 10, 0, 120)
+    ContentArea.Size = UDim2.new(1, -20, 1, -195)
+    ContentArea.Position = UDim2.new(0, 10, 0, 130)
     ContentArea.BackgroundColor3 = Color3.fromRGB(10, 12, 30)
     ContentArea.BackgroundTransparency = 0.3
     ContentArea.ZIndex = 92
@@ -209,13 +197,18 @@ function FileViewer.Open(mainParent, instance, onClose)
     CAStroke.Parent = ContentArea
 
     -- ═══════════════════════════════
-    -- شريط الأزرار السفلي
+    -- الشريط السفلي (Actions)
     -- ═══════════════════════════════
-    local BottomBar = Instance.new("Frame")
-    BottomBar.Size = UDim2.new(1, -20, 0, 50)
-    BottomBar.Position = UDim2.new(0, 10, 1, -55)
+    local BottomBar = Instance.new("ScrollingFrame")
+    BottomBar.Size = UDim2.new(1, -20, 0, 55)
+    BottomBar.Position = UDim2.new(0, 10, 1, -60)
     BottomBar.BackgroundColor3 = Color3.fromRGB(15, 20, 45)
     BottomBar.BackgroundTransparency = 0.3
+    BottomBar.BorderSizePixel = 0
+    BottomBar.ScrollBarThickness = 3
+    BottomBar.ScrollBarImageColor3 = Color3.fromRGB(0, 212, 255)
+    BottomBar.ScrollingDirection = Enum.ScrollingDirection.X
+    BottomBar.CanvasSize = UDim2.new(0, 800, 0, 0)
     BottomBar.ZIndex = 92
     BottomBar.Parent = Window
     Instance.new("UICorner", BottomBar).CornerRadius = UDim.new(0, 10)
@@ -223,14 +216,18 @@ function FileViewer.Open(mainParent, instance, onClose)
     local BLayout = Instance.new("UIListLayout")
     BLayout.FillDirection = Enum.FillDirection.Horizontal
     BLayout.Padding = UDim.new(0, 5)
-    BLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     BLayout.VerticalAlignment = Enum.VerticalAlignment.Center
     BLayout.Parent = BottomBar
 
-    -- دالة لإنشاء زر
+    local BPad = Instance.new("UIPadding")
+    BPad.PaddingLeft = UDim.new(0, 8)
+    BPad.PaddingRight = UDim.new(0, 8)
+    BPad.PaddingTop = UDim.new(0, 8)
+    BPad.Parent = BottomBar
+
     local function CreateActionBtn(text, icon, color, callback)
         local Btn = Instance.new("TextButton")
-        Btn.Size = UDim2.new(0, 100, 0, 40)
+        Btn.Size = UDim2.new(0, 110, 0, 40)
         Btn.Text = icon .. " " .. text
         Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
         Btn.TextSize = 13
@@ -245,24 +242,23 @@ function FileViewer.Open(mainParent, instance, onClose)
     end
 
     -- ═══════════════════════════════
-    -- التبويبات
+    -- إدارة التبويبات
     -- ═══════════════════════════════
     local tabs = {}
     local currentTab = nil
 
     local function CreateTab(name, icon, order)
         local Tab = Instance.new("TextButton")
-        Tab.Size = UDim2.new(0, 110, 1, 0)
+        Tab.Size = UDim2.new(0, 120, 1, 0)
         Tab.Text = icon .. " " .. name
         Tab.TextColor3 = Color3.fromRGB(150, 170, 200)
-        Tab.TextSize = 13
+        Tab.TextSize = 14
         Tab.Font = Enum.Font.GothamBold
         Tab.BackgroundColor3 = Color3.fromRGB(20, 25, 55)
         Tab.LayoutOrder = order
         Tab.ZIndex = 93
         Tab.Parent = TabBar
         Instance.new("UICorner", Tab).CornerRadius = UDim.new(0, 8)
-        
         return Tab
     end
 
@@ -282,7 +278,7 @@ function FileViewer.Open(mainParent, instance, onClose)
     end
 
     -- ═══════════════════════════════
-    -- تبويب: المعلومات (Info)
+    -- تبويب: Info
     -- ═══════════════════════════════
     local InfoContent = Instance.new("ScrollingFrame")
     InfoContent.Size = UDim2.new(1, -10, 1, -10)
@@ -305,10 +301,9 @@ function FileViewer.Open(mainParent, instance, onClose)
     InfoPadding.PaddingRight = UDim.new(0, 10)
     InfoPadding.Parent = InfoContent
 
-    -- دالة إضافة معلومة
     local function AddInfoRow(key, value, order)
         local Row = Instance.new("Frame")
-        Row.Size = UDim2.new(1, -10, 0, 50)
+        Row.Size = UDim2.new(1, -10, 0, 55)
         Row.BackgroundColor3 = Color3.fromRGB(20, 25, 55)
         Row.LayoutOrder = order
         Row.ZIndex = 94
@@ -328,11 +323,11 @@ function FileViewer.Open(mainParent, instance, onClose)
         Key.Parent = Row
 
         local Value = Instance.new("TextLabel")
-        Value.Size = UDim2.new(1, -10, 0, 20)
+        Value.Size = UDim2.new(1, -10, 0, 25)
         Value.Position = UDim2.new(0, 10, 0, 25)
         Value.Text = tostring(value)
         Value.TextColor3 = Color3.fromRGB(255, 255, 255)
-        Value.TextSize = 13
+        Value.TextSize = 14
         Value.Font = Enum.Font.Gotham
         Value.TextXAlignment = Enum.TextXAlignment.Left
         Value.TextTruncate = Enum.TextTruncate.AtEnd
@@ -341,7 +336,6 @@ function FileViewer.Open(mainParent, instance, onClose)
         Value.Parent = Row
     end
 
-    -- إضافة كل المعلومات
     AddInfoRow("📛 Name", info.Name, 1)
     AddInfoRow("🏷️ Class Name", info.ClassName, 2)
     AddInfoRow("📁 Full Path", info.FullName, 3)
@@ -351,14 +345,10 @@ function FileViewer.Open(mainParent, instance, onClose)
     
     if info.IsScript then
         AddInfoRow("📜 Is Script", "Yes", 7)
-        AddInfoRow("💾 Has Source", info.HasSource and "Yes" or "Protected", 8)
-        if info.SourceLength then
-            AddInfoRow("📏 Source Length", info.SourceLength .. " characters", 9)
-        end
+        AddInfoRow("💾 Source Length", info.SourceLength .. " chars", 8)
     end
 
-    -- خصائص إضافية (Properties)
-    local propOrder = 10
+    local propOrder = 20
     local function TryAddProperty(propName)
         pcall(function()
             local val = instance[propName]
@@ -371,7 +361,6 @@ function FileViewer.Open(mainParent, instance, onClose)
 
     TryAddProperty("Position")
     TryAddProperty("Size")
-    TryAddProperty("CFrame")
     TryAddProperty("Anchored")
     TryAddProperty("CanCollide")
     TryAddProperty("Transparency")
@@ -386,14 +375,13 @@ function FileViewer.Open(mainParent, instance, onClose)
     TryAddProperty("Playing")
     TryAddProperty("Looped")
     TryAddProperty("Image")
-    TryAddProperty("ImageColor3")
     TryAddProperty("Enabled")
     TryAddProperty("Visible")
 
     InfoContent.CanvasSize = UDim2.new(0, 0, 0, InfoLayout.AbsoluteContentSize.Y + 20)
 
     -- ═══════════════════════════════
-    -- تبويب: الكود (Code) - للسكريبتات فقط
+    -- تبويب: Code (للسكريبتات)
     -- ═══════════════════════════════
     local CodeContent = Instance.new("Frame")
     CodeContent.Size = UDim2.new(1, -10, 1, -10)
@@ -403,46 +391,115 @@ function FileViewer.Open(mainParent, instance, onClose)
     CodeContent.ZIndex = 93
     CodeContent.Parent = ContentArea
 
+    -- شريط معلومات الكود
+    local CodeInfoBar = Instance.new("Frame")
+    CodeInfoBar.Size = UDim2.new(1, 0, 0, 35)
+    CodeInfoBar.BackgroundColor3 = Color3.fromRGB(20, 25, 55)
+    CodeInfoBar.ZIndex = 94
+    CodeInfoBar.Parent = CodeContent
+    Instance.new("UICorner", CodeInfoBar).CornerRadius = UDim.new(0, 8)
+
+    local MethodLabel = Instance.new("TextLabel")
+    MethodLabel.Size = UDim2.new(1, -100, 1, 0)
+    MethodLabel.Position = UDim2.new(0, 10, 0, 0)
+    MethodLabel.Text = "Loading..."
+    MethodLabel.TextColor3 = Color3.fromRGB(0, 255, 136)
+    MethodLabel.TextSize = 12
+    MethodLabel.Font = Enum.Font.GothamBold
+    MethodLabel.TextXAlignment = Enum.TextXAlignment.Left
+    MethodLabel.BackgroundTransparency = 1
+    MethodLabel.ZIndex = 95
+    MethodLabel.Parent = CodeInfoBar
+
+    local LinesLabel = Instance.new("TextLabel")
+    LinesLabel.Size = UDim2.new(0, 90, 1, 0)
+    LinesLabel.Position = UDim2.new(1, -95, 0, 0)
+    LinesLabel.Text = "0 lines"
+    LinesLabel.TextColor3 = Color3.fromRGB(0, 212, 255)
+    LinesLabel.TextSize = 12
+    LinesLabel.Font = Enum.Font.GothamBold
+    LinesLabel.TextXAlignment = Enum.TextXAlignment.Right
+    LinesLabel.BackgroundTransparency = 1
+    LinesLabel.ZIndex = 95
+    LinesLabel.Parent = CodeInfoBar
+
+    -- منطقة الكود
+    local CodeScroll = Instance.new("ScrollingFrame")
+    CodeScroll.Size = UDim2.new(1, 0, 1, -40)
+    CodeScroll.Position = UDim2.new(0, 0, 0, 40)
+    CodeScroll.BackgroundColor3 = Color3.fromRGB(12, 15, 30)
+    CodeScroll.BorderSizePixel = 0
+    CodeScroll.ScrollBarThickness = 6
+    CodeScroll.ScrollBarImageColor3 = Color3.fromRGB(0, 212, 255)
+    CodeScroll.ZIndex = 94
+    CodeScroll.Parent = CodeContent
+    Instance.new("UICorner", CodeScroll).CornerRadius = UDim.new(0, 8)
+
     local CodeBox = Instance.new("TextBox")
-    CodeBox.Size = UDim2.new(1, 0, 1, 0)
-    CodeBox.BackgroundColor3 = Color3.fromRGB(15, 18, 35)
+    CodeBox.Size = UDim2.new(1, -10, 1, -10)
+    CodeBox.Position = UDim2.new(0, 5, 0, 5)
+    CodeBox.BackgroundColor3 = Color3.fromRGB(12, 15, 30)
     CodeBox.TextColor3 = Color3.fromRGB(200, 220, 255)
     CodeBox.Font = Enum.Font.Code
-    CodeBox.TextSize = 13
+    CodeBox.TextSize = 14
     CodeBox.TextXAlignment = Enum.TextXAlignment.Left
     CodeBox.TextYAlignment = Enum.TextYAlignment.Top
-    CodeBox.TextWrapped = false
+    CodeBox.TextWrapped = true
     CodeBox.ClearTextOnFocus = false
     CodeBox.MultiLine = true
-    CodeBox.Text = ""
-    CodeBox.PlaceholderText = "// No source code available"
-    CodeBox.ZIndex = 94
-    CodeBox.Parent = CodeContent
-    Instance.new("UICorner", CodeBox).CornerRadius = UDim.new(0, 8)
+    CodeBox.Text = "Loading source code..."
+    CodeBox.ZIndex = 95
+    CodeBox.Parent = CodeScroll
 
     local CodePad = Instance.new("UIPadding")
-    CodePad.PaddingTop = UDim.new(0, 10)
-    CodePad.PaddingLeft = UDim.new(0, 10)
-    CodePad.PaddingRight = UDim.new(0, 10)
-    CodePad.PaddingBottom = UDim.new(0, 10)
+    CodePad.PaddingTop = UDim.new(0, 5)
+    CodePad.PaddingLeft = UDim.new(0, 5)
+    CodePad.PaddingRight = UDim.new(0, 5)
     CodePad.Parent = CodeBox
 
     -- تحميل الكود
-    local sourceCode = ""
+    local sourceData = {source = "", method = "none", success = false}
     if info.IsScript then
-        pcall(function()
-            sourceCode = instance.Source or ""
-        end)
-        if sourceCode == "" then
-            CodeBox.Text = "-- Script is protected or empty"
-            CodeBox.TextColor3 = Color3.fromRGB(255, 100, 100)
+        sourceData = FileScanner.GetSource(instance)
+        
+        if sourceData.success then
+            CodeBox.Text = sourceData.source
+            CodeBox.TextColor3 = Color3.fromRGB(200, 220, 255)
+            
+            local lines = 0
+            for _ in sourceData.source:gmatch("\n") do
+                lines = lines + 1
+            end
+            lines = lines + 1
+            
+            LinesLabel.Text = lines .. " lines"
+            
+            if sourceData.method == "direct" then
+                MethodLabel.Text = "✅ Method: Direct Read"
+                MethodLabel.TextColor3 = Color3.fromRGB(0, 255, 136)
+            elseif sourceData.method == "decompile" then
+                MethodLabel.Text = "🔓 Method: Decompiled"
+                MethodLabel.TextColor3 = Color3.fromRGB(255, 200, 50)
+            elseif sourceData.method == "bytecode" then
+                MethodLabel.Text = "⚡ Method: Bytecode"
+                MethodLabel.TextColor3 = Color3.fromRGB(255, 150, 50)
+            end
         else
-            CodeBox.Text = sourceCode
+            CodeBox.Text = sourceData.source
+            CodeBox.TextColor3 = Color3.fromRGB(255, 150, 150)
+            MethodLabel.Text = "🔒 Protected Script"
+            MethodLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+            LinesLabel.Text = "N/A"
         end
+        
+        -- تحديث CanvasSize تلقائياً
+        CodeBox:GetPropertyChangedSignal("TextBounds"):Connect(function()
+            CodeScroll.CanvasSize = UDim2.new(0, 0, 0, CodeBox.TextBounds.Y + 20)
+        end)
     end
 
     -- ═══════════════════════════════
-    -- تبويب: الأبناء (Children)
+    -- تبويب: Children
     -- ═══════════════════════════════
     local ChildrenContent = Instance.new("ScrollingFrame")
     ChildrenContent.Size = UDim2.new(1, -10, 1, -10)
@@ -470,7 +527,7 @@ function FileViewer.Open(mainParent, instance, onClose)
         local childInfo = FileScanner.GetInfo(child)
         
         local ChItem = Instance.new("TextButton")
-        ChItem.Size = UDim2.new(1, -10, 0, 45)
+        ChItem.Size = UDim2.new(1, -10, 0, 50)
         ChItem.BackgroundColor3 = Color3.fromRGB(20, 25, 55)
         ChItem.Text = ""
         ChItem.LayoutOrder = i
@@ -482,17 +539,17 @@ function FileViewer.Open(mainParent, instance, onClose)
         ChIcon.Size = UDim2.new(0, 40, 1, 0)
         ChIcon.Position = UDim2.new(0, 5, 0, 0)
         ChIcon.Text = childInfo.Icon
-        ChIcon.TextSize = 20
+        ChIcon.TextSize = 22
         ChIcon.BackgroundTransparency = 1
         ChIcon.ZIndex = 95
         ChIcon.Parent = ChItem
 
         local ChName = Instance.new("TextLabel")
-        ChName.Size = UDim2.new(1, -50, 0, 20)
-        ChName.Position = UDim2.new(0, 45, 0, 5)
+        ChName.Size = UDim2.new(1, -60, 0, 20)
+        ChName.Position = UDim2.new(0, 50, 0, 5)
         ChName.Text = childInfo.Name
         ChName.TextColor3 = Color3.fromRGB(255, 255, 255)
-        ChName.TextSize = 13
+        ChName.TextSize = 14
         ChName.Font = Enum.Font.GothamBold
         ChName.TextXAlignment = Enum.TextXAlignment.Left
         ChName.BackgroundTransparency = 1
@@ -500,8 +557,8 @@ function FileViewer.Open(mainParent, instance, onClose)
         ChName.Parent = ChItem
 
         local ChClass = Instance.new("TextLabel")
-        ChClass.Size = UDim2.new(1, -50, 0, 15)
-        ChClass.Position = UDim2.new(0, 45, 0, 25)
+        ChClass.Size = UDim2.new(1, -60, 0, 15)
+        ChClass.Position = UDim2.new(0, 50, 0, 27)
         ChClass.Text = childInfo.ClassName .. " • " .. childInfo.Children .. " items"
         ChClass.TextColor3 = Color3.fromRGB(150, 170, 200)
         ChClass.TextSize = 11
@@ -522,25 +579,27 @@ function FileViewer.Open(mainParent, instance, onClose)
     -- ═══════════════════════════════
     -- إنشاء التبويبات
     -- ═══════════════════════════════
-    tabs["Info"] = {button = CreateTab("Info", "ℹ️", 1), content = InfoContent}
+    local tabOrder = 1
+    tabs["Info"] = {button = CreateTab("Info", "ℹ️", tabOrder), content = InfoContent}
+    tabOrder = tabOrder + 1
     
     if info.IsScript then
-        tabs["Code"] = {button = CreateTab("Code", "📜", 2), content = CodeContent}
+        tabs["Code"] = {button = CreateTab("Code", "📜", tabOrder), content = CodeContent}
+        tabOrder = tabOrder + 1
     end
     
     if info.Children > 0 then
-        tabs["Children"] = {button = CreateTab("Children", "📂", 3), content = ChildrenContent}
+        tabs["Children"] = {button = CreateTab("Children", "📂", tabOrder), content = ChildrenContent}
     end
 
-    -- ربط التبويبات
     for name, data in pairs(tabs) do
         data.button.MouseButton1Click:Connect(function()
             SwitchTab(name)
         end)
     end
 
-    -- افتراضياً: افتح أول تبويب
-    if info.IsScript and info.HasSource then
+    -- افتراضياً: افتح Code إذا سكريبت
+    if info.IsScript then
         SwitchTab("Code")
     else
         SwitchTab("Info")
@@ -550,12 +609,31 @@ function FileViewer.Open(mainParent, instance, onClose)
     -- الأزرار السفلية
     -- ═══════════════════════════════
     
-    -- زر نسخ المحتوى
-    CreateActionBtn("Copy", "📋", Color3.fromRGB(0, 152, 219), function()
+    -- زر عرض الكود (بارز)
+    if info.IsScript then
+        CreateActionBtn("VIEW CODE", "📜", Color3.fromRGB(0, 255, 136), function()
+            SwitchTab("Code")
+            ShowNotification(Window, "📜 Code view opened", Color3.fromRGB(0, 255, 136))
+        end)
+        
+        CreateActionBtn("EDIT & SAVE", "✏️", Color3.fromRGB(255, 150, 50), function()
+            SwitchTab("Code")
+            local newSource = CodeBox.Text
+            local saveResult = FileScanner.SetSource(instance, newSource)
+            
+            if saveResult.success then
+                ShowNotification(Window, "✅ Saved via " .. saveResult.method, Color3.fromRGB(0, 200, 100))
+            else
+                ShowNotification(Window, "❌ Save failed: " .. saveResult.error, Color3.fromRGB(200, 50, 70))
+            end
+        end)
+    end
+
+    CreateActionBtn("Copy Code", "📋", Color3.fromRGB(0, 152, 219), function()
         local textToCopy = ""
         if currentTab == "Code" then
             textToCopy = CodeBox.Text
-        elseif currentTab == "Info" then
+        else
             textToCopy = info.FullName
         end
         
@@ -566,30 +644,12 @@ function FileViewer.Open(mainParent, instance, onClose)
         end
     end)
 
-    -- زر نسخ المسار
-    CreateActionBtn("Path", "🔗", Color3.fromRGB(100, 100, 200), function()
+    CreateActionBtn("Copy Path", "🔗", Color3.fromRGB(100, 100, 200), function()
         if CopyToClipboard(info.FullName) then
             ShowNotification(Window, "✅ Path copied!", Color3.fromRGB(0, 200, 100))
         end
     end)
 
-    -- زر الحفظ (للسكريبتات فقط)
-    if info.IsScript then
-        CreateActionBtn("Save", "💾", Color3.fromRGB(0, 200, 100), function()
-            local newSource = CodeBox.Text
-            local success, err = pcall(function()
-                instance.Source = newSource
-            end)
-            
-            if success then
-                ShowNotification(Window, "✅ Saved successfully!", Color3.fromRGB(0, 200, 100))
-            else
-                ShowNotification(Window, "❌ " .. tostring(err), Color3.fromRGB(200, 50, 70))
-            end
-        end)
-    end
-
-    -- زر النسخ المكرر (Clone)
     CreateActionBtn("Clone", "📑", Color3.fromRGB(200, 150, 50), function()
         local success = pcall(function()
             local clone = instance:Clone()
@@ -604,7 +664,6 @@ function FileViewer.Open(mainParent, instance, onClose)
         end
     end)
 
-    -- زر الحذف
     CreateActionBtn("Delete", "🗑️", Color3.fromRGB(200, 50, 70), function()
         local success = pcall(function()
             instance:Destroy()
@@ -620,7 +679,7 @@ function FileViewer.Open(mainParent, instance, onClose)
         end
     end)
 
-    print("FileViewer opened for: " .. instance:GetFullName())
+    print("FileViewer opened: " .. instance:GetFullName())
 end
 
 return FileViewer
