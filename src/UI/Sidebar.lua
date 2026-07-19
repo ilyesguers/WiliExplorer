@@ -169,11 +169,201 @@ function Sidebar.Create(parent)
     end)
 
     -- ═══════════════════════════════
+    -- بطاقة Advanced Tools الجديدة
+    -- ═══════════════════════════════
+    local AdvancedCard = Instance.new("TextButton")
+    AdvancedCard.Name = "AdvancedTools"
+    AdvancedCard.Size = UDim2.new(1, -10, 0, 100)
+    AdvancedCard.Position = UDim2.new(0, 5, 0, 120)
+    AdvancedCard.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+    AdvancedCard.Text = ""
+    AdvancedCard.AutoButtonColor = false
+    AdvancedCard.ZIndex = 22
+    AdvancedCard.Parent = Scroll
+    Instance.new("UICorner", AdvancedCard).CornerRadius = UDim.new(0, 15)
+    
+    local AdGrad = Instance.new("UIGradient")
+    AdGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(138, 43, 226)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(75, 0, 130))
+    })
+    AdGrad.Rotation = 135
+    AdGrad.Parent = AdvancedCard
+    
+    local AdStroke = Instance.new("UIStroke")
+    AdStroke.Color = Color3.fromRGB(200, 100, 255)
+    AdStroke.Thickness = 2
+    AdStroke.Transparency = 0.5
+    AdStroke.Parent = AdvancedCard
+    
+    local AdIcon = Instance.new("TextLabel")
+    AdIcon.Size = UDim2.new(0, 60, 0, 60)
+    AdIcon.Position = UDim2.new(0, 15, 0.5, -30)
+    AdIcon.Text = "⚡"
+    AdIcon.TextSize = 42
+    AdIcon.BackgroundTransparency = 1
+    AdIcon.ZIndex = 23
+    AdIcon.Parent = AdvancedCard
+    
+    local AdName = Instance.new("TextLabel")
+    AdName.Size = UDim2.new(1, -90, 0, 28)
+    AdName.Position = UDim2.new(0, 80, 0, 15)
+    AdName.Text = "ADVANCED TOOLS"
+    AdName.TextColor3 = Color3.fromRGB(255, 255, 255)
+    AdName.TextSize = 20
+    AdName.Font = Enum.Font.GothamBold
+    AdName.TextXAlignment = Enum.TextXAlignment.Left
+    AdName.BackgroundTransparency = 1
+    AdName.ZIndex = 23
+    AdName.Parent = AdvancedCard
+    
+    local AdDesc = Instance.new("TextLabel")
+    AdDesc.Size = UDim2.new(1, -90, 0, 20)
+    AdDesc.Position = UDim2.new(0, 80, 0, 42)
+    AdDesc.Text = "🎨 Model editor & customization"
+    AdDesc.TextColor3 = Color3.fromRGB(200, 150, 255)
+    AdDesc.TextSize = 12
+    AdDesc.Font = Enum.Font.GothamBold
+    AdDesc.TextXAlignment = Enum.TextXAlignment.Left
+    AdDesc.BackgroundTransparency = 1
+    AdDesc.ZIndex = 23
+    AdDesc.Parent = AdvancedCard
+    
+    local AdBadge = Instance.new("TextLabel")
+    AdBadge.Size = UDim2.new(0, 70, 0, 18)
+    AdBadge.Position = UDim2.new(1, -80, 0, 65)
+    AdBadge.Text = "PRO"
+    AdBadge.TextColor3 = Color3.fromRGB(255, 255, 255)
+    AdBadge.TextSize = 12
+    AdBadge.Font = Enum.Font.GothamBold
+    AdBadge.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+    AdBadge.ZIndex = 24
+    AdBadge.Parent = AdvancedCard
+    Instance.new("UICorner", AdBadge).CornerRadius = UDim.new(0, 6)
+    
+    AdvancedCard.MouseEnter:Connect(function()
+        TweenService:Create(AdvancedCard, TweenInfo.new(0.2), {Size = UDim2.new(1, -5, 0, 105)}):Play()
+        TweenService:Create(AdStroke, TweenInfo.new(0.2), {Thickness = 3}):Play()
+    end)
+    AdvancedCard.MouseLeave:Connect(function()
+        TweenService:Create(AdvancedCard, TweenInfo.new(0.2), {Size = UDim2.new(1, -10, 0, 100)}):Play()
+        TweenService:Create(AdStroke, TweenInfo.new(0.2), {Thickness = 2}):Play()
+    end)
+    
+    AdvancedCard.MouseButton1Click:Connect(function()
+        TweenService:Create(AdvancedCard, TweenInfo.new(0.1), {Size = UDim2.new(1, -15, 0, 95)}):Play()
+        wait(0.1)
+        TweenService:Create(AdvancedCard, TweenInfo.new(0.1), {Size = UDim2.new(1, -10, 0, 100)}):Play()
+        
+        parent:ClearAllChildren()
+        local AdvancedUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/AdvancedUI.lua", true))()
+        AdvancedUI.Create(parent, function()
+            parent:ClearAllChildren()
+            Sidebar.Create(parent)
+        end)
+    end)
+
+    -- ═══════════════════════════════
+    -- بطاقة Game Analyzer الجديدة
+    -- ═══════════════════════════════
+    local AnalyzerAdvCard = Instance.new("TextButton")
+    AnalyzerAdvCard.Name = "GameAnalyzer"
+    AnalyzerAdvCard.Size = UDim2.new(1, -10, 0, 100)
+    AnalyzerAdvCard.Position = UDim2.new(0, 5, 0, 235)
+    AnalyzerAdvCard.BackgroundColor3 = Color3.fromRGB(0, 212, 255)
+    AnalyzerAdvCard.Text = ""
+    AnalyzerAdvCard.AutoButtonColor = false
+    AnalyzerAdvCard.ZIndex = 22
+    AnalyzerAdvCard.Parent = Scroll
+    Instance.new("UICorner", AnalyzerAdvCard).CornerRadius = UDim.new(0, 15)
+    
+    local AaGrad = Instance.new("UIGradient")
+    AaGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 212, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 150, 200))
+    })
+    AaGrad.Rotation = 135
+    AaGrad.Parent = AnalyzerAdvCard
+    
+    local AaStroke = Instance.new("UIStroke")
+    AaStroke.Color = Color3.fromRGB(100, 255, 255)
+    AaStroke.Thickness = 2
+    AaStroke.Transparency = 0.5
+    AaStroke.Parent = AnalyzerAdvCard
+    
+    local AaIcon = Instance.new("TextLabel")
+    AaIcon.Size = UDim2.new(0, 60, 0, 60)
+    AaIcon.Position = UDim2.new(0, 15, 0.5, -30)
+    AaIcon.Text = "🔬"
+    AaIcon.TextSize = 42
+    AaIcon.BackgroundTransparency = 1
+    AaIcon.ZIndex = 23
+    AaIcon.Parent = AnalyzerAdvCard
+    
+    local AaName = Instance.new("TextLabel")
+    AaName.Size = UDim2.new(1, -90, 0, 28)
+    AaName.Position = UDim2.new(0, 80, 0, 15)
+    AaName.Text = "GAME ANALYZER"
+    AaName.TextColor3 = Color3.fromRGB(11, 13, 26)
+    AaName.TextSize = 20
+    AaName.Font = Enum.Font.GothamBold
+    AaName.TextXAlignment = Enum.TextXAlignment.Left
+    AaName.BackgroundTransparency = 1
+    AaName.ZIndex = 23
+    AaName.Parent = AnalyzerAdvCard
+    
+    local AaDesc = Instance.new("TextLabel")
+    AaDesc.Size = UDim2.new(1, -90, 0, 20)
+    AaDesc.Position = UDim2.new(0, 80, 0, 42)
+    AaDesc.Text = "📊 Deep game analysis & values"
+    AaDesc.TextColor3 = Color3.fromRGB(50, 100, 120)
+    AaDesc.TextSize = 12
+    AaDesc.Font = Enum.Font.GothamBold
+    AaDesc.TextXAlignment = Enum.TextXAlignment.Left
+    AaDesc.BackgroundTransparency = 1
+    AaDesc.ZIndex = 23
+    AaDesc.Parent = AnalyzerAdvCard
+    
+    local AaBadge = Instance.new("TextLabel")
+    AaBadge.Size = UDim2.new(0, 70, 0, 18)
+    AaBadge.Position = UDim2.new(1, -80, 0, 65)
+    AaBadge.Text = "BETA"
+    AaBadge.TextColor3 = Color3.fromRGB(255, 255, 255)
+    AaBadge.TextSize = 12
+    AaBadge.Font = Enum.Font.GothamBold
+    AaBadge.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+    AaBadge.ZIndex = 24
+    AaBadge.Parent = AnalyzerAdvCard
+    Instance.new("UICorner", AaBadge).CornerRadius = UDim.new(0, 6)
+    
+    AnalyzerAdvCard.MouseEnter:Connect(function()
+        TweenService:Create(AnalyzerAdvCard, TweenInfo.new(0.2), {Size = UDim2.new(1, -5, 0, 105)}):Play()
+        TweenService:Create(AaStroke, TweenInfo.new(0.2), {Thickness = 3}):Play()
+    end)
+    AnalyzerAdvCard.MouseLeave:Connect(function()
+        TweenService:Create(AnalyzerAdvCard, TweenInfo.new(0.2), {Size = UDim2.new(1, -10, 0, 100)}):Play()
+        TweenService:Create(AaStroke, TweenInfo.new(0.2), {Thickness = 2}):Play()
+    end)
+    
+    AnalyzerAdvCard.MouseButton1Click:Connect(function()
+        TweenService:Create(AnalyzerAdvCard, TweenInfo.new(0.1), {Size = UDim2.new(1, -15, 0, 95)}):Play()
+        wait(0.1)
+        TweenService:Create(AnalyzerAdvCard, TweenInfo.new(0.1), {Size = UDim2.new(1, -10, 0, 100)}):Play()
+        
+        parent:ClearAllChildren()
+        local AnalyzerUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/AnalyzerUI.lua", true))()
+        AnalyzerUI.Create(parent, function()
+            parent:ClearAllChildren()
+            Sidebar.Create(parent)
+        end)
+    end)
+
+    -- ═══════════════════════════════
     -- فاصل + عنوان "Services"
     -- ═══════════════════════════════
     local Divider = Instance.new("Frame")
     Divider.Size = UDim2.new(1, -10, 0, 35)
-    Divider.Position = UDim2.new(0, 5, 0, 115)
+    Divider.Position = UDim2.new(0, 5, 0, 350)
     Divider.BackgroundTransparency = 1
     Divider.ZIndex = 22
     Divider.Parent = Scroll
@@ -212,7 +402,7 @@ function Sidebar.Create(parent)
     -- ═══════════════════════════════
     local ServicesFrame = Instance.new("Frame")
     ServicesFrame.Size = UDim2.new(1, -10, 0, 700)
-    ServicesFrame.Position = UDim2.new(0, 5, 0, 155)
+    ServicesFrame.Position = UDim2.new(0, 5, 0, 390)
     ServicesFrame.BackgroundTransparency = 1
     ServicesFrame.ZIndex = 20
     ServicesFrame.Parent = Scroll
@@ -360,7 +550,7 @@ function Sidebar.Create(parent)
     end
 
     -- تحديث حجم Canvas
-    Scroll.CanvasSize = UDim2.new(0, 0, 0, 155 + math.ceil(#services / 2) * 100 + 40)
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, 390 + math.ceil(#services / 2) * 100 + 40)
 end
 
 return Sidebar
