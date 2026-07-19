@@ -24,10 +24,10 @@ local CONFIG = {
     BATCH_SIZE = 20,
     
     -- وقت الراحة بين الدفعات (ثواني)
-    BATCH_DELAY = 0.02,
+    BATCH_DELAY = 0.03,
     
     -- أقصى وقت للفحص الكامل (ثواني) - يتوقف بعدها
-    MAX_SCAN_TIME = 30,
+    MAX_SCAN_TIME = 45,
     
     -- أقصى عدد للعناصر المفحوصة
     MAX_INSTANCES = 150000,
