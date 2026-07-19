@@ -1,13 +1,22 @@
 local MainFrame = {}
 
-local KeySystem = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Security/KeySystem.lua", true))()
-local Stars = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Theme/Stars.lua", true))()
-local Language = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Utils/Language.lua", true))()
-
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
-function MainFrame.Create()
+function MainFrame.Create(Modules)
+    -- ═══════════════════════════════════════
+    -- استقبال الـ Modules أو تحميلها إذا لم تُمرر
+    -- ═══════════════════════════════════════
+    Modules = Modules or {}
+    
+    local KeySystem = Modules.KeySystem or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Security/KeySystem.lua", true))()
+    local Stars = Modules.Stars or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Theme/Stars.lua", true))()
+    local Language = Modules.Language or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Utils/Language.lua", true))()
+    
+    -- ⭐ الأدوات الجديدة
+    local AdvancedTools = Modules.AdvancedTools
+    local GameAnalyzer = Modules.GameAnalyzer
+
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "WiliExplorerUI"
     ScreenGui.ResetOnSpawn = false
@@ -55,8 +64,10 @@ function MainFrame.Create()
     Gradient.Rotation = 135
     Gradient.Parent = Frame
 
-    -- النجوم في الخلفية
-    Stars.Create(Frame, 100)
+    -- النجوم في الخلفية (مقللة لمنع الكراش)
+    if Stars and Stars.Create then
+        Stars.Create(Frame, 30) -- 30 بدلاً من 100
+    end
 
     -- ═══════════════════════════════
     -- الشريط العلوي (Top Bar)
@@ -173,7 +184,7 @@ function MainFrame.Create()
     Title.Parent = KeyScreen
 
     local Subtitle = Instance.new("TextLabel")
-    Subtitle.Text = Language.Get("Welcome")
+    Subtitle.Text = Language and Language.Get and Language.Get("Welcome") or "Welcome to the Cosmos"
     Subtitle.Size = UDim2.new(1, 0, 0, 25)
     Subtitle.Position = UDim2.new(0, 0, 0.28, 0)
     Subtitle.TextColor3 = Color3.fromRGB(150, 170, 200)
@@ -184,7 +195,7 @@ function MainFrame.Create()
     Subtitle.Parent = KeyScreen
 
     local KeyInput = Instance.new("TextBox")
-    KeyInput.PlaceholderText = Language.Get("EnterKey")
+    KeyInput.PlaceholderText = Language and Language.Get and Language.Get("EnterKey") or "ENTER COSMIC KEY"
     KeyInput.Text = ""
     KeyInput.Size = UDim2.new(0.85, 0, 0, 55)
     KeyInput.Position = UDim2.new(0.075, 0, 0.45, 0)
@@ -205,7 +216,7 @@ function MainFrame.Create()
     KeyStroke.Parent = KeyInput
 
     local LoginBtn = Instance.new("TextButton")
-    LoginBtn.Text = "🔓 " .. Language.Get("Verify")
+    LoginBtn.Text = "🔓 " .. (Language and Language.Get and Language.Get("Verify") or "VERIFY KEY")
     LoginBtn.Size = UDim2.new(0.6, 0, 0, 55)
     LoginBtn.Position = UDim2.new(0.2, 0, 0.65, 0)
     LoginBtn.BackgroundColor3 = Color3.fromRGB(0, 212, 255)
@@ -216,74 +227,190 @@ function MainFrame.Create()
     LoginBtn.Parent = KeyScreen
     Instance.new("UICorner", LoginBtn).CornerRadius = UDim.new(0, 12)
 
-    local LoginGradient = Instance.new("UIGradient")
-    LoginGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 245, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 152, 219))
-    })
-    LoginGradient.Rotation = 90
-    LoginGradient.Parent = LoginBtn
+    local StatusLabel = Instance.new("TextLabel")
+    StatusLabel.Text = ""
+    StatusLabel.Size = UDim2.new(0.8, 0, 0, 30)
+    StatusLabel.Position = UDim2.new(0.1, 0, 0.8, 0)
+    StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+    StatusLabel.TextSize = 14
+    StatusLabel.Font = Enum.Font.Gotham
+    StatusLabel.BackgroundTransparency = 1
+    StatusLabel.ZIndex = 16
+    StatusLabel.Parent = KeyScreen
 
     -- ═══════════════════════════════
-    -- شاشة المتصفح
+    -- الشاشة الرئيسية (بعد المفتاح)
     -- ═══════════════════════════════
-    local ExplorerScreen = Instance.new("Frame")
-    ExplorerScreen.Name = "ExplorerScreen"
-    ExplorerScreen.Size = UDim2.new(1, 0, 1, 0)
-    ExplorerScreen.BackgroundTransparency = 1
-    ExplorerScreen.Visible = false
-    ExplorerScreen.ZIndex = 15
-    ExplorerScreen.Parent = Content
+    local MainScreen = Instance.new("Frame")
+    MainScreen.Name = "MainScreen"
+    MainScreen.Size = UDim2.new(1, 0, 1, 0)
+    MainScreen.BackgroundTransparency = 1
+    MainScreen.Visible = false
+    MainScreen.ZIndex = 15
+    MainScreen.Parent = Content
 
-    -- تحديث اللغة
-    LangBtn.MouseButton1Click:Connect(function()
-        Language.Toggle()
-        LangBtn.Text = Language.Current == "en" and "🌐 عربي" or "🌐 English"
+    -- ═══════════════════════════════
+    -- ⭐ أزرار الأدوات الجديدة
+    -- ═══════════════════════════════
+    local ToolsTitle = Instance.new("TextLabel")
+    ToolsTitle.Text = "🛠️ Advanced Tools"
+    ToolsTitle.Size = UDim2.new(1, 0, 0, 40)
+    ToolsTitle.Position = UDim2.new(0, 0, 0, 10)
+    ToolsTitle.TextColor3 = Color3.fromRGB(0, 212, 255)
+    ToolsTitle.TextSize = 22
+    ToolsTitle.Font = Enum.Font.GothamBold
+    ToolsTitle.BackgroundTransparency = 1
+    ToolsTitle.ZIndex = 16
+    ToolsTitle.Parent = MainScreen
+
+    local ButtonsContainer = Instance.new("Frame")
+    ButtonsContainer.Size = UDim2.new(1, -20, 1, -60)
+    ButtonsContainer.Position = UDim2.new(0, 10, 0, 55)
+    ButtonsContainer.BackgroundTransparency = 1
+    ButtonsContainer.ZIndex = 16
+    ButtonsContainer.Parent = MainScreen
+
+    local ButtonsLayout = Instance.new("UIGridLayout")
+    ButtonsLayout.CellSize = UDim2.new(0.48, 0, 0, 60)
+    ButtonsLayout.CellPadding = UDim2.new(0.02, 0, 0, 10)
+    ButtonsLayout.Parent = ButtonsContainer
+
+    -- دالة إنشاء زر
+    local function CreateToolButton(name, icon, color, callback)
+        local btn = Instance.new("TextButton")
+        btn.Text = icon .. " " .. name
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.TextSize = 14
+        btn.Font = Enum.Font.GothamBold
+        btn.BackgroundColor3 = color
+        btn.ZIndex = 17
+        btn.Parent = ButtonsContainer
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
         
-        Subtitle.Text = Language.Get("Welcome")
-        KeyInput.PlaceholderText = Language.Get("EnterKey")
-        LoginBtn.Text = "🔓 " .. Language.Get("Verify")
+        local stroke = Instance.new("UIStroke")
+        stroke.Color = color
+        stroke.Thickness = 2
+        stroke.Transparency = 0.5
+        stroke.Parent = btn
         
-        -- إعادة تحميل المتصفح لو مفتوح
-        if ExplorerScreen.Visible then
-            ExplorerScreen:ClearAllChildren()
-            local Sidebar = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/Sidebar.lua", true))()
-            Sidebar.Create(ExplorerScreen)
+        btn.MouseButton1Click:Connect(function()
+            if callback then callback() end
+        end)
+        
+        return btn
+    end
+
+    -- ═══════════════════════════════
+    -- 🎮 أزرار الأدوات
+    -- ═══════════════════════════════
+    
+    -- 1. Game Analyzer
+    CreateToolButton("Game Analyzer", "🔍", Color3.fromRGB(138, 43, 226), function()
+        if GameAnalyzer then
+            StatusLabel.Text = "🔍 Scanning..."
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 193, 7)
+            
+            GameAnalyzer.Scan(nil, function(results)
+                StatusLabel.Text = "✅ Found: " .. #results.values .. " values, " .. #results.remotes .. " remotes"
+                StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 136)
+            end)
+        else
+            StatusLabel.Text = "❌ GameAnalyzer not loaded"
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 71, 87)
         end
     end)
 
+    -- 2. Teleport to Part
+    CreateToolButton("Teleport Tool", "📍", Color3.fromRGB(0, 200, 150), function()
+        if AdvancedTools and AdvancedTools.Teleporter then
+            AdvancedTools.Teleporter.SaveLocation("Saved_" .. tick())
+            StatusLabel.Text = "✅ Location saved!"
+            StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 136)
+        end
+    end)
+
+    -- 3. Highlight Objects
+    CreateToolButton("Highlight Mode", "👁️", Color3.fromRGB(255, 193, 7), function()
+        if AdvancedTools and AdvancedTools.Visualizer then
+            -- Highlight كل الأجزاء القريبة
+            local char = game.Players.LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local pos = char.HumanoidRootPart.Position
+                for _, part in ipairs(workspace:GetDescendants()) do
+                    if part:IsA("BasePart") and (part.Position - pos).Magnitude < 50 then
+                        AdvancedTools.Visualizer.Highlight(part, Color3.fromRGB(255, 255, 0), 3)
+                    end
+                end
+                StatusLabel.Text = "✅ Highlighted nearby parts!"
+                StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 136)
+            end
+        end
+    end)
+
+    -- 4. Activator
+    CreateToolButton("Auto Activate", "⚡", Color3.fromRGB(255, 100, 150), function()
+        if AdvancedTools and AdvancedTools.Activator then
+            local found = AdvancedTools.Activator.FindAll(workspace)
+            StatusLabel.Text = "✅ Found " .. #found .. " activatable objects"
+            StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 136)
+        end
+    end)
+
+    -- 5. Model Editor
+    CreateToolButton("Model Editor", "🧱", Color3.fromRGB(100, 150, 255), function()
+        StatusLabel.Text = "🧱 Select a part to edit..."
+        StatusLabel.TextColor3 = Color3.fromRGB(0, 212, 255)
+    end)
+
+    -- 6. Clear Effects
+    CreateToolButton("Clear Effects", "🧹", Color3.fromRGB(150, 150, 150), function()
+        if AdvancedTools and AdvancedTools.Visualizer then
+            AdvancedTools.Visualizer.ClearAll()
+            StatusLabel.Text = "✅ All effects cleared!"
+            StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 136)
+        end
+    end)
+
+    -- ═══════════════════════════════
     -- التحقق من المفتاح
+    -- ═══════════════════════════════
     LoginBtn.MouseButton1Click:Connect(function()
-        LoginBtn.Text = "⏳ " .. Language.Get("Verifying")
-        LoginBtn.BackgroundColor3 = Color3.fromRGB(100, 150, 200)
-        wait(0.5)
+        local key = KeyInput.Text
         
-        local success, data = KeySystem.Verify(KeyInput.Text)
+        if key == "" then
+            StatusLabel.Text = "❌ Please enter a key"
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 71, 87)
+            return
+        end
+        
+        LoginBtn.Text = "⏳ Verifying..."
+        
+        local success, data = false, nil
+        if KeySystem and KeySystem.Verify then
+            success, data = KeySystem.Verify(key)
+        end
         
         if success then
-            LoginBtn.Text = "✅ " .. Language.Get("Launching")
-            LoginBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 136)
-            KeyStroke.Color = Color3.fromRGB(0, 255, 136)
-            wait(1)
+            StatusLabel.Text = "✅ Access Granted!"
+            StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 136)
             
+            task.wait(1)
+            
+            -- إخفاء شاشة المفتاح وإظهار الشاشة الرئيسية
             KeyScreen.Visible = false
-            ExplorerScreen.Visible = true
-            
-            local Sidebar = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/Sidebar.lua", true))()
-            Sidebar.Create(ExplorerScreen)
+            MainScreen.Visible = true
         else
-            LoginBtn.Text = "❌ " .. Language.Get("Invalid")
-            LoginBtn.BackgroundColor3 = Color3.fromRGB(255, 71, 87)
-            KeyStroke.Color = Color3.fromRGB(255, 71, 87)
-            wait(2)
-            LoginBtn.Text = "🔓 " .. Language.Get("Verify")
-            LoginBtn.BackgroundColor3 = Color3.fromRGB(0, 212, 255)
-            KeyStroke.Color = Color3.fromRGB(0, 212, 255)
+            StatusLabel.Text = "❌ Invalid Key"
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 71, 87)
+            LoginBtn.Text = "🔓 " .. (Language and Language.Get and Language.Get("Verify") or "VERIFY KEY")
         end
     end)
 
-    -- جعل النافذة قابلة للسحب
+    -- ═══════════════════════════════
+    -- السحب (Drag)
+    -- ═══════════════════════════════
     local dragging, dragInput, dragStart, startPos
+
     TopBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
@@ -291,11 +418,13 @@ function MainFrame.Create()
             startPos = Frame.Position
         end
     end)
+
     TopBar.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = false
         end
     end)
+
     UserInputService.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
@@ -303,7 +432,6 @@ function MainFrame.Create()
         end
     end)
 
-    print("WiliExplorer Mobile UI Ready!")
     return ScreenGui
 end
 
