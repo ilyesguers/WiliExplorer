@@ -329,6 +329,13 @@ function MainFrame.Create()
     end)
 
     print("WiliExplorer Mobile UI Ready!")
+    ═══════════════════════════════
+    KlimboBtn.MouseButton1Click:Connect(function()
+        Content:ClearAllChildren()
+        
+        local KlimboMenu = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/KlimboMenu.lua", true))()
+        KlimboMenu.Create(Content)
+    end)
     return ScreenGui
 end
 
