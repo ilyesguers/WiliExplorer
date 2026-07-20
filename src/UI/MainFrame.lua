@@ -99,7 +99,32 @@ function MainFrame.Create()
     LangBtn.ZIndex = 51
     LangBtn.Parent = TopBar
     Instance.new("UICorner", LangBtn).CornerRadius = UDim.new(0, 8)
-
+═══════════════════════════════
+    -- 👑 زر KLIMBO MENU
+    -- ═══════════════════════════════
+    local KlimboBtn = Instance.new("TextButton")
+    KlimboBtn.Size = UDim2.new(0, 90, 0, 32)
+    KlimboBtn.Position = UDim2.new(1, -280, 0.5, -16)
+    KlimboBtn.Text = "👑 KLIMBO"
+    KlimboBtn.TextColor3 = Color3.fromRGB(255, 215, 0)
+    KlimboBtn.TextSize = 12
+    KlimboBtn.Font = Enum.Font.GothamBlack
+    KlimboBtn.ZIndex = 51
+    KlimboBtn.Parent = TopBar
+    Instance.new("UICorner", KlimboBtn).CornerRadius = UDim.new(0, 8)
+    
+    -- Gradient للزر
+    local KlimboGradient = Instance.new("UIGradient")
+    KlimboGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 128)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 255))
+    })
+    KlimboGradient.Parent = KlimboBtn
+    
+    local KlimboStroke = Instance.new("UIStroke")
+    KlimboStroke.Color = Color3.fromRGB(255, 215, 0)
+    KlimboStroke.Thickness = 2
+    KlimboStroke.Parent = KlimboBtn
     -- زر التصغير
     local MinBtn = Instance.new("TextButton")
     MinBtn.Size = UDim2.new(0, 32, 0, 32)
