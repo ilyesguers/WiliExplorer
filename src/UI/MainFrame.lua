@@ -99,7 +99,7 @@ function MainFrame.Create()
     LangBtn.ZIndex = 51
     LangBtn.Parent = TopBar
     Instance.new("UICorner", LangBtn).CornerRadius = UDim.new(0, 8)
-═══════════════════════════════
+-- ═══════════════════════════════
     -- 👑 زر KLIMBO MENU
     -- ═══════════════════════════════
     local KlimboBtn = Instance.new("TextButton")
@@ -329,7 +329,7 @@ function MainFrame.Create()
     end)
 
     print("WiliExplorer Mobile UI Ready!")
-   -- ═══════════════════════════════
+-- ═══════════════════════════════
     KlimboBtn.MouseButton1Click:Connect(function()
         Content:ClearAllChildren()
         
