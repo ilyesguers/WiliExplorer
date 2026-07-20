@@ -1,7 +1,7 @@
 local MainFrame = {}
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- 🚀 WiliExplorer - MainFrame v3.0 (VIP Ultimate Edition)
+-- 🚀 WiliExplorer - MainFrame v3.1 (VIP Ultimate Edition - KlimboMenu Fix)
 -- ═══════════════════════════════════════════════════════════════════════════
 
 local KeySystem = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Security/KeySystem.lua", true))()
@@ -776,6 +776,7 @@ function MainFrame.Create()
     
     -- متغير لتتبع حالة Klimbo
     local klimboLoaded = false
+    local klimboLoading = false
     local KlimboModule = nil
 
     -- تحديث اللغة
@@ -869,9 +870,9 @@ function MainFrame.Create()
         end
     end)
     
-    -- ═══════════════════════════════
-    -- 👑 زر KLIMBO - الوظيفة
-    -- ═══════════════════════════════
+    -- ═══════════════════════════════════════════════════════════════════════
+    -- 👑 زر KLIMBO - الوظيفة (مُصلح v3.1)
+    -- ═══════════════════════════════════════════════════════════════════════
     KlimboBtn.MouseButton1Click:Connect(function()
         -- تأثير الضغط
         CreateTween(KlimboBtn, {Size = UDim2.new(0, 95, 0, 34)}, 0.1):Play()
@@ -879,7 +880,7 @@ function MainFrame.Create()
         CreateTween(KlimboBtn, {Size = UDim2.new(0, 100, 0, 36)}, 0.1):Play()
         
         if KlimboContainer.Visible then
-            -- إغلاق Klimbo
+            -- ═══ إغلاق Klimbo ═══
             CreateTween(KlimboContainer, {BackgroundTransparency = 1}, 0.3):Play()
             wait(0.1)
             for _, child in ipairs(KlimboContainer:GetChildren()) do
@@ -895,28 +896,84 @@ function MainFrame.Create()
             -- إظهار Explorer
             ExplorerScreen.Visible = true
         else
-            -- فتح Klimbo
-            KlimboContainer.Visible = true
-            KlimboBtn.Text = "◀ BACK"
+            -- ═══ فتح Klimbo (مُصلح) ═══
+            -- منع الضغط المتكرر أثناء التحميل
+            if klimboLoading then return end
+            klimboLoading = true
             
-            -- إخفاء Explorer
-            ExplorerScreen.Visible = false
-            
-            -- تحميل KlimboMenu
+            KlimboBtn.Text = "⏳ Loading"
             ShowNotification(Frame, "👑 Loading KLIMBO Menu...", "info", 2)
             
-            local success, KlimboMenu = pcall(function()
-                return loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/KlimboMenu.lua", true))()
+            -- التحميل في thread منفصل حتى لا يجمّد الواجهة
+            spawn(function()
+                local KlimboMenu = nil
+                local loadSuccess = false
+                
+                -- محاولة التحميل مع إعادة المحاولة 3 مرات
+                for attempt = 1, 3 do
+                    local ok, result = pcall(function()
+                        local code = game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/KlimboMenu.lua", true)
+                        
+                        -- التحقق من اكتمال الملف (الملف الأصلي ~80KB)
+                        if not code or #code < 5000 then
+                            error("Incomplete download: " .. tostring(code and #code or 0) .. " bytes")
+                        end
+                        
+                        local fn = loadstring(code)
+                        if not fn then
+                            error("loadstring failed - file may be corrupted")
+                        end
+                        
+                        return fn()
+                    end)
+                    
+                    if ok and result and type(result) == "table" and type(result.Create) == "function" then
+                        KlimboMenu = result
+                        loadSuccess = true
+                        print("✅ KlimboMenu loaded successfully (attempt " .. attempt .. ")")
+                        break
+                    else
+                        warn("⚠️ KlimboMenu load attempt " .. attempt .. "/3 failed: " .. tostring(result))
+                    end
+                    
+                    if attempt < 3 then
+                        task.wait(1)
+                    end
+                end
+                
+                if loadSuccess and KlimboMenu then
+                    -- ✅ التحميل نجح - الآن نُظهر الحاوية
+                    KlimboContainer.Visible = true
+                    ExplorerScreen.Visible = false
+                    KlimboBtn.Text = "◀ BACK"
+                    
+                    -- إنشاء القائمة مع حماية pcall
+                    local createOk, createErr = pcall(function()
+                        KlimboMenu.Create(KlimboContainer)
+                    end)
+                    
+                    if createOk then
+                        ShowNotification(Frame, "👑 KLIMBO Menu Ready!", "success", 2)
+                        print("🎉 KlimboMenu created successfully!")
+                    else
+                        -- فشل Create - نعود للحالة الطبيعية
+                        warn("❌ KlimboMenu.Create error: " .. tostring(createErr))
+                        ShowNotification(Frame, "❌ Menu error - try again", "error", 4)
+                        KlimboContainer.Visible = false
+                        KlimboContainer:ClearAllChildren()
+                        ExplorerScreen.Visible = true
+                        KlimboBtn.Text = "👑 KLIMBO"
+                    end
+                else
+                    -- ❌ فشل التحميل بعد 3 محاولات
+                    ShowNotification(Frame, "❌ Failed to load KLIMBO Menu after 3 attempts", "error", 4)
+                    KlimboContainer.Visible = false
+                    ExplorerScreen.Visible = true
+                    KlimboBtn.Text = "👑 KLIMBO"
+                end
+                
+                klimboLoading = false
             end)
-            
-            if success and KlimboMenu then
-                KlimboMenu.Create(KlimboContainer)
-            else
-                ShowNotification(Frame, "Failed to load KLIMBO Menu", "error", 3)
-                KlimboContainer.Visible = false
-                ExplorerScreen.Visible = true
-                KlimboBtn.Text = "👑 KLIMBO"
-            end
         end
     end)
 
