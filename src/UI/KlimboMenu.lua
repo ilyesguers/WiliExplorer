@@ -2088,6 +2088,6 @@ end
 
 -- ═══════════════════════════════════════════════════════════════════════════
 
-print("👑 KlimboMenu v4.0 Loaded!")
+print("👑 KlimboMenu v4.0 Ready!")
 
 return KlimboMenu
