@@ -23,10 +23,10 @@ local function ShowNotif(parent, msg, color)
     L.ZIndex = 1000
     L.Parent = N
     TweenService:Create(N, TweenInfo.new(0.3), {Position = UDim2.new(0.5, -150, 0, 10)}):Play()
-    spawn(function()
-        wait(2.5)
+    task.spawn(function()
+        task.wait(2.5)
         TweenService:Create(N, TweenInfo.new(0.3), {Position = UDim2.new(0.5, -150, 0, -60)}):Play()
-        wait(0.3)
+        task.wait(0.3)
         N:Destroy()
     end)
 end
@@ -46,7 +46,7 @@ function SmartMenu.Open(mainParent)
     TopBar.Parent = FullScreen
     
     local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(0, 400, 0, 25)
+    Title.Size = UDim2.new(0, 300, 0, 25)
     Title.Position = UDim2.new(0, 15, 0, 8)
     Title.Text = "🧠 Smart Game Analyzer"
     Title.TextColor3 = Color3.fromRGB(255, 200, 50)
@@ -58,7 +58,7 @@ function SmartMenu.Open(mainParent)
     Title.Parent = TopBar
     
     local StatusLbl = Instance.new("TextLabel")
-    StatusLbl.Size = UDim2.new(0, 400, 0, 20)
+    StatusLbl.Size = UDim2.new(0, 300, 0, 20)
     StatusLbl.Position = UDim2.new(0, 15, 0, 33)
     StatusLbl.Text = "🔎 Scanning game..."
     StatusLbl.TextColor3 = Color3.fromRGB(0, 212, 255)
@@ -69,6 +69,24 @@ function SmartMenu.Open(mainParent)
     StatusLbl.ZIndex = 502
     StatusLbl.Parent = TopBar
     
+    -- زر الرجوع
+    local BackBtn = Instance.new("TextButton")
+    BackBtn.Size = UDim2.new(0, 80, 0, 40)
+    BackBtn.Position = UDim2.new(1, -170, 0.5, -20)
+    BackBtn.Text = "◀ Back"
+    BackBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    BackBtn.TextSize = 14
+    BackBtn.Font = Enum.Font.GothamBold
+    BackBtn.BackgroundColor3 = Color3.fromRGB(50, 60, 100)
+    BackBtn.ZIndex = 502
+    BackBtn.Parent = TopBar
+    Instance.new("UICorner", BackBtn).CornerRadius = UDim.new(0, 8)
+    
+    BackBtn.MouseButton1Click:Connect(function()
+        FullScreen:Destroy()
+    end)
+    
+    -- زر الإغلاق
     local ExitBtn = Instance.new("TextButton")
     ExitBtn.Size = UDim2.new(0, 70, 0, 40)
     ExitBtn.Position = UDim2.new(1, -80, 0.5, -20)
@@ -107,8 +125,8 @@ function SmartMenu.Open(mainParent)
     SPad.Parent = Scroll
     
     -- بدء الفحص
-    spawn(function()
-        wait(0.5)
+    task.spawn(function()
+        task.wait(0.5)
         local results = GameAnalyzer.Scan()
         
         StatusLbl.Text = "✅ Scanned " .. results.summary.totalScanned .. " items | " .. results.summary.totalEditable .. " editable | " .. results.summary.totalRemotes .. " remotes"
@@ -444,7 +462,7 @@ function SmartMenu.Open(mainParent)
         CreateCard("📜", "Key Scripts", "Scripts with important code", Color3.fromRGB(0, 255, 136), importantScripts, orderCounter)
         
         -- تحديث حجم الـ Canvas
-        wait(0.5)
+        task.wait(0.5)
         Scroll.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 30)
     end)
 end
