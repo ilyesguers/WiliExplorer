@@ -1,66 +1,114 @@
 --[[
-    🚀 WiliExplorer - Loader v2.0
+    🚀 WiliExplorer - Loader v3.0 (Optimized)
+    
+    ✅ إصلاحات:
+    • تحميل Modules مرة واحدة فقط
+    • تخزين في _G.WiliModules للاستخدام لاحقاً
+    • معالجة أخطاء محسنة
+    • تحسين الأداء
 ]]
 
-local VERSION = "2.0.0"
+local VERSION = "3.0.0"
 local BASE_URL = "https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/"
 
 print("🚀 WiliExplorer v" .. VERSION .. " Loading...")
 
 local Modules = {}
 
-local function LoadModule(path)
+local function LoadModule(path, name)
     local url = BASE_URL .. path
-    print("📥 Loading: " .. path)
+    print("📥 Loading: " .. (name or path))
     
     local success, response = pcall(function()
         return game:HttpGet(url, true)
     end)
     
     if not success or not response or response == "" then
-        warn("❌ Failed: " .. path)
+        warn("❌ Failed to download: " .. path)
         return nil
     end
     
     local func, err = loadstring(response)
     if not func then
-        warn("❌ Parse error: " .. path)
+        warn("❌ Parse error in " .. path .. ": " .. tostring(err))
         return nil
     end
     
     local ok, result = pcall(func)
     if not ok then
-        warn("❌ Execution error: " .. path)
+        warn("❌ Execution error in " .. path .. ": " .. tostring(result))
         return nil
     end
     
-    print("✅ Loaded: " .. path)
+    print("✅ Loaded: " .. (name or path))
     return result
 end
 
--- تحميل الملفات
-Modules.Config = LoadModule("Config.lua") task.wait(0.05)
-Modules.Colors = LoadModule("Theme/Colors.lua") task.wait(0.05)
-Modules.Language = LoadModule("Utils/Language.lua") task.wait(0.05)
-Modules.Icons = LoadModule("Utils/Icons.lua") task.wait(0.05)
-Modules.KeySystem = LoadModule("Security/KeySystem.lua") task.wait(0.05)
+-- ═══════════════════════════════════════════════════════════════════════
+-- تحميل الملفات بالترتيب الصحيح
+-- ═══════════════════════════════════════════════════════════════════════
 
--- ⭐ الملفات الجديدة
-Modules.GameAnalyzer = LoadModule("Core/GameAnalyzer.lua") task.wait(0.1)
-Modules.AdvancedTools = LoadModule("Core/AdvancedTools.lua") task.wait(0.1)
-Modules.FileScanner = LoadModule("Core/FileScanner.lua") task.wait(0.05)
+-- الملفات الأساسية أولاً
+Modules.Config = LoadModule("Config.lua", "Config")
+task.wait(0.05)
 
-Modules.Stars = LoadModule("Theme/Stars.lua") task.wait(0.05)
-Modules.ImageEditor = LoadModule("UI/ImageEditor.lua") task.wait(0.05)
-Modules.FileViewer = LoadModule("UI/FileViewer.lua") task.wait(0.1)
-Modules.MainFrame = LoadModule("UI/MainFrame.lua") task.wait(0.05)
+Modules.Colors = LoadModule("Theme/Colors.lua", "Colors")
+task.wait(0.05)
 
+Modules.Language = LoadModule("Utils/Language.lua", "Language")
+task.wait(0.05)
+
+Modules.Icons = LoadModule("Utils/Icons.lua", "Icons")
+task.wait(0.05)
+
+-- نظام الأمان
+Modules.KeySystem = LoadModule("Security/KeySystem.lua", "KeySystem")
+task.wait(0.05)
+
+-- الملفات الأساسية
+Modules.GameAnalyzer = LoadModule("Core/GameAnalyzer.lua", "GameAnalyzer")
+task.wait(0.1)
+
+Modules.AdvancedTools = LoadModule("Core/AdvancedTools.lua", "AdvancedTools")
+task.wait(0.1)
+
+Modules.FileScanner = LoadModule("Core/FileScanner.lua", "FileScanner")
+task.wait(0.1)
+
+-- المظهر البصري
+Modules.Stars = LoadModule("Theme/Stars.lua", "Stars")
+task.wait(0.05)
+
+-- واجهة المستخدم
+Modules.ImageEditor = LoadModule("UI/ImageEditor.lua", "ImageEditor")
+task.wait(0.05)
+
+Modules.FileViewer = LoadModule("UI/FileViewer.lua", "FileViewer")
+task.wait(0.1)
+
+-- ═══════════════════════════════════════════════════════════════════════
+-- تخزين Modules عالمياً للاستخدام في أي مكان
+-- ═══════════════════════════════════════════════════════════════════════
 _G.WiliModules = Modules
 
-print("🎮 Creating UI...")
+print("📦 All modules loaded! Creating UI...")
+
+-- تحميل MainFrame أخيراً
+Modules.MainFrame = LoadModule("UI/MainFrame.lua", "MainFrame")
+task.wait(0.1)
+
+-- إنشاء الواجهة
 if Modules.MainFrame and Modules.MainFrame.Create then
-    pcall(function() Modules.MainFrame.Create(Modules) end)
+    local ok, err = pcall(function()
+        Modules.MainFrame.Create()
+    end)
+    if ok then
+        print("🎉 WiliExplorer Ready!")
+    else
+        warn("❌ Failed to create UI: " .. tostring(err))
+    end
+else
+    warn("❌ MainFrame module not loaded!")
 end
 
-print("🎉 WiliExplorer Ready!")
 return Modules
