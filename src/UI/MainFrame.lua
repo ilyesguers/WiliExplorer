@@ -1,7 +1,7 @@
 local MainFrame = {}
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- 🚀 WiliExplorer - MainFrame v3.1 (VIP Ultimate Edition - KlimboMenu Fix)
+-- 🚀 WiliExplorer - MainFrame v3.2 (KLIMBO MENU FIX - COMPLETE)
 -- ═══════════════════════════════════════════════════════════════════════════
 
 local KeySystem = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Security/KeySystem.lua", true))()
@@ -220,820 +220,442 @@ local function CreateLoadingScreen(parent)
         end
     end)
     
-    -- VIP Badge
-    local vipBadge = Instance.new("TextLabel")
-    vipBadge.Size = UDim2.new(0, 120, 0, 35)
-    vipBadge.Position = UDim2.new(0.5, -60, 0.48, 0)
-    vipBadge.Text = "👑 VIP ACCESS"
-    vipBadge.TextColor3 = Colors.Gold
-    vipBadge.TextSize = 14
-    vipBadge.Font = Enum.Font.GothamBlack
-    vipBadge.BackgroundColor3 = Color3.fromRGB(30, 25, 15)
-    vipBadge.ZIndex = 101
-    vipBadge.Parent = loading
-    AddCorner(vipBadge, 8)
-    AddStroke(vipBadge, Colors.Gold, 2)
-    
-    -- شريط التحميل
-    local progressBg = Instance.new("Frame")
-    progressBg.Size = UDim2.new(0.6, 0, 0, 8)
-    progressBg.Position = UDim2.new(0.2, 0, 0.6, 0)
-    progressBg.BackgroundColor3 = Colors.Tertiary
-    progressBg.ZIndex = 101
-    progressBg.Parent = loading
-    AddCorner(progressBg, 4)
-    
-    local progressFill = Instance.new("Frame")
-    progressFill.Size = UDim2.new(0, 0, 1, 0)
-    progressFill.BackgroundColor3 = Colors.Accent
-    progressFill.ZIndex = 102
-    progressFill.Parent = progressBg
-    AddCorner(progressFill, 4)
-    
-    local progGrad = Instance.new("UIGradient")
-    progGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Colors.Pink),
-        ColorSequenceKeypoint.new(0.5, Colors.Accent),
-        ColorSequenceKeypoint.new(1, Colors.Cyan)
-    })
-    progGrad.Parent = progressFill
-    
     -- نص التحميل
     local loadingText = Instance.new("TextLabel")
-    loadingText.Size = UDim2.new(1, 0, 0, 25)
-    loadingText.Position = UDim2.new(0, 0, 0.65, 0)
-    loadingText.Text = "جاري التحميل..."
+    loadingText.Size = UDim2.new(1, 0, 0, 40)
+    loadingText.Position = UDim2.new(0, 0, 0.5, 0)
+    loadingText.Text = "Loading..."
     loadingText.TextColor3 = Colors.TextSecondary
-    loadingText.TextSize = 14
+    loadingText.TextSize = 18
     loadingText.Font = Enum.Font.Gotham
     loadingText.BackgroundTransparency = 1
     loadingText.ZIndex = 101
     loadingText.Parent = loading
     
-    -- أنيميشن التحميل
-    local loadSteps = {
-        {text = "📦 Loading modules...", progress = 0.2},
-        {text = "🎨 Initializing UI...", progress = 0.4},
-        {text = "🔐 Checking security...", progress = 0.6},
-        {text = "⚡ Optimizing performance...", progress = 0.8},
-        {text = "✨ Almost ready...", progress = 0.95},
-        {text = "🚀 Welcome to WiliExplorer!", progress = 1}
-    }
+    -- شريط التحميل
+    local progressBar = Instance.new("Frame")
+    progressBar.Size = UDim2.new(0.6, 0, 0, 6)
+    progressBar.Position = UDim2.new(0.2, 0, 0.55, 0)
+    progressBar.BackgroundColor3 = Colors.Tertiary
+    progressBar.BorderSizePixel = 0
+    progressBar.ZIndex = 101
+    progressBar.Parent = loading
+    AddCorner(progressBar, 3)
     
-    spawn(function()
-        for _, step in ipairs(loadSteps) do
-            loadingText.Text = step.text
-            CreateTween(progressFill, {Size = UDim2.new(step.progress, 0, 1, 0)}, 0.4):Play()
-            wait(0.5)
-        end
-        wait(0.5)
-        CreateTween(loading, {BackgroundTransparency = 1}, 0.5):Play()
-        CreateTween(logo, {TextTransparency = 1}, 0.5):Play()
-        CreateTween(vipBadge, {BackgroundTransparency = 1, TextTransparency = 1}, 0.5):Play()
-        CreateTween(progressBg, {BackgroundTransparency = 1}, 0.5):Play()
-        CreateTween(progressFill, {BackgroundTransparency = 1}, 0.5):Play()
-        CreateTween(loadingText, {TextTransparency = 1}, 0.5):Play()
-        wait(0.5)
-        loading:Destroy()
-    end)
+    local progress = Instance.new("Frame")
+    progress.Size = UDim2.new(0, 0, 1, 0)
+    progress.BackgroundColor3 = Colors.Accent
+    progress.BorderSizePixel = 0
+    progress.ZIndex = 102
+    progress.Parent = progressBar
+    AddCorner(progress, 3)
+    
+    -- أنيميشن التحميل
+    CreateTween(progress, {Size = UDim2.new(1, 0, 1, 0)}, 2):Play()
     
     return loading
 end
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- 🎮 الدالة الرئيسية
+-- 🎨 إنشاء الواجهة الرئيسية
 -- ═══════════════════════════════════════════════════════════════════════════
-function MainFrame.Create()
+
+function MainFrame.Create(Modules)
+    print("🚀 [MainFrame] Creating WiliExplorer UI...")
+    
+    -- إنشاء ScreenGui
     local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "WiliExplorerUI"
+    ScreenGui.Name = "WiliExplorerGUI"
     ScreenGui.ResetOnSpawn = false
-    ScreenGui.IgnoreGuiInset = true
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ScreenGui.Parent = game.CoreGui
     
-    local success = pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
-    if not success then ScreenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui") end
-
-    -- كشف حجم الشاشة
-    local viewport = workspace.CurrentCamera.ViewportSize
-    local isMobile = viewport.X < 800
-    
-    -- حجم مناسب للهاتف
-    local frameWidth = isMobile and viewport.X * 0.95 or 700
-    local frameHeight = isMobile and viewport.Y * 0.85 or 500
-
-    -- ═══════════════════════════════
     -- الإطار الرئيسي
-    -- ═══════════════════════════════
-    local Frame = Instance.new("Frame")
-    Frame.Name = "Main"
-    Frame.Size = UDim2.new(0, frameWidth, 0, frameHeight)
-    Frame.Position = UDim2.new(0.5, -frameWidth/2, 0.5, -frameHeight/2)
-    Frame.BackgroundColor3 = Colors.Primary
-    Frame.BorderSizePixel = 0
-    Frame.ClipsDescendants = true
-    Frame.Parent = ScreenGui
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Name = "MainFrame"
+    mainFrame.Size = UDim2.new(0, 450, 0, 600)
+    mainFrame.Position = UDim2.new(0.5, -225, 0.5, -300)
+    mainFrame.BackgroundColor3 = Colors.Primary
+    mainFrame.BorderSizePixel = 0
+    mainFrame.ZIndex = 5
+    mainFrame.Parent = ScreenGui
+    AddCorner(mainFrame, 20)
+    AddStroke(mainFrame, Colors.Accent, 3)
     
-    AddCorner(Frame, 20)
+    -- الخلفية المتحركة
+    if Stars and Stars.Create then
+        Stars.Create(mainFrame, 60)
+    end
+    CreateParticles(mainFrame)
     
-    -- حدود متوهجة متحركة
-    local MainStroke = AddStroke(Frame, Colors.Accent, 2)
-    spawn(function()
-        while Frame.Parent do
-            CreateTween(MainStroke, {Color = Colors.Cyan}, 2):Play()
-            wait(2)
-            CreateTween(MainStroke, {Color = Colors.Accent}, 2):Play()
-            wait(2)
-        end
-    end)
-
-    -- تدرج فضائي
-    local Gradient = Instance.new("UIGradient")
-    Gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Colors.Primary),
-        ColorSequenceKeypoint.new(0.5, Colors.Secondary),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 15, 60))
-    })
-    Gradient.Rotation = 135
-    Gradient.Parent = Frame
-
-    -- النجوم في الخلفية
-    Stars.Create(Frame, 100)
+    -- الشريط العلوي
+    local topBar = Instance.new("Frame")
+    topBar.Name = "TopBar"
+    topBar.Size = UDim2.new(1, 0, 0, 70)
+    topBar.BackgroundColor3 = Colors.Secondary
+    topBar.BackgroundTransparency = 0.3
+    topBar.BorderSizePixel = 0
+    topBar.ZIndex = 50
+    topBar.Parent = mainFrame
+    AddCorner(topBar, 20)
     
-    -- الجزيئات
-    CreateParticles(Frame)
+    local logo = Instance.new("TextLabel")
+    logo.Size = UDim2.new(0.6, 0, 1, 0)
+    logo.Position = UDim2.new(0, 20, 0, 0)
+    logo.Text = "🚀 WiliExplorer"
+    logo.TextSize = 26
+    logo.Font = Enum.Font.GothamBlack
+    logo.TextXAlignment = Enum.TextXAlignment.Left
+    logo.TextColor3 = Colors.Gold
+    logo.BackgroundTransparency = 1
+    logo.ZIndex = 51
+    logo.Parent = topBar
     
-    -- شاشة التحميل
-    CreateLoadingScreen(Frame)
-
-    -- ═══════════════════════════════
-    -- الشريط العلوي (Top Bar)
-    -- ═══════════════════════════════
-    local TopBar = Instance.new("Frame")
-    TopBar.Name = "TopBar"
-    TopBar.Size = UDim2.new(1, 0, 0, 55)
-    TopBar.BackgroundColor3 = Color3.fromRGB(15, 18, 40)
-    TopBar.BackgroundTransparency = 0.2
-    TopBar.BorderSizePixel = 0
-    TopBar.ZIndex = 50
-    TopBar.Parent = Frame
-
-    local TopCorner = Instance.new("UICorner")
-    TopCorner.CornerRadius = UDim.new(0, 20)
-    TopCorner.Parent = TopBar
-    
-    -- خط سفلي متوهج
-    local TopLine = Instance.new("Frame")
-    TopLine.Size = UDim2.new(1, 0, 0, 2)
-    TopLine.Position = UDim2.new(0, 0, 1, -2)
-    TopLine.BackgroundColor3 = Colors.Accent
-    TopLine.BorderSizePixel = 0
-    TopLine.ZIndex = 51
-    TopLine.Parent = TopBar
-    
-    spawn(function()
-        while TopLine.Parent do
-            CreateTween(TopLine, {BackgroundColor3 = Colors.Pink}, 1.5):Play()
-            wait(1.5)
-            CreateTween(TopLine, {BackgroundColor3 = Colors.Cyan}, 1.5):Play()
-            wait(1.5)
-            CreateTween(TopLine, {BackgroundColor3 = Colors.Accent}, 1.5):Play()
-            wait(1.5)
-        end
-    end)
-
-    -- شعار التطبيق
-    local Logo = Instance.new("TextLabel")
-    Logo.Size = UDim2.new(0, 200, 1, 0)
-    Logo.Position = UDim2.new(0, 15, 0, 0)
-    Logo.Text = "🚀 WiliExplorer"
-    Logo.TextColor3 = Colors.Accent
-    Logo.TextSize = 22
-    Logo.Font = Enum.Font.GothamBlack
-    Logo.BackgroundTransparency = 1
-    Logo.TextXAlignment = Enum.TextXAlignment.Left
-    Logo.ZIndex = 51
-    Logo.Parent = TopBar
-    
-    -- VIP Badge في الشعار
-    local LogoVIP = Instance.new("TextLabel")
-    LogoVIP.Size = UDim2.new(0, 35, 0, 18)
-    LogoVIP.Position = UDim2.new(0, 175, 0.5, -9)
-    LogoVIP.Text = "VIP"
-    LogoVIP.TextColor3 = Colors.Primary
-    LogoVIP.TextSize = 10
-    LogoVIP.Font = Enum.Font.GothamBlack
-    LogoVIP.BackgroundColor3 = Colors.Gold
-    LogoVIP.ZIndex = 52
-    LogoVIP.Parent = TopBar
-    AddCorner(LogoVIP, 4)
-
-    -- ═══════════════════════════════
-    -- 👑 زر KLIMBO MENU (مخفي في البداية)
-    -- ═══════════════════════════════
-    local KlimboBtn = Instance.new("TextButton")
-    KlimboBtn.Name = "KlimboBtn"
-    KlimboBtn.Size = UDim2.new(0, 100, 0, 36)
-    KlimboBtn.Position = UDim2.new(1, -370, 0.5, -18)
-    KlimboBtn.Text = "👑 KLIMBO"
-    KlimboBtn.TextColor3 = Colors.Gold
-    KlimboBtn.TextSize = 12
-    KlimboBtn.Font = Enum.Font.GothamBlack
-    KlimboBtn.BackgroundColor3 = Colors.Secondary
-    KlimboBtn.ZIndex = 51
-    KlimboBtn.Visible = false -- مخفي حتى يدخل المفتاح
-    KlimboBtn.Parent = TopBar
-    AddCorner(KlimboBtn, 10)
-    
-    -- تدرج جميل للزر
-    local KlimboGradient = Instance.new("UIGradient")
-    KlimboGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Colors.Pink),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 50, 150)),
+    -- تأثير توهج للشعار
+    local logoGlow = Instance.new("UIGradient")
+    logoGlow.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Colors.Gold),
+        ColorSequenceKeypoint.new(0.5, Colors.Accent),
         ColorSequenceKeypoint.new(1, Colors.Cyan)
     })
-    KlimboGradient.Rotation = 45
-    KlimboGradient.Parent = KlimboBtn
+    logoGlow.Parent = logo
     
-    local KlimboStroke = AddStroke(KlimboBtn, Colors.Gold, 2)
-    
-    -- أنيميشن توهج الزر
+    -- أنيميشن الشعار
     spawn(function()
-        while KlimboBtn.Parent do
-            CreateTween(KlimboStroke, {Color = Colors.Pink, Transparency = 0}, 1):Play()
-            wait(1)
-            CreateTween(KlimboStroke, {Color = Colors.Cyan, Transparency = 0}, 1):Play()
-            wait(1)
-            CreateTween(KlimboStroke, {Color = Colors.Gold, Transparency = 0}, 1):Play()
-            wait(1)
+        while logo.Parent do
+            CreateTween(logoGlow, {Rotation = 360}, 4, Enum.EasingStyle.Linear):Play()
+            wait(4)
+            logoGlow.Rotation = 0
         end
     end)
     
-    -- تأثير hover
-    KlimboBtn.MouseEnter:Connect(function()
-        CreateTween(KlimboBtn, {Size = UDim2.new(0, 110, 0, 40)}, 0.2):Play()
-        CreateTween(KlimboStroke, {Thickness = 3}, 0.2):Play()
-    end)
-    KlimboBtn.MouseLeave:Connect(function()
-        CreateTween(KlimboBtn, {Size = UDim2.new(0, 100, 0, 36)}, 0.2):Play()
-        CreateTween(KlimboStroke, {Thickness = 2}, 0.2):Play()
-    end)
-
     -- زر اللغة
-    local LangBtn = Instance.new("TextButton")
-    LangBtn.Size = UDim2.new(0, 85, 0, 36)
-    LangBtn.Position = UDim2.new(1, -260, 0.5, -18)
-    LangBtn.Text = "🌐 عربي"
-    LangBtn.TextColor3 = Colors.TextPrimary
-    LangBtn.TextSize = 13
-    LangBtn.Font = Enum.Font.GothamBold
-    LangBtn.BackgroundColor3 = Color3.fromRGB(0, 130, 180)
-    LangBtn.ZIndex = 51
-    LangBtn.Parent = TopBar
-    AddCorner(LangBtn, 10)
-    AddStroke(LangBtn, Colors.Accent, 1, 0.5)
-
-    -- زر التصغير
-    local MinBtn = Instance.new("TextButton")
-    MinBtn.Size = UDim2.new(0, 36, 0, 36)
-    MinBtn.Position = UDim2.new(1, -165, 0.5, -18)
-    MinBtn.Text = "—"
-    MinBtn.TextColor3 = Colors.TextPrimary
-    MinBtn.TextSize = 22
-    MinBtn.Font = Enum.Font.GothamBold
-    MinBtn.BackgroundColor3 = Color3.fromRGB(60, 70, 120)
-    MinBtn.ZIndex = 51
-    MinBtn.Parent = TopBar
-    AddCorner(MinBtn, 10)
+    local langBtn = Instance.new("TextButton")
+    langBtn.Size = UDim2.new(0, 50, 0, 50)
+    langBtn.Position = UDim2.new(1, -130, 0.5, -25)
+    langBtn.Text = "🌐"
+    langBtn.TextSize = 24
+    langBtn.Font = Enum.Font.GothamBold
+    langBtn.BackgroundColor3 = Colors.Tertiary
+    langBtn.TextColor3 = Colors.TextPrimary
+    langBtn.BorderSizePixel = 0
+    langBtn.ZIndex = 51
+    langBtn.Parent = topBar
+    AddCorner(langBtn, 12)
     
-    MinBtn.MouseEnter:Connect(function()
-        CreateTween(MinBtn, {BackgroundColor3 = Color3.fromRGB(80, 90, 140)}, 0.2):Play()
+    langBtn.MouseButton1Click:Connect(function()
+        if Language and Language.Toggle then
+            Language.Toggle()
+            ShowNotification(mainFrame, "Language Changed!", "success", 2)
+        end
     end)
-    MinBtn.MouseLeave:Connect(function()
-        CreateTween(MinBtn, {BackgroundColor3 = Color3.fromRGB(60, 70, 120)}, 0.2):Play()
-    end)
-
+    
     -- زر الإغلاق
-    local CloseBtn = Instance.new("TextButton")
-    CloseBtn.Size = UDim2.new(0, 36, 0, 36)
-    CloseBtn.Position = UDim2.new(1, -120, 0.5, -18)
-    CloseBtn.Text = "✕"
-    CloseBtn.TextColor3 = Colors.TextPrimary
-    CloseBtn.TextSize = 18
-    CloseBtn.Font = Enum.Font.GothamBold
-    CloseBtn.BackgroundColor3 = Colors.Error
-    CloseBtn.ZIndex = 51
-    CloseBtn.Parent = TopBar
-    AddCorner(CloseBtn, 10)
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Size = UDim2.new(0, 50, 0, 50)
+    closeBtn.Position = UDim2.new(1, -65, 0.5, -25)
+    closeBtn.Text = "✕"
+    closeBtn.TextColor3 = Colors.TextPrimary
+    closeBtn.TextSize = 24
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.BackgroundColor3 = Colors.Error
+    closeBtn.BorderSizePixel = 0
+    closeBtn.ZIndex = 51
+    closeBtn.Parent = topBar
+    AddCorner(closeBtn, 12)
     
-    CloseBtn.MouseEnter:Connect(function()
-        CreateTween(CloseBtn, {BackgroundColor3 = Color3.fromRGB(255, 100, 110)}, 0.2):Play()
-    end)
-    CloseBtn.MouseLeave:Connect(function()
-        CreateTween(CloseBtn, {BackgroundColor3 = Colors.Error}, 0.2):Play()
-    end)
-
-    CloseBtn.MouseButton1Click:Connect(function()
-        -- أنيميشن إغلاق
-        CreateTween(Frame, {Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)}, 0.3):Play()
+    closeBtn.MouseButton1Click:Connect(function()
+        CreateTween(mainFrame, {Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)}, 0.3):Play()
         wait(0.3)
         ScreenGui:Destroy()
     end)
-
-    local minimized = false
-    MinBtn.MouseButton1Click:Connect(function()
-        minimized = not minimized
-        if minimized then
-            CreateTween(Frame, {Size = UDim2.new(0, frameWidth, 0, 55)}, 0.3, Enum.EasingStyle.Back):Play()
-            MinBtn.Text = "+"
-        else
-            CreateTween(Frame, {Size = UDim2.new(0, frameWidth, 0, frameHeight)}, 0.3, Enum.EasingStyle.Back):Play()
-            MinBtn.Text = "—"
-        end
-    end)
-
-    -- ═══════════════════════════════
-    -- معلومات المستخدم (تظهر بعد الدخول)
-    -- ═══════════════════════════════
-    local UserInfo = Instance.new("Frame")
-    UserInfo.Name = "UserInfo"
-    UserInfo.Size = UDim2.new(0, 150, 0, 36)
-    UserInfo.Position = UDim2.new(1, -75, 0.5, -18)
-    UserInfo.BackgroundColor3 = Colors.Tertiary
-    UserInfo.BackgroundTransparency = 0.5
-    UserInfo.ZIndex = 51
-    UserInfo.Visible = false
-    UserInfo.Parent = TopBar
-    AddCorner(UserInfo, 10)
     
-    local UserAvatar = Instance.new("ImageLabel")
-    UserAvatar.Size = UDim2.new(0, 28, 0, 28)
-    UserAvatar.Position = UDim2.new(0, 4, 0.5, -14)
-    UserAvatar.BackgroundColor3 = Colors.Accent
-    UserAvatar.ZIndex = 52
-    UserAvatar.Parent = UserInfo
-    AddCorner(UserAvatar, 14)
-    pcall(function()
-        UserAvatar.Image = Players:GetUserThumbnailAsync(Players.LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
-    end)
-    
-    local UserName = Instance.new("TextLabel")
-    UserName.Size = UDim2.new(1, -40, 1, 0)
-    UserName.Position = UDim2.new(0, 36, 0, 0)
-    UserName.Text = Players.LocalPlayer.Name:sub(1, 10)
-    UserName.TextColor3 = Colors.TextPrimary
-    UserName.TextSize = 11
-    UserName.Font = Enum.Font.GothamBold
-    UserName.TextXAlignment = Enum.TextXAlignment.Left
-    UserName.BackgroundTransparency = 1
-    UserName.ZIndex = 52
-    UserName.Parent = UserInfo
-
-    -- ═══════════════════════════════
     -- منطقة المحتوى
-    -- ═══════════════════════════════
-    local Content = Instance.new("Frame")
-    Content.Name = "Content"
-    Content.Size = UDim2.new(1, 0, 1, -55)
-    Content.Position = UDim2.new(0, 0, 0, 55)
-    Content.BackgroundTransparency = 1
-    Content.ZIndex = 10
-    Content.Parent = Frame
-
-    -- ═══════════════════════════════
-    -- شاشة المفتاح
-    -- ═══════════════════════════════
-    local KeyScreen = Instance.new("Frame")
-    KeyScreen.Name = "KeyScreen"
-    KeyScreen.Size = UDim2.new(1, 0, 1, 0)
-    KeyScreen.BackgroundTransparency = 1
-    KeyScreen.ZIndex = 15
-    KeyScreen.Parent = Content
-
-    -- العنوان الرئيسي مع أنيميشن
-    local Title = Instance.new("TextLabel")
-    Title.Text = "🌌 WiliExplorer"
-    Title.Size = UDim2.new(1, 0, 0, 70)
-    Title.Position = UDim2.new(0, 0, 0.12, 0)
-    Title.TextColor3 = Colors.Accent
-    Title.TextSize = isMobile and 32 or 42
-    Title.Font = Enum.Font.GothamBlack
-    Title.BackgroundTransparency = 1
-    Title.ZIndex = 16
-    Title.Parent = KeyScreen
+    local scrollFrame = Instance.new("ScrollingFrame")
+    scrollFrame.Name = "Content"
+    scrollFrame.Size = UDim2.new(1, -30, 1, -90)
+    scrollFrame.Position = UDim2.new(0, 15, 0, 75)
+    scrollFrame.BackgroundTransparency = 1
+    scrollFrame.ScrollBarThickness = 6
+    scrollFrame.ScrollBarImageColor3 = Colors.Accent
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 1000)
+    scrollFrame.ZIndex = 20
+    scrollFrame.Parent = mainFrame
     
-    -- تأثير توهج العنوان
-    spawn(function()
-        while Title.Parent do
-            CreateTween(Title, {TextColor3 = Colors.Cyan}, 1.5):Play()
-            wait(1.5)
-            CreateTween(Title, {TextColor3 = Colors.Accent}, 1.5):Play()
-            wait(1.5)
-        end
-    end)
-
-    local Subtitle = Instance.new("TextLabel")
-    Subtitle.Text = Language.Get("Welcome")
-    Subtitle.Size = UDim2.new(1, 0, 0, 30)
-    Subtitle.Position = UDim2.new(0, 0, 0.25, 0)
-    Subtitle.TextColor3 = Colors.TextSecondary
-    Subtitle.TextSize = 16
-    Subtitle.Font = Enum.Font.Gotham
-    Subtitle.BackgroundTransparency = 1
-    Subtitle.ZIndex = 16
-    Subtitle.Parent = KeyScreen
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 12)
+    layout.Parent = scrollFrame
     
-    -- VIP Badge
-    local VIPLabel = Instance.new("TextLabel")
-    VIPLabel.Size = UDim2.new(0, 140, 0, 35)
-    VIPLabel.Position = UDim2.new(0.5, -70, 0.32, 0)
-    VIPLabel.Text = "👑 VIP EXCLUSIVE"
-    VIPLabel.TextColor3 = Colors.Gold
-    VIPLabel.TextSize = 13
-    VIPLabel.Font = Enum.Font.GothamBlack
-    VIPLabel.BackgroundColor3 = Color3.fromRGB(40, 35, 20)
-    VIPLabel.ZIndex = 16
-    VIPLabel.Parent = KeyScreen
-    AddCorner(VIPLabel, 8)
-    AddStroke(VIPLabel, Colors.Gold, 2)
-
-    -- حقل إدخال المفتاح
-    local KeyInputContainer = Instance.new("Frame")
-    KeyInputContainer.Size = UDim2.new(0.85, 0, 0, 60)
-    KeyInputContainer.Position = UDim2.new(0.075, 0, 0.45, 0)
-    KeyInputContainer.BackgroundColor3 = Color3.fromRGB(20, 25, 55)
-    KeyInputContainer.ZIndex = 16
-    KeyInputContainer.Parent = KeyScreen
-    AddCorner(KeyInputContainer, 15)
+    local padding = Instance.new("UIPadding")
+    padding.PaddingTop = UDim.new(0, 10)
+    padding.Parent = scrollFrame
     
-    local KeyInputStroke = AddStroke(KeyInputContainer, Colors.Accent, 2, 0.3)
-    
-    local KeyIcon = Instance.new("TextLabel")
-    KeyIcon.Size = UDim2.new(0, 50, 1, 0)
-    KeyIcon.Text = "🔑"
-    KeyIcon.TextSize = 24
-    KeyIcon.BackgroundTransparency = 1
-    KeyIcon.ZIndex = 17
-    KeyIcon.Parent = KeyInputContainer
-    
-    local KeyInput = Instance.new("TextBox")
-    KeyInput.Size = UDim2.new(1, -60, 1, 0)
-    KeyInput.Position = UDim2.new(0, 55, 0, 0)
-    KeyInput.PlaceholderText = Language.Get("EnterKey")
-    KeyInput.Text = ""
-    KeyInput.TextColor3 = Colors.TextPrimary
-    KeyInput.PlaceholderColor3 = Colors.TextSecondary
-    KeyInput.Font = Enum.Font.Code
-    KeyInput.TextSize = 16
-    KeyInput.ClearTextOnFocus = false
-    KeyInput.BackgroundTransparency = 1
-    KeyInput.TextXAlignment = Enum.TextXAlignment.Left
-    KeyInput.ZIndex = 17
-    KeyInput.Parent = KeyInputContainer
-    
-    -- تأثير عند التركيز
-    KeyInput.Focused:Connect(function()
-        CreateTween(KeyInputStroke, {Color = Colors.Accent, Transparency = 0}, 0.2):Play()
-    end)
-    KeyInput.FocusLost:Connect(function()
-        CreateTween(KeyInputStroke, {Transparency = 0.3}, 0.2):Play()
-    end)
-
-    -- زر تسجيل الدخول
-    local LoginBtn = Instance.new("TextButton")
-    LoginBtn.Text = "🔓 " .. Language.Get("Verify")
-    LoginBtn.Size = UDim2.new(0.7, 0, 0, 55)
-    LoginBtn.Position = UDim2.new(0.15, 0, 0.62, 0)
-    LoginBtn.BackgroundColor3 = Colors.Accent
-    LoginBtn.TextColor3 = Colors.Primary
-    LoginBtn.Font = Enum.Font.GothamBlack
-    LoginBtn.TextSize = 18
-    LoginBtn.ZIndex = 16
-    LoginBtn.Parent = KeyScreen
-    AddCorner(LoginBtn, 15)
-
-    local LoginGradient = Instance.new("UIGradient")
-    LoginGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 245, 255)),
-        ColorSequenceKeypoint.new(0.5, Colors.Accent),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 152, 219))
-    })
-    LoginGradient.Rotation = 90
-    LoginGradient.Parent = LoginBtn
-    
-    -- تأثير hover للزر
-    LoginBtn.MouseEnter:Connect(function()
-        CreateTween(LoginBtn, {Size = UDim2.new(0.72, 0, 0, 58)}, 0.2):Play()
-    end)
-    LoginBtn.MouseLeave:Connect(function()
-        CreateTween(LoginBtn, {Size = UDim2.new(0.7, 0, 0, 55)}, 0.2):Play()
+    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        scrollFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 20)
     end)
     
-    -- نص المساعدة
-    local HelpText = Instance.new("TextLabel")
-    HelpText.Size = UDim2.new(1, 0, 0, 25)
-    HelpText.Position = UDim2.new(0, 0, 0.78, 0)
-    HelpText.Text = "💬 Need a key? Contact: @WiliExplorer"
-    HelpText.TextColor3 = Colors.TextSecondary
-    HelpText.TextSize = 12
-    HelpText.Font = Enum.Font.Gotham
-    HelpText.BackgroundTransparency = 1
-    HelpText.ZIndex = 16
-    HelpText.Parent = KeyScreen
-    
-    -- حقوق الطبع
-    local Copyright = Instance.new("TextLabel")
-    Copyright.Size = UDim2.new(1, 0, 0, 20)
-    Copyright.Position = UDim2.new(0, 0, 0.92, 0)
-    Copyright.Text = "© 2025 WiliExplorer - All Rights Reserved"
-    Copyright.TextColor3 = Color3.fromRGB(80, 90, 120)
-    Copyright.TextSize = 11
-    Copyright.Font = Enum.Font.Gotham
-    Copyright.BackgroundTransparency = 1
-    Copyright.ZIndex = 16
-    Copyright.Parent = KeyScreen
-
-    -- ═══════════════════════════════
-    -- شاشة المتصفح
-    -- ═══════════════════════════════
-    local ExplorerScreen = Instance.new("Frame")
-    ExplorerScreen.Name = "ExplorerScreen"
-    ExplorerScreen.Size = UDim2.new(1, 0, 1, 0)
-    ExplorerScreen.BackgroundTransparency = 1
-    ExplorerScreen.Visible = false
-    ExplorerScreen.ZIndex = 15
-    ExplorerScreen.Parent = Content
-    
-    -- ═══════════════════════════════
-    -- حاوية KlimboMenu (منفصلة)
-    -- ═══════════════════════════════
-    local KlimboContainer = Instance.new("Frame")
-    KlimboContainer.Name = "KlimboContainer"
-    KlimboContainer.Size = UDim2.new(1, 0, 1, 0)
-    KlimboContainer.BackgroundTransparency = 1
-    KlimboContainer.Visible = false
-    KlimboContainer.ZIndex = 200
-    KlimboContainer.Parent = Frame
-    
-    -- متغير لتتبع حالة Klimbo
-    local klimboLoaded = false
-    local klimboLoading = false
-    local KlimboModule = nil
-
-    -- تحديث اللغة
-    LangBtn.MouseButton1Click:Connect(function()
-        Language.Toggle()
-        LangBtn.Text = Language.Current == "en" and "🌐 عربي" or "🌐 English"
+    -- دالة إنشاء زر
+    local function CreateButton(parent, icon, title, description, callback)
+        local btn = Instance.new("Frame")
+        btn.Size = UDim2.new(1, -10, 0, 75)
+        btn.BackgroundColor3 = Colors.Secondary
+        btn.BorderSizePixel = 0
+        btn.ZIndex = 21
+        btn.Parent = parent
+        AddCorner(btn, 12)
+        AddStroke(btn, Colors.Accent, 2, 0.5)
         
-        Subtitle.Text = Language.Get("Welcome")
-        KeyInput.PlaceholderText = Language.Get("EnterKey")
-        LoginBtn.Text = "🔓 " .. Language.Get("Verify")
+        local iconLabel = Instance.new("TextLabel")
+        iconLabel.Size = UDim2.new(0, 60, 1, 0)
+        iconLabel.Text = icon
+        iconLabel.TextSize = 32
+        iconLabel.Font = Enum.Font.GothamBold
+        iconLabel.BackgroundTransparency = 1
+        iconLabel.ZIndex = 22
+        iconLabel.Parent = btn
         
-        ShowNotification(Frame, Language.Current == "ar" and "تم تغيير اللغة للعربية" or "Language changed to English", "info", 2)
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Size = UDim2.new(1, -140, 0, 30)
+        titleLabel.Position = UDim2.new(0, 65, 0, 12)
+        titleLabel.Text = title
+        titleLabel.TextColor3 = Colors.TextPrimary
+        titleLabel.TextSize = 16
+        titleLabel.Font = Enum.Font.GothamBold
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.ZIndex = 22
+        titleLabel.Parent = btn
         
-        -- إعادة تحميل المتصفح لو مفتوح
-        if ExplorerScreen.Visible then
-            ExplorerScreen:ClearAllChildren()
-            local Sidebar = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/Sidebar.lua", true))()
-            Sidebar.Create(ExplorerScreen)
-        end
-    end)
-
-    -- التحقق من المفتاح
-    LoginBtn.MouseButton1Click:Connect(function()
-        -- تأثير الضغط
-        CreateTween(LoginBtn, {Size = UDim2.new(0.68, 0, 0, 52)}, 0.1):Play()
-        wait(0.1)
-        CreateTween(LoginBtn, {Size = UDim2.new(0.7, 0, 0, 55)}, 0.1):Play()
+        local descLabel = Instance.new("TextLabel")
+        descLabel.Size = UDim2.new(1, -140, 0, 20)
+        descLabel.Position = UDim2.new(0, 65, 0, 42)
+        descLabel.Text = description
+        descLabel.TextColor3 = Colors.TextSecondary
+        descLabel.TextSize = 12
+        descLabel.Font = Enum.Font.Gotham
+        descLabel.TextXAlignment = Enum.TextXAlignment.Left
+        descLabel.BackgroundTransparency = 1
+        descLabel.ZIndex = 22
+        descLabel.Parent = btn
         
-        LoginBtn.Text = "⏳ " .. Language.Get("Verifying")
-        CreateTween(LoginBtn, {BackgroundColor3 = Color3.fromRGB(100, 150, 200)}, 0.3):Play()
-        CreateTween(KeyInputStroke, {Color = Colors.Warning}, 0.3):Play()
-        wait(0.8)
+        local clickBtn = Instance.new("TextButton")
+        clickBtn.Size = UDim2.new(0, 55, 0, 55)
+        clickBtn.Position = UDim2.new(1, -65, 0.5, -27)
+        clickBtn.Text = "▶"
+        clickBtn.TextColor3 = Colors.TextPrimary
+        clickBtn.TextSize = 20
+        clickBtn.Font = Enum.Font.GothamBold
+        clickBtn.BackgroundColor3 = Colors.Accent
+        clickBtn.BorderSizePixel = 0
+        clickBtn.ZIndex = 22
+        clickBtn.Parent = btn
+        AddCorner(clickBtn, 12)
         
-        local keySuccess, data = KeySystem.Verify(KeyInput.Text)
+        -- تأثير Hover
+        btn.MouseEnter:Connect(function()
+            CreateTween(btn, {BackgroundColor3 = Colors.Tertiary}, 0.2):Play()
+            CreateTween(clickBtn, {Size = UDim2.new(0, 60, 0, 60), Position = UDim2.new(1, -67, 0.5, -30)}, 0.2):Play()
+        end)
         
-        if keySuccess then
-            -- نجاح!
-            LoginBtn.Text = "✅ " .. Language.Get("Launching")
-            CreateTween(LoginBtn, {BackgroundColor3 = Colors.Success}, 0.3):Play()
-            CreateTween(KeyInputStroke, {Color = Colors.Success}, 0.3):Play()
-            
-            ShowNotification(Frame, "🎉 Welcome VIP! Access Granted", "success", 3)
-            
-            wait(1)
-            
-            -- إخفاء شاشة المفتاح بأنيميشن
-            CreateTween(KeyScreen, {Position = UDim2.new(0, 0, -1, 0)}, 0.5, Enum.EasingStyle.Back):Play()
-            wait(0.5)
-            KeyScreen.Visible = false
-            
-            -- إظهار عناصر VIP
-            KlimboBtn.Visible = true
-            KlimboBtn.Size = UDim2.new(0, 0, 0, 36)
-            CreateTween(KlimboBtn, {Size = UDim2.new(0, 100, 0, 36)}, 0.4, Enum.EasingStyle.Back):Play()
-            
-            UserInfo.Visible = true
-            -- نقل أزرار أخرى
-            LangBtn.Position = UDim2.new(1, -470, 0.5, -18)
-            MinBtn.Position = UDim2.new(1, -100, 0.5, -18)
-            CloseBtn.Position = UDim2.new(1, -55, 0.5, -18)
-            
-            -- إظهار المتصفح
-            ExplorerScreen.Visible = true
-            ExplorerScreen.Position = UDim2.new(0, 0, 1, 0)
-            CreateTween(ExplorerScreen, {Position = UDim2.new(0, 0, 0, 0)}, 0.5, Enum.EasingStyle.Back):Play()
-            
-            local Sidebar = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/Sidebar.lua", true))()
-            Sidebar.Create(ExplorerScreen)
-            
-        else
-            -- فشل
-            LoginBtn.Text = "❌ " .. Language.Get("Invalid")
-            CreateTween(LoginBtn, {BackgroundColor3 = Colors.Error}, 0.3):Play()
-            CreateTween(KeyInputStroke, {Color = Colors.Error}, 0.3):Play()
-            
-            -- اهتزاز حقل الإدخال
-            for i = 1, 3 do
-                CreateTween(KeyInputContainer, {Position = UDim2.new(0.075, 10, 0.45, 0)}, 0.05):Play()
-                wait(0.05)
-                CreateTween(KeyInputContainer, {Position = UDim2.new(0.075, -10, 0.45, 0)}, 0.05):Play()
-                wait(0.05)
-            end
-            CreateTween(KeyInputContainer, {Position = UDim2.new(0.075, 0, 0.45, 0)}, 0.05):Play()
-            
-            ShowNotification(Frame, "Invalid key! Please try again.", "error", 3)
-            
-            wait(2)
-            LoginBtn.Text = "🔓 " .. Language.Get("Verify")
-            CreateTween(LoginBtn, {BackgroundColor3 = Colors.Accent}, 0.3):Play()
-            CreateTween(KeyInputStroke, {Color = Colors.Accent, Transparency = 0.3}, 0.3):Play()
-        end
-    end)
-    
-    -- ═══════════════════════════════════════════════════════════════════════
-    -- 👑 زر KLIMBO - الوظيفة (مُصلح v3.1)
-    -- ═══════════════════════════════════════════════════════════════════════
-    KlimboBtn.MouseButton1Click:Connect(function()
-        -- تأثير الضغط
-        CreateTween(KlimboBtn, {Size = UDim2.new(0, 95, 0, 34)}, 0.1):Play()
-        wait(0.1)
-        CreateTween(KlimboBtn, {Size = UDim2.new(0, 100, 0, 36)}, 0.1):Play()
+        btn.MouseLeave:Connect(function()
+            CreateTween(btn, {BackgroundColor3 = Colors.Secondary}, 0.2):Play()
+            CreateTween(clickBtn, {Size = UDim2.new(0, 55, 0, 55), Position = UDim2.new(1, -65, 0.5, -27)}, 0.2):Play()
+        end)
         
-        if KlimboContainer.Visible then
-            -- ═══ إغلاق Klimbo ═══
-            CreateTween(KlimboContainer, {BackgroundTransparency = 1}, 0.3):Play()
+        clickBtn.MouseButton1Click:Connect(function()
+            CreateTween(clickBtn, {Size = UDim2.new(0, 50, 0, 50)}, 0.1):Play()
             wait(0.1)
-            for _, child in ipairs(KlimboContainer:GetChildren()) do
-                if child:IsA("Frame") then
-                    CreateTween(child, {Position = UDim2.new(0.5, 0, 1.5, 0)}, 0.3):Play()
-                end
+            CreateTween(clickBtn, {Size = UDim2.new(0, 55, 0, 55)}, 0.1):Play()
+            if callback then 
+                pcall(function()
+                    callback()
+                end)
             end
-            wait(0.3)
-            KlimboContainer.Visible = false
-            KlimboContainer:ClearAllChildren()
-            KlimboBtn.Text = "👑 KLIMBO"
-            
-            -- إظهار Explorer
-            ExplorerScreen.Visible = true
-        else
-            -- ═══ فتح Klimbo (مُصلح) ═══
-            -- منع الضغط المتكرر أثناء التحميل
-            if klimboLoading then return end
-            klimboLoading = true
-            
-            KlimboBtn.Text = "⏳ Loading"
-            ShowNotification(Frame, "👑 Loading KLIMBO Menu...", "info", 2)
-            
-            -- التحميل في thread منفصل حتى لا يجمّد الواجهة
-            spawn(function()
-                local KlimboMenu = nil
-                local loadSuccess = false
-                
-                -- محاولة التحميل مع إعادة المحاولة 3 مرات
-                for attempt = 1, 3 do
-                    local ok, result = pcall(function()
-                        local code = game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/KlimboMenu.lua", true)
-                        
-                        -- التحقق من اكتمال الملف (الملف الأصلي ~80KB)
-                        if not code or #code < 5000 then
-                            error("Incomplete download: " .. tostring(code and #code or 0) .. " bytes")
-                        end
-                        
-                        local fn = loadstring(code)
-                        if not fn then
-                            error("loadstring failed - file may be corrupted")
-                        end
-                        
-                        return fn()
-                    end)
-                    
-                    if ok and result and type(result) == "table" and type(result.Create) == "function" then
-                        KlimboMenu = result
-                        loadSuccess = true
-                        print("✅ KlimboMenu loaded successfully (attempt " .. attempt .. ")")
-                        break
-                    else
-                        warn("⚠️ KlimboMenu load attempt " .. attempt .. "/3 failed: " .. tostring(result))
-                    end
-                    
-                    if attempt < 3 then
-                        task.wait(1)
-                    end
-                end
-                
-                if loadSuccess and KlimboMenu then
-                    -- ✅ التحميل نجح - الآن نُظهر الحاوية
-                    KlimboContainer.Visible = true
-                    ExplorerScreen.Visible = false
-                    KlimboBtn.Text = "◀ BACK"
-                    
-                    -- إنشاء القائمة مع حماية pcall
-                    local createOk, createErr = pcall(function()
-                        KlimboMenu.Create(KlimboContainer)
-                    end)
-                    
-                    if createOk then
-                        ShowNotification(Frame, "👑 KLIMBO Menu Ready!", "success", 2)
-                        print("🎉 KlimboMenu created successfully!")
-                    else
-                        -- فشل Create - نعود للحالة الطبيعية
-                        warn("❌ KlimboMenu.Create error: " .. tostring(createErr))
-                        ShowNotification(Frame, "❌ Menu error - try again", "error", 4)
-                        KlimboContainer.Visible = false
-                        KlimboContainer:ClearAllChildren()
-                        ExplorerScreen.Visible = true
-                        KlimboBtn.Text = "👑 KLIMBO"
-                    end
-                else
-                    -- ❌ فشل التحميل بعد 3 محاولات
-                    ShowNotification(Frame, "❌ Failed to load KLIMBO Menu after 3 attempts", "error", 4)
-                    KlimboContainer.Visible = false
-                    ExplorerScreen.Visible = true
-                    KlimboBtn.Text = "👑 KLIMBO"
-                end
-                
-                klimboLoading = false
-            end)
+        end)
+        
+        return btn
+    end
+    
+    -- ════════════════════════════════════════════════════════════════════════
+    -- 📝 إنشاء الأزرار
+    -- ════════════════════════════════════════════════════════════════════════
+    
+    -- زر File Explorer
+    CreateButton(scrollFrame, "📁", "File Explorer", "Browse and edit game files", function()
+        ShowNotification(mainFrame, "Opening File Explorer...", "info", 2)
+        -- سيتم إضافة الكود هنا
+        if Modules and Modules.FileViewer and Modules.FileViewer.Create then
+            Modules.FileViewer.Create()
         end
     end)
-
-    -- جعل النافذة قابلة للسحب
-    local dragging, dragInput, dragStart, startPos
     
-    TopBar.InputBegan:Connect(function(input)
+    -- زر Image Editor
+    CreateButton(scrollFrame, "🖼️", "Image Editor", "Edit and view images", function()
+        ShowNotification(mainFrame, "Opening Image Editor...", "info", 2)
+        if Modules and Modules.ImageEditor and Modules.ImageEditor.Create then
+            Modules.ImageEditor.Create()
+        end
+    end)
+    
+    -- ⭐⭐⭐ زر KLIMBO MENU (المُحدّث والمُصلح) ⭐⭐⭐
+    CreateButton(scrollFrame, "👑", "Klimbo Menu", "Advanced Features & Cheats", function()
+        print("🔥 [KLIMBO] Button clicked!")
+        ShowNotification(mainFrame, "Loading KLIMBO Menu...", "info", 1)
+        
+        -- تحميل KLIMBO Menu
+        print("📥 [KLIMBO] Loading from GitHub...")
+        local success, KlimboMenu = pcall(function()
+            return loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/KlimboMenu.lua", true))()
+        end)
+        
+        if not success then
+            warn("❌ [KLIMBO] Failed to load:", KlimboMenu)
+            ShowNotification(mainFrame, "Failed to load KLIMBO Menu!", "error", 3)
+            return
+        end
+        
+        if not KlimboMenu then
+            warn("❌ [KLIMBO] Module is nil!")
+            ShowNotification(mainFrame, "KLIMBO Menu not found!", "error", 3)
+            return
+        end
+        
+        print("✅ [KLIMBO] Module loaded successfully!")
+        
+        -- إنشاء القائمة (مرة واحدة فقط)
+        if not _G.KlimboMenuCreated then
+            print("🔧 [KLIMBO] Creating menu for the first time...")
+            local createSuccess = pcall(function()
+                KlimboMenu.Create(game.CoreGui, mainFrame)
+                _G.KlimboMenuCreated = true
+                _G.KlimboMenuInstance = KlimboMenu
+                print("✅ [KLIMBO] Menu created successfully!")
+            end)
+            
+            if not createSuccess then
+                warn("❌ [KLIMBO] Failed to create menu!")
+                ShowNotification(mainFrame, "Failed to create KLIMBO Menu!", "error", 3)
+                return
+            end
+        else
+            print("ℹ️ [KLIMBO] Menu already exists, using cached instance")
+            KlimboMenu = _G.KlimboMenuInstance
+        end
+        
+        -- عرض رسالة النجاح
+        task.wait(0.5)
+        ShowNotification(mainFrame, "KLIMBO Menu Ready!", "success", 2)
+        print("✅ [KLIMBO] Ready message shown")
+        
+        -- فتح القائمة
+        task.wait(0.3)
+        if KlimboMenu and KlimboMenu.Show then
+            print("🔓 [KLIMBO] Opening menu...")
+            local showSuccess = pcall(function()
+                KlimboMenu.Show()
+            end)
+            
+            if showSuccess then
+                print("✅ [KLIMBO] Menu opened successfully!")
+            else
+                warn("❌ [KLIMBO] Failed to show menu!")
+                ShowNotification(mainFrame, "Failed to open KLIMBO Menu!", "error", 3)
+            end
+        else
+            warn("❌ [KLIMBO] Show function not found!")
+            ShowNotification(mainFrame, "KLIMBO Menu error!", "error", 3)
+        end
+    end)
+    
+    -- زر Sound Editor
+    CreateButton(scrollFrame, "🔊", "Sound Editor", "Edit and play sounds", function()
+        ShowNotification(mainFrame, "Opening Sound Editor...", "info", 2)
+        -- سيتم إضافة الكود هنا
+    end)
+    
+    -- زر Game Analyzer
+    CreateButton(scrollFrame, "🎮", "Game Analyzer", "Analyze game structure", function()
+        ShowNotification(mainFrame, "Opening Game Analyzer...", "info", 2)
+        if Modules and Modules.GameAnalyzer and Modules.GameAnalyzer.Analyze then
+            Modules.GameAnalyzer.Analyze()
+        end
+    end)
+    
+    -- زر Advanced Tools
+    CreateButton(scrollFrame, "🛠️", "Advanced Tools", "Developer utilities", function()
+        ShowNotification(mainFrame, "Opening Advanced Tools...", "info", 2)
+        if Modules and Modules.AdvancedTools and Modules.AdvancedTools.Create then
+            Modules.AdvancedTools.Create()
+        end
+    end)
+    
+    -- زر Settings
+    CreateButton(scrollFrame, "⚙️", "Settings", "Configure WiliExplorer", function()
+        ShowNotification(mainFrame, "Opening Settings...", "info", 2)
+        -- سيتم إضافة الكود هنا
+    end)
+    
+    -- زر About
+    CreateButton(scrollFrame, "ℹ️", "About", "Version and credits", function()
+        ShowNotification(mainFrame, "WiliExplorer v2.0 - By ilyesguers", "info", 3)
+    end)
+    
+    -- السحب
+    local dragging = false
+    local dragStart, startPos
+    
+    topBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
-            startPos = Frame.Position
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-    
-    TopBar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
+            startPos = mainFrame.Position
         end
     end)
     
     UserInputService.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
-            Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            mainFrame.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
         end
     end)
-
-    -- ═══════════════════════════════
-    -- ⌨️ اختصارات لوحة المفاتيح
-    -- ═══════════════════════════════
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed then return end
-        
-        -- Escape لإغلاق/تصغير
-        if input.KeyCode == Enum.KeyCode.Escape then
-            if KlimboContainer.Visible then
-                -- إغلاق Klimbo
-                KlimboBtn.MouseButton1Click:Fire()
-            else
-                minimized = not minimized
-                MinBtn.MouseButton1Click:Fire()
-            end
-        end
-        
-        -- K لفتح Klimbo
-        if input.KeyCode == Enum.KeyCode.K and KlimboBtn.Visible then
-            KlimboBtn.MouseButton1Click:Fire()
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
         end
     end)
-
-    print("🚀 WiliExplorer VIP UI Ready!")
-    print("👑 Press K to toggle KLIMBO Menu")
+    
+    -- شاشة التحميل
+    local loadingScreen = CreateLoadingScreen(mainFrame)
+    wait(2)
+    CreateTween(loadingScreen, {BackgroundTransparency = 1}, 0.5):Play()
+    for _, child in ipairs(loadingScreen:GetDescendants()) do
+        if child:IsA("GuiObject") then
+            CreateTween(child, {BackgroundTransparency = 1, TextTransparency = 1, ImageTransparency = 1}, 0.5):Play()
+        end
+    end
+    wait(0.5)
+    loadingScreen:Destroy()
+    
+    -- أنيميشن الفتح
+    mainFrame.Size = UDim2.new(0, 0, 0, 0)
+    mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    CreateTween(mainFrame, {
+        Size = UDim2.new(0, 450, 0, 600),
+        Position = UDim2.new(0.5, -225, 0.5, -300)
+    }, 0.5, Enum.EasingStyle.Back):Play()
+    
+    print("✅ [MainFrame] WiliExplorer UI Created Successfully!")
+    ShowNotification(mainFrame, "WiliExplorer Ready!", "success", 2)
     
     return ScreenGui
 end
+
+-- ═══════════════════════════════════════════════════════════════════════════
+
+print("👑 MainFrame v3.2 - KLIMBO FIX COMPLETE Ready!")
 
 return MainFrame
