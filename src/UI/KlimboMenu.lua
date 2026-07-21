@@ -7,8 +7,9 @@
     ║  ██║  ██╗███████╗██║██║ ╚═╝ ██║██████╔╝╚██████╔╝                      ║
     ║  ╚═╝  ╚═╝╚══════╝╚═╝╚═╝     ╚═╝╚═════╝  ╚═════╝                       ║
     ║                                                                        ║
-    ║  🔥 KLIMBO MENU v1.0 - Ultimate Game Tools 🔥                         ║
-    ║  Works on: Blox Fruits, Brookhaven, MM2, Adopt Me, & More!            ║
+    ║  🔥 KLIMBO MENU v2.0 - Ultimate Game Tools 🔥                         ║
+    ║  ✅ Fixed: ZIndex rendering issue                                      ║
+    ║  ✅ Fixed: UI visibility after load                                    ║
     ╚═══════════════════════════════════════════════════════════════════════╝
 ]]
 
@@ -31,9 +32,9 @@ local Mouse = LocalPlayer:GetMouse()
 -- 🎨 ثيم KLIMBO
 -- ═══════════════════════════════════════════════════════════════════════
 local Theme = {
-    Primary = Color3.fromRGB(255, 0, 128),      -- وردي/فوشيا
-    Secondary = Color3.fromRGB(0, 255, 255),    -- سماوي
-    Accent = Color3.fromRGB(255, 215, 0),       -- ذهبي
+    Primary = Color3.fromRGB(255, 0, 128),
+    Secondary = Color3.fromRGB(0, 255, 255),
+    Accent = Color3.fromRGB(255, 215, 0),
     Dark = Color3.fromRGB(10, 10, 20),
     Darker = Color3.fromRGB(5, 5, 15),
     Card = Color3.fromRGB(20, 20, 40),
@@ -71,20 +72,20 @@ local AntiKick = {}
 function AntiKick.Enable()
     ActiveFeatures.AntiKick = true
     
-    -- Hook kick function
-    local mt = getrawmetatable(game)
-    if setreadonly then setreadonly(mt, false) end
-    
-    local oldNamecall = mt.__namecall
-    mt.__namecall = newcclosure(function(self, ...)
-        local method = getnamecallmethod()
-        if method == "Kick" and ActiveFeatures.AntiKick then
-            return nil
-        end
-        return oldNamecall(self, ...)
+    pcall(function()
+        local mt = getrawmetatable(game)
+        if setreadonly then setreadonly(mt, false) end
+        
+        local oldNamecall = mt.__namecall
+        mt.__namecall = newcclosure(function(self, ...)
+            local method = getnamecallmethod()
+            if method == "Kick" and ActiveFeatures.AntiKick then
+                return nil
+            end
+            return oldNamecall(self, ...)
+        end)
     end)
     
-    -- Alternative method
     pcall(function()
         for _, connection in pairs(getconnections(LocalPlayer.OnTeleport)) do
             if connection.Function then
@@ -113,16 +114,16 @@ function ESP.CreateESP(player)
     local espData = {
         Highlight = nil,
         BillboardGui = nil,
-        Tracer = nil
+        Connection = nil
     }
     
     local function UpdateESP()
+        if not ActiveFeatures.ESP then return end
         if not player.Character then return end
         local hrp = player.Character:FindFirstChild("HumanoidRootPart")
         local humanoid = player.Character:FindFirstChild("Humanoid")
         if not hrp or not humanoid then return end
         
-        -- Highlight
         if not espData.Highlight or not espData.Highlight.Parent then
             espData.Highlight = Instance.new("Highlight")
             espData.Highlight.Name = "KlimboESP"
@@ -133,7 +134,6 @@ function ESP.CreateESP(player)
             espData.Highlight.Parent = player.Character
         end
         
-        -- Team color
         local isEnemy = true
         if player.Team and LocalPlayer.Team then
             isEnemy = player.Team ~= LocalPlayer.Team
@@ -142,7 +142,6 @@ function ESP.CreateESP(player)
         espData.Highlight.FillColor = isEnemy and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
         espData.Highlight.OutlineColor = isEnemy and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(100, 255, 100)
         
-        -- Name & Info Billboard
         if not espData.BillboardGui or not espData.BillboardGui.Parent then
             espData.BillboardGui = Instance.new("BillboardGui")
             espData.BillboardGui.Name = "KlimboInfo"
@@ -176,15 +175,14 @@ function ESP.CreateESP(player)
             infoLabel.Parent = espData.BillboardGui
         end
         
-        -- Update info
-        local distance = (hrp.Position - (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character.HumanoidRootPart.Position or Vector3.new(0,0,0))).Magnitude
+        local myHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local distance = myHRP and (hrp.Position - myHRP.Position).Magnitude or 0
         local health = humanoid.Health
         local maxHealth = humanoid.MaxHealth
         
         espData.BillboardGui.NameLabel.Text = player.Name
         espData.BillboardGui.InfoLabel.Text = string.format("❤️ %d/%d | 📏 %dm", math.floor(health), math.floor(maxHealth), math.floor(distance))
         
-        -- Health bar color
         local healthPercent = health / maxHealth
         if healthPercent > 0.5 then
             espData.BillboardGui.InfoLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
@@ -197,7 +195,7 @@ function ESP.CreateESP(player)
     
     espData.Connection = RunService.RenderStepped:Connect(function()
         if ActiveFeatures.ESP then
-            UpdateESP()
+            pcall(UpdateESP)
         end
     end)
     
@@ -206,15 +204,9 @@ end
 
 function ESP.RemoveESP(player)
     if ESPObjects[player] then
-        if ESPObjects[player].Highlight then
-            ESPObjects[player].Highlight:Destroy()
-        end
-        if ESPObjects[player].BillboardGui then
-            ESPObjects[player].BillboardGui:Destroy()
-        end
-        if ESPObjects[player].Connection then
-            ESPObjects[player].Connection:Disconnect()
-        end
+        pcall(function() if ESPObjects[player].Highlight then ESPObjects[player].Highlight:Destroy() end end)
+        pcall(function() if ESPObjects[player].BillboardGui then ESPObjects[player].BillboardGui:Destroy() end end)
+        pcall(function() if ESPObjects[player].Connection then ESPObjects[player].Connection:Disconnect() end end)
         ESPObjects[player] = nil
     end
 end
@@ -268,7 +260,6 @@ function Aimbot.GetClosestPlayer()
             local targetPart = char:FindFirstChild(Aimbot.TargetPart) or hrp
             
             if hrp and humanoid and humanoid.Health > 0 and targetPart then
-                -- Check team
                 local isEnemy = true
                 if player.Team and LocalPlayer.Team then
                     isEnemy = player.Team ~= LocalPlayer.Team
@@ -339,7 +330,6 @@ function Invisibility.Enable()
     local char = LocalPlayer.Character
     if not char then return end
     
-    -- Method 1: Local invisibility
     for _, part in ipairs(char:GetDescendants()) do
         if part:IsA("BasePart") then
             part.LocalTransparencyModifier = 1
@@ -347,18 +337,6 @@ function Invisibility.Enable()
             part.Transparency = 1
         end
     end
-    
-    -- Method 2: Destroy for others (Blox Fruits style)
-    pcall(function()
-        local fakeChar = char:Clone()
-        fakeChar.Name = "FakeCharacter"
-        fakeChar.Parent = Workspace
-        
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            hrp.Transparency = 1
-        end
-    end)
     
     print("👻 Invisibility Enabled!")
 end
@@ -377,12 +355,6 @@ function Invisibility.Disable()
         end
     end
     
-    -- Remove fake character
-    pcall(function()
-        local fake = Workspace:FindFirstChild("FakeCharacter")
-        if fake then fake:Destroy() end
-    end)
-    
     print("👻 Invisibility Disabled!")
 end
 
@@ -393,15 +365,8 @@ local ViewCamera = {}
 
 function ViewCamera.ViewPlayer(player)
     if not player or not player.Character then return end
-    
     ViewingPlayer = player
-    
-    local hrp = player.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    
-    -- Spectate mode
     Camera.CameraSubject = player.Character:FindFirstChild("Humanoid")
-    
     print("📷 Viewing: " .. player.Name)
 end
 
@@ -421,24 +386,20 @@ local StealTool = {}
 function StealTool.StealFromPlayer(player)
     if not player or not player.Character then return end
     
-    -- Check for equipped tool
     for _, child in ipairs(player.Character:GetChildren()) do
         if child:IsA("Tool") then
             pcall(function()
-                -- Method 1: Direct parent change
                 child.Parent = LocalPlayer.Backpack
-                print("🔫 Stole: " .. child.Name .. " from " .. player.Name)
+                print("🔫 Stole: " .. child.Name)
             end)
         end
     end
     
-    -- Check backpack too
     if player:FindFirstChild("Backpack") then
         for _, tool in ipairs(player.Backpack:GetChildren()) do
             if tool:IsA("Tool") then
                 pcall(function()
                     tool.Parent = LocalPlayer.Backpack
-                    print("🔫 Stole from backpack: " .. tool.Name)
                 end)
             end
         end
@@ -446,14 +407,11 @@ function StealTool.StealFromPlayer(player)
 end
 
 function StealTool.StealFromAll()
-    local count = 0
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer then
             StealTool.StealFromPlayer(player)
-            count = count + 1
         end
     end
-    print("🔫 Attempted steal from " .. count .. " players")
 end
 
 -- ═══════════════════════════════════════════════════════════════════════
@@ -464,16 +422,11 @@ FreezePlayer.FrozenPlayers = {}
 
 function FreezePlayer.Freeze(player)
     if not player or not player.Character then return end
-    
     local hrp = player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
     
-    -- Try to anchor (may not work on server-side characters)
-    pcall(function()
-        hrp.Anchored = true
-    end)
+    pcall(function() hrp.Anchored = true end)
     
-    -- Visual freeze effect
     local freezeEffect = Instance.new("Part")
     freezeEffect.Name = "KlimboFreeze"
     freezeEffect.Size = Vector3.new(5, 7, 5)
@@ -486,22 +439,16 @@ function FreezePlayer.Freeze(player)
     freezeEffect.Parent = Workspace
     
     FreezePlayer.FrozenPlayers[player] = {hrp = hrp, effect = freezeEffect}
-    
     print("❄️ Froze: " .. player.Name)
 end
 
 function FreezePlayer.Unfreeze(player)
     if FreezePlayer.FrozenPlayers[player] then
-        pcall(function()
-            FreezePlayer.FrozenPlayers[player].hrp.Anchored = false
-        end)
-        
+        pcall(function() FreezePlayer.FrozenPlayers[player].hrp.Anchored = false end)
         if FreezePlayer.FrozenPlayers[player].effect then
             FreezePlayer.FrozenPlayers[player].effect:Destroy()
         end
-        
         FreezePlayer.FrozenPlayers[player] = nil
-        print("❄️ Unfroze: " .. player.Name)
     end
 end
 
@@ -512,7 +459,7 @@ function FreezePlayer.UnfreezeAll()
 end
 
 -- ═══════════════════════════════════════════════════════════════════════
--- 📍 SAFE TELEPORT (Anti-Detection)
+-- 📍 SAFE TELEPORT
 -- ═══════════════════════════════════════════════════════════════════════
 local SafeTeleport = {}
 
@@ -522,12 +469,8 @@ function SafeTeleport.ToPosition(position)
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
     
-    -- Enable anti-kick first
-    if not ActiveFeatures.AntiKick then
-        AntiKick.Enable()
-    end
+    if not ActiveFeatures.AntiKick then AntiKick.Enable() end
     
-    -- Smooth teleport (harder to detect)
     local distance = (hrp.Position - position).Magnitude
     local steps = math.max(5, math.floor(distance / 50))
     
@@ -539,16 +482,14 @@ function SafeTeleport.ToPosition(position)
     end
     
     hrp.CFrame = CFrame.new(position)
-    print("📍 Teleported safely!")
+    print("📍 Teleported!")
 end
 
 function SafeTeleport.ToPlayer(player)
     if not player or not player.Character then return end
     local hrp = player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
-    
     SafeTeleport.ToPosition(hrp.Position + Vector3.new(5, 0, 0))
-    print("📍 Teleported to: " .. player.Name)
 end
 
 function SafeTeleport.ToMouse()
@@ -567,12 +508,9 @@ function PlayerMods.SetSpeed(speed)
     local char = LocalPlayer.Character
     if char then
         local humanoid = char:FindFirstChild("Humanoid")
-        if humanoid then
-            humanoid.WalkSpeed = speed
-        end
+        if humanoid then humanoid.WalkSpeed = speed end
     end
     
-    -- Keep speed on respawn
     if not PlayerMods.SpeedConnection then
         PlayerMods.SpeedConnection = LocalPlayer.CharacterAdded:Connect(function(char)
             task.wait(0.5)
@@ -584,60 +522,48 @@ function PlayerMods.SetSpeed(speed)
     end
     
     ActiveFeatures.Speed = true
-    print("⚡ Speed set to: " .. speed)
+    print("⚡ Speed: " .. speed)
 end
 
 function PlayerMods.SetJump(power)
     local char = LocalPlayer.Character
     if char then
         local humanoid = char:FindFirstChild("Humanoid")
-        if humanoid then
-            humanoid.JumpPower = power
-        end
+        if humanoid then humanoid.JumpPower = power end
     end
-    print("🦘 Jump set to: " .. power)
 end
 
 function PlayerMods.InfiniteJump()
     ActiveFeatures.InfiniteJump = true
-    
     PlayerMods.JumpConnection = UserInputService.JumpRequest:Connect(function()
         if ActiveFeatures.InfiniteJump then
             local char = LocalPlayer.Character
             if char then
                 local humanoid = char:FindFirstChild("Humanoid")
-                if humanoid then
-                    humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-                end
+                if humanoid then humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end
             end
         end
     end)
-    
     print("🦘 Infinite Jump Enabled!")
 end
 
 function PlayerMods.Noclip()
     ActiveFeatures.Noclip = true
-    
     PlayerMods.NoclipConnection = RunService.Stepped:Connect(function()
         if ActiveFeatures.Noclip then
             local char = LocalPlayer.Character
             if char then
                 for _, part in ipairs(char:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
+                    if part:IsA("BasePart") then part.CanCollide = false end
                 end
             end
         end
     end)
-    
     print("👻 Noclip Enabled!")
 end
 
 function PlayerMods.Fly()
     ActiveFeatures.Fly = true
-    
     local char = LocalPlayer.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
@@ -656,39 +582,26 @@ function PlayerMods.Fly()
     bodyGyro.Parent = hrp
     
     PlayerMods.FlyConnection = RunService.RenderStepped:Connect(function()
-        if ActiveFeatures.Fly and hrp then
+        if ActiveFeatures.Fly and hrp and hrp.Parent then
             local direction = Vector3.new(0, 0, 0)
             
-            if UserInputService:IsKeyDown(Enum.KeyCode.W) then
-                direction = direction + Camera.CFrame.LookVector
-            end
-            if UserInputService:IsKeyDown(Enum.KeyCode.S) then
-                direction = direction - Camera.CFrame.LookVector
-            end
-            if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-                direction = direction - Camera.CFrame.RightVector
-            end
-            if UserInputService:IsKeyDown(Enum.KeyCode.D) then
-                direction = direction + Camera.CFrame.RightVector
-            end
-            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-                direction = direction + Vector3.new(0, 1, 0)
-            end
-            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-                direction = direction - Vector3.new(0, 1, 0)
-            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then direction = direction + Camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then direction = direction - Camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then direction = direction - Camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction = direction + Camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then direction = direction + Vector3.new(0, 1, 0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then direction = direction - Vector3.new(0, 1, 0) end
             
             bodyVelocity.Velocity = direction * FlySpeed
             bodyGyro.CFrame = Camera.CFrame
         end
     end)
     
-    print("🚀 Fly Enabled! (Use WASD + Space/Ctrl)")
+    print("🚀 Fly Enabled!")
 end
 
 function PlayerMods.StopFly()
     ActiveFeatures.Fly = false
-    
     local char = LocalPlayer.Character
     if char then
         local hrp = char:FindFirstChild("HumanoidRootPart")
@@ -699,16 +612,12 @@ function PlayerMods.StopFly()
             if bg then bg:Destroy() end
         end
     end
-    
-    if PlayerMods.FlyConnection then
-        PlayerMods.FlyConnection:Disconnect()
-    end
-    
+    if PlayerMods.FlyConnection then PlayerMods.FlyConnection:Disconnect() end
     print("🚀 Fly Disabled!")
 end
 
 -- ═══════════════════════════════════════════════════════════════════════
--- 🎮 GAME-SPECIFIC FEATURES (Blox Fruits, etc.)
+-- 🎮 GAME DETECTION
 -- ═══════════════════════════════════════════════════════════════════════
 local GameSpecific = {}
 
@@ -716,19 +625,14 @@ function GameSpecific.DetectGame()
     local placeId = game.PlaceId
     local gameName = "Unknown"
     
-    -- Blox Fruits
     if placeId == 2753915549 or placeId == 4442272183 then
         gameName = "Blox Fruits"
-    -- Brookhaven
     elseif placeId == 4924922222 then
         gameName = "Brookhaven"
-    -- Murder Mystery 2
     elseif placeId == 142823291 then
         gameName = "MM2"
-    -- Adopt Me
     elseif placeId == 920587237 then
         gameName = "Adopt Me"
-    -- Jailbreak
     elseif placeId == 606849621 then
         gameName = "Jailbreak"
     end
@@ -762,11 +666,21 @@ function GameSpecific.BloxFruitsFeatures()
     }
 end
 
--- ═══════════════════════════════════════════════════════════════════════
--- 🖥️ CREATE KLIMBO MENU UI
--- ═══════════════════════════════════════════════════════════════════════
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 🖥️ CREATE KLIMBO MENU UI (الإصلاح الرئيسي)
+-- ═══════════════════════════════════════════════════════════════════════════
 function KlimboMenu.Create(parent)
+    if not parent then
+        warn("❌ KlimboMenu.Create: parent is nil!")
+        return nil
+    end
+    
     local gameName, placeId = GameSpecific.DetectGame()
+    
+    -- ═══════════════════════════════════════════════════════════════════
+    -- 🔧 الإصلاح: ZIndex الأساسي = 51 (أعلى من KlimboContainer الذي = 50)
+    -- ═══════════════════════════════════════════════════════════════════
+    local BASE_ZINDEX = 51
     
     -- Main Frame
     local MainFrame = Instance.new("Frame")
@@ -774,7 +688,7 @@ function KlimboMenu.Create(parent)
     MainFrame.Size = UDim2.new(1, 0, 1, 0)
     MainFrame.BackgroundColor3 = Theme.Dark
     MainFrame.BorderSizePixel = 0
-    MainFrame.ZIndex = 100
+    MainFrame.ZIndex = BASE_ZINDEX
     MainFrame.Parent = parent
     
     local Gradient = Instance.new("UIGradient")
@@ -788,10 +702,10 @@ function KlimboMenu.Create(parent)
     
     -- Header
     local Header = Instance.new("Frame")
-    Header.Size = UDim2.new(1, 0, 0, 70)
+    Header.Size = UDim2.new(1, 0, 0, 65)
     Header.BackgroundColor3 = Theme.Darker
     Header.BorderSizePixel = 0
-    Header.ZIndex = 101
+    Header.ZIndex = BASE_ZINDEX + 1
     Header.Parent = MainFrame
     
     local HeaderGradient = Instance.new("UIGradient")
@@ -803,91 +717,97 @@ function KlimboMenu.Create(parent)
     HeaderGradient.Parent = Header
     
     local Logo = Instance.new("TextLabel")
-    Logo.Size = UDim2.new(1, 0, 0, 35)
+    Logo.Size = UDim2.new(1, 0, 0, 32)
     Logo.Position = UDim2.new(0, 0, 0, 5)
     Logo.Text = "👑 KLIMBO MENU 👑"
     Logo.TextColor3 = Theme.Accent
-    Logo.TextSize = 24
+    Logo.TextSize = 22
     Logo.Font = Enum.Font.GothamBlack
     Logo.BackgroundTransparency = 1
-    Logo.ZIndex = 102
+    Logo.ZIndex = BASE_ZINDEX + 2
     Logo.Parent = Header
     
     local GameLabel = Instance.new("TextLabel")
-    GameLabel.Size = UDim2.new(1, 0, 0, 20)
-    GameLabel.Position = UDim2.new(0, 0, 0, 42)
+    GameLabel.Size = UDim2.new(1, 0, 0, 18)
+    GameLabel.Position = UDim2.new(0, 0, 0, 38)
     GameLabel.Text = "🎮 " .. gameName .. " | ID: " .. placeId
     GameLabel.TextColor3 = Theme.TextDim
-    GameLabel.TextSize = 12
+    GameLabel.TextSize = 11
     GameLabel.Font = Enum.Font.Gotham
     GameLabel.BackgroundTransparency = 1
-    GameLabel.ZIndex = 102
+    GameLabel.ZIndex = BASE_ZINDEX + 2
     GameLabel.Parent = Header
     
     -- Content
     local Content = Instance.new("ScrollingFrame")
-    Content.Size = UDim2.new(1, -20, 1, -90)
-    Content.Position = UDim2.new(0, 10, 0, 80)
+    Content.Size = UDim2.new(1, -16, 1, -80)
+    Content.Position = UDim2.new(0, 8, 0, 72)
     Content.BackgroundTransparency = 1
     Content.ScrollBarThickness = 5
     Content.ScrollBarImageColor3 = Theme.Primary
     Content.CanvasSize = UDim2.new(0, 0, 0, 1200)
-    Content.ZIndex = 101
+    Content.ZIndex = BASE_ZINDEX + 1
     Content.Parent = MainFrame
     
     local Layout = Instance.new("UIListLayout")
-    Layout.Padding = UDim.new(0, 10)
+    Layout.Padding = UDim.new(0, 8)
     Layout.Parent = Content
     
-    -- ═══════════════════════════════
-    -- دالة إنشاء زر
-    -- ═══════════════════════════════
+    local ContentPad = Instance.new("UIPadding")
+    ContentPad.PaddingLeft = UDim.new(0, 4)
+    ContentPad.PaddingRight = UDim.new(0, 4)
+    ContentPad.PaddingTop = UDim.new(0, 4)
+    ContentPad.Parent = Content
+    
+    -- ═══════════════════════════════════════════════════════════════════
+    -- دوال إنشاء العناصر
+    -- ═══════════════════════════════════════════════════════════════════
     local function CreateButton(name, icon, color, callback, isToggle)
         local Btn = Instance.new("TextButton")
-        Btn.Size = UDim2.new(1, -10, 0, 50)
+        Btn.Size = UDim2.new(1, -8, 0, 48)
         Btn.BackgroundColor3 = Theme.Card
         Btn.Text = ""
         Btn.AutoButtonColor = false
-        Btn.ZIndex = 102
+        Btn.ZIndex = BASE_ZINDEX + 2
         Btn.Parent = Content
-        Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 12)
+        Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 10)
         
         local BtnStroke = Instance.new("UIStroke")
         BtnStroke.Color = color
-        BtnStroke.Thickness = 2
+        BtnStroke.Thickness = 1.5
         BtnStroke.Transparency = 0.5
         BtnStroke.Parent = Btn
         
-        local Icon = Instance.new("TextLabel")
-        Icon.Size = UDim2.new(0, 40, 0, 40)
-        Icon.Position = UDim2.new(0, 10, 0.5, -20)
-        Icon.Text = icon
-        Icon.TextSize = 24
-        Icon.BackgroundTransparency = 1
-        Icon.ZIndex = 103
-        Icon.Parent = Btn
+        local IconLbl = Instance.new("TextLabel")
+        IconLbl.Size = UDim2.new(0, 38, 0, 38)
+        IconLbl.Position = UDim2.new(0, 8, 0.5, -19)
+        IconLbl.Text = icon
+        IconLbl.TextSize = 22
+        IconLbl.BackgroundTransparency = 1
+        IconLbl.ZIndex = BASE_ZINDEX + 3
+        IconLbl.Parent = Btn
         
-        local Name = Instance.new("TextLabel")
-        Name.Size = UDim2.new(1, -120, 1, 0)
-        Name.Position = UDim2.new(0, 55, 0, 0)
-        Name.Text = name
-        Name.TextColor3 = Theme.Text
-        Name.TextSize = 14
-        Name.Font = Enum.Font.GothamBold
-        Name.TextXAlignment = Enum.TextXAlignment.Left
-        Name.BackgroundTransparency = 1
-        Name.ZIndex = 103
-        Name.Parent = Btn
+        local NameLbl = Instance.new("TextLabel")
+        NameLbl.Size = UDim2.new(1, -115, 1, 0)
+        NameLbl.Position = UDim2.new(0, 50, 0, 0)
+        NameLbl.Text = name
+        NameLbl.TextColor3 = Theme.Text
+        NameLbl.TextSize = 13
+        NameLbl.Font = Enum.Font.GothamBold
+        NameLbl.TextXAlignment = Enum.TextXAlignment.Left
+        NameLbl.BackgroundTransparency = 1
+        NameLbl.ZIndex = BASE_ZINDEX + 3
+        NameLbl.Parent = Btn
         
         local Status = Instance.new("TextLabel")
-        Status.Size = UDim2.new(0, 50, 0, 25)
-        Status.Position = UDim2.new(1, -60, 0.5, -12)
+        Status.Size = UDim2.new(0, 48, 0, 24)
+        Status.Position = UDim2.new(1, -56, 0.5, -12)
         Status.Text = isToggle and "OFF" or "▶"
         Status.TextColor3 = isToggle and Theme.Danger or color
-        Status.TextSize = 12
+        Status.TextSize = 11
         Status.Font = Enum.Font.GothamBold
         Status.BackgroundColor3 = Theme.Darker
-        Status.ZIndex = 103
+        Status.ZIndex = BASE_ZINDEX + 3
         Status.Parent = Btn
         Instance.new("UICorner", Status).CornerRadius = UDim.new(0, 6)
         
@@ -903,12 +823,11 @@ function KlimboMenu.Create(parent)
             callback(isEnabled)
         end)
         
-        -- Hover
         Btn.MouseEnter:Connect(function()
-            TweenService:Create(Btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(35, 35, 60)}):Play()
+            TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(35, 35, 60)}):Play()
         end)
         Btn.MouseLeave:Connect(function()
-            TweenService:Create(Btn, TweenInfo.new(0.2), {BackgroundColor3 = Theme.Card}):Play()
+            TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundColor3 = Theme.Card}):Play()
         end)
         
         return Btn
@@ -916,20 +835,20 @@ function KlimboMenu.Create(parent)
     
     local function CreateSection(name)
         local Section = Instance.new("TextLabel")
-        Section.Size = UDim2.new(1, -10, 0, 30)
+        Section.Size = UDim2.new(1, -8, 0, 28)
         Section.Text = "━━━ " .. name .. " ━━━"
         Section.TextColor3 = Theme.Primary
-        Section.TextSize = 14
+        Section.TextSize = 13
         Section.Font = Enum.Font.GothamBold
         Section.BackgroundTransparency = 1
-        Section.ZIndex = 102
+        Section.ZIndex = BASE_ZINDEX + 2
         Section.Parent = Content
         return Section
     end
     
-    -- ═══════════════════════════════
+    -- ═══════════════════════════════════════════════════════════════════
     -- الأزرار
-    -- ═══════════════════════════════
+    -- ═══════════════════════════════════════════════════════════════════
     
     CreateSection("👁️ VISUALS")
     
@@ -980,14 +899,10 @@ function KlimboMenu.Create(parent)
     CreateSection("🎮 PLAYERS")
     
     CreateButton("View Player Camera", "📷", Color3.fromRGB(100, 150, 255), function()
-        -- سيتم إضافة قائمة اللاعبين
-        local players = Players:GetPlayers()
-        if #players > 1 then
-            for _, p in ipairs(players) do
-                if p ~= LocalPlayer then
-                    ViewCamera.ViewPlayer(p)
-                    break
-                end
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then
+                ViewCamera.ViewPlayer(p)
+                break
             end
         end
     end, false)
@@ -1018,10 +933,7 @@ function KlimboMenu.Create(parent)
                     end
                 end
             end
-            
-            if nearest then
-                FreezePlayer.Freeze(nearest)
-            end
+            if nearest then FreezePlayer.Freeze(nearest) end
         end
     end, false)
     
@@ -1036,16 +948,12 @@ function KlimboMenu.Create(parent)
     end, false)
     
     CreateButton("TP to Random Player", "👤", Color3.fromRGB(200, 150, 255), function()
-        local players = Players:GetPlayers()
         local otherPlayers = {}
-        for _, p in ipairs(players) do
-            if p ~= LocalPlayer then
-                table.insert(otherPlayers, p)
-            end
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then table.insert(otherPlayers, p) end
         end
         if #otherPlayers > 0 then
-            local random = otherPlayers[math.random(1, #otherPlayers)]
-            SafeTeleport.ToPlayer(random)
+            SafeTeleport.ToPlayer(otherPlayers[math.random(1, #otherPlayers)])
         end
     end, false)
     
@@ -1058,12 +966,18 @@ function KlimboMenu.Create(parent)
     -- Game specific
     if gameName == "Blox Fruits" then
         CreateSection("🍎 BLOX FRUITS")
-        
-        local bfFeatures = GameSpecific.BloxFruitsFeatures()
-        for _, feature in ipairs(bfFeatures) do
+        for _, feature in ipairs(GameSpecific.BloxFruitsFeatures()) do
             CreateButton(feature.name, "🍎", Color3.fromRGB(255, 100, 100), feature.callback, false)
         end
     end
+    
+    -- Update canvas size
+    Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        Content.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 20)
+    end)
+    Content.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 20)
+    
+    print("✅ KlimboMenu UI created with " .. #Content:GetChildren() .. " elements")
     
     return MainFrame
 end
