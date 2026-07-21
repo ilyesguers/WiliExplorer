@@ -1,23 +1,22 @@
 --[[
     ═══════════════════════════════════════════════════════════════════════════
-    🚀 WiliExplorer - MainFrame v4.0 (Fixed Edition)
+    🚀 WiliExplorer - MainFrame v5.0 (Ultimate Edition)
     ═══════════════════════════════════════════════════════════════════════════
     
-    ✅ إصلاحات:
-    • مشكلة KlimboMenu لا تظهر (ZIndex Fix)
-    • تحميل Modules مرة واحدة فقط
-    • تحسين تداخل النصوص والأزرار
-    • تنظيف الأنيميشنات المتسربة
-    • تحسين الأداء العام
+    ✅ واجهة موحدة ومتناسقة
+    ✅ دعم كامل للهاتف
+    ✅ أنيميشنات سلسة
+    ✅ نظام ثيمات
+    ✅ معالجة أخطاء محسنة
     
     ═══════════════════════════════════════════════════════════════════════════
 ]]
 
 local MainFrame = {}
 
--- ═══════════════════════════════════════════════════════════════════════════
--- 📦 تحميل Modules من الذاكرة (بدون إعادة تحميل)
--- ═══════════════════════════════════════════════════════════════════════════
+-- ═══════════════════════════════════════════════════════════════════════
+-- 📦 تحميل Modules من الذاكرة
+-- ═══════════════════════════════════════════════════════════════════════
 local function GetModule(name)
     if _G.WiliModules and _G.WiliModules[name] then
         return _G.WiliModules[name]
@@ -33,54 +32,58 @@ local function SafeLoadModule(path, name)
         return loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/" .. path, true))()
     end)
     if ok and result then return result end
-    warn("⚠️ Failed to load: " .. path)
     return nil
 end
 
 local KeySystem = SafeLoadModule("Security/KeySystem.lua", "KeySystem")
 local Stars = SafeLoadModule("Theme/Stars.lua", "Stars")
 local Language = SafeLoadModule("Utils/Language.lua", "Language")
+local Colors = SafeLoadModule("Theme/Colors.lua", "Colors")
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 
--- ═══════════════════════════════════════════════════════════════════════════
--- 🎨 الألوان الفخمة
--- ═══════════════════════════════════════════════════════════════════════════
-local Colors = {
-    Primary = Color3.fromRGB(11, 13, 26),
-    Secondary = Color3.fromRGB(17, 20, 50),
-    Tertiary = Color3.fromRGB(25, 30, 70),
+local LocalPlayer = Players.LocalPlayer
+
+-- ═══════════════════════════════════════════════════════════════════════
+-- 🎨 الألوان (من Theme System)
+-- ═══════════════════════════════════════════════════════════════════════
+local C = Colors and Colors.Current or {
+    BG_Primary = Color3.fromRGB(8, 8, 18),
+    BG_Secondary = Color3.fromRGB(12, 12, 28),
+    BG_Header = Color3.fromRGB(10, 10, 25),
     Accent = Color3.fromRGB(0, 212, 255),
-    AccentDark = Color3.fromRGB(0, 152, 219),
     Gold = Color3.fromRGB(255, 215, 0),
-    Pink = Color3.fromRGB(255, 0, 128),
-    Cyan = Color3.fromRGB(0, 255, 255),
-    Success = Color3.fromRGB(0, 255, 136),
-    Error = Color3.fromRGB(255, 71, 87),
-    Warning = Color3.fromRGB(255, 165, 2),
-    TextPrimary = Color3.fromRGB(255, 255, 255),
-    TextSecondary = Color3.fromRGB(150, 170, 200)
+    Primary = Color3.fromRGB(255, 0, 128),
+    Secondary = Color3.fromRGB(0, 255, 255),
+    Success = Color3.fromRGB(0, 255, 100),
+    Error = Color3.fromRGB(255, 50, 50),
+    Warning = Color3.fromRGB(255, 165, 0),
+    Text_Primary = Color3.fromRGB(255, 255, 255),
+    Text_Secondary = Color3.fromRGB(150, 170, 200),
+    Border = Color3.fromRGB(40, 40, 70),
+    Separator = Color3.fromRGB(35, 35, 65)
 }
 
--- ═══════════════════════════════════════════════════════════════════════════
+-- ═══════════════════════════════════════════════════════════════════════
 -- 🛠️ دوال مساعدة
--- ═══════════════════════════════════════════════════════════════════════════
+-- ═══════════════════════════════════════════════════════════════════════
 local activeTweens = {}
 
-local function CreateTween(obj, props, duration, style, direction)
+local function Tween(obj, props, duration, style, direction)
     if not obj or not obj.Parent then return nil end
-    local tween = TweenService:Create(obj, TweenInfo.new(duration or 0.3, style or Enum.EasingStyle.Quart, direction or Enum.EasingDirection.Out), props)
+    local tween = TweenService:Create(obj, TweenInfo.new(
+        duration or 0.3,
+        style or Enum.EasingStyle.Quart,
+        direction or Enum.EasingDirection.Out
+    ), props)
     table.insert(activeTweens, tween)
     tween:Play()
     tween.Completed:Connect(function()
         for i, t in ipairs(activeTweens) do
-            if t == tween then
-                table.remove(activeTweens, i)
-                break
-            end
+            if t == tween then table.remove(activeTweens, i); break end
         end
     end)
     return tween
@@ -97,85 +100,109 @@ end
 local function AddStroke(parent, color, thickness, transparency)
     if not parent then return nil end
     local s = Instance.new("UIStroke")
-    s.Color = color or Colors.Accent
+    s.Color = color or C.Accent
     s.Thickness = thickness or 2
     s.Transparency = transparency or 0
     s.Parent = parent
     return s
 end
 
--- ═══════════════════════════════════════════════════════════════════════════
--- 📢 نظام الإشعارات
--- ═══════════════════════════════════════════════════════════════════════════
-local function ShowNotification(parent, message, notifType, duration)
-    if not parent or not parent.Parent then return nil end
-    
+local Lang = Language or {Get = function(k) return k end, Current = "en"}
+
+-- ═══════════════════════════════════════════════════════════════════════
+-- 📢 نظام الإشعارات المدمج
+-- ═══════════════════════════════════════════════════════════════════════
+local NotifContainer = nil
+
+local function ShowNotification(message, notifType, duration)
     local colorMap = {
-        success = Colors.Success,
-        error = Colors.Error,
-        warning = Colors.Warning,
-        info = Colors.Accent
+        success = C.Success, error = C.Error,
+        warning = C.Warning, info = C.Accent
     }
     local iconMap = {
-        success = "✅",
-        error = "❌",
-        warning = "⚠️",
-        info = "ℹ️"
+        success = "✅", error = "❌", warning = "⚠️", info = "ℹ️"
     }
     
-    local color = colorMap[notifType] or Colors.Accent
+    local color = colorMap[notifType] or C.Accent
     local icon = iconMap[notifType] or "ℹ️"
     
+    if not NotifContainer or not NotifContainer.Parent then
+        local gui = Instance.new("ScreenGui")
+        gui.Name = "WiliNotifs"
+        gui.ResetOnSpawn = false
+        gui.IgnoreGuiInset = true
+        gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        pcall(function() gui.Parent = game:GetService("CoreGui") end)
+        if not gui.Parent then gui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
+        
+        NotifContainer = Instance.new("Frame")
+        NotifContainer.Size = UDim2.new(0, 250, 1, 0)
+        NotifContainer.Position = UDim2.new(1, -260, 0, 0)
+        NotifContainer.BackgroundTransparency = 1
+        NotifContainer.Parent = gui
+        
+        local layout = Instance.new("UIListLayout")
+        layout.Padding = UDim.new(0, 4)
+        layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+        layout.Parent = NotifContainer
+        
+        local pad = Instance.new("UIPadding")
+        pad.PaddingBottom = UDim.new(0, 8)
+        pad.PaddingRight = UDim.new(0, 5)
+        pad.Parent = NotifContainer
+    end
+    
     local notif = Instance.new("Frame")
-    notif.Size = UDim2.new(0, 340, 0, 55)
-    notif.Position = UDim2.new(0.5, -170, 0, -65)
-    notif.BackgroundColor3 = Colors.Primary
+    notif.Size = UDim2.new(1, 0, 0, 32)
+    notif.BackgroundColor3 = C.BG_Primary
     notif.BorderSizePixel = 0
     notif.ZIndex = 9999
-    notif.Parent = parent
-    AddCorner(notif, 12)
-    AddStroke(notif, color, 2)
+    notif.Parent = NotifContainer
+    AddCorner(notif, 8)
     
-    local iconLabel = Instance.new("TextLabel")
-    iconLabel.Size = UDim2.new(0, 45, 1, 0)
-    iconLabel.Position = UDim2.new(0, 5, 0, 0)
-    iconLabel.Text = icon
-    iconLabel.TextSize = 24
-    iconLabel.BackgroundTransparency = 1
-    iconLabel.ZIndex = 10000
-    iconLabel.Parent = notif
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = color
+    stroke.Thickness = 1
+    stroke.Transparency = 0.3
+    stroke.Parent = notif
     
-    local msgLabel = Instance.new("TextLabel")
-    msgLabel.Size = UDim2.new(1, -60, 1, 0)
-    msgLabel.Position = UDim2.new(0, 55, 0, 0)
-    msgLabel.Text = message
-    msgLabel.TextColor3 = Colors.TextPrimary
-    msgLabel.TextSize = 13
-    msgLabel.Font = Enum.Font.GothamBold
-    msgLabel.TextXAlignment = Enum.TextXAlignment.Left
-    msgLabel.TextWrapped = true
-    msgLabel.BackgroundTransparency = 1
-    msgLabel.ZIndex = 10000
-    msgLabel.Parent = notif
+    local iconLbl = Instance.new("TextLabel")
+    iconLbl.Size = UDim2.new(0, 28, 1, 0)
+    iconLbl.Position = UDim2.new(0, 2, 0, 0)
+    iconLbl.Text = icon
+    iconLbl.TextSize = 14
+    iconLbl.BackgroundTransparency = 1
+    iconLbl.ZIndex = 10000
+    iconLbl.Parent = notif
     
-    CreateTween(notif, {Position = UDim2.new(0.5, -170, 0, 15)}, 0.4, Enum.EasingStyle.Back)
+    local msgLbl = Instance.new("TextLabel")
+    msgLbl.Size = UDim2.new(1, -32, 1, 0)
+    msgLbl.Position = UDim2.new(0, 30, 0, 0)
+    msgLbl.Text = message
+    msgLbl.TextColor3 = C.Text_Primary
+    msgLbl.TextSize = 11
+    msgLbl.Font = Enum.Font.GothamBold
+    msgLbl.TextXAlignment = Enum.TextXAlignment.Left
+    msgLbl.TextTruncate = Enum.TextTruncate.AtEnd
+    msgLbl.BackgroundTransparency = 1
+    msgLbl.ZIndex = 10000
+    msgLbl.Parent = notif
     
-    task.delay(duration or 3, function()
+    notif.Position = UDim2.new(1, 0, 0, 0)
+    Tween(notif, {Position = UDim2.new(0, 0, 0, 0)}, 0.2, Enum.EasingStyle.Back)
+    
+    task.delay(duration or 2.5, function()
         if notif and notif.Parent then
-            CreateTween(notif, {Position = UDim2.new(0.5, -170, 0, -65)}, 0.3)
-            task.wait(0.35)
-            if notif and notif.Parent then
-                notif:Destroy()
-            end
+            Tween(notif, {BackgroundTransparency = 1}, 0.2)
+            task.wait(0.25)
+            if notif and notif.Parent then notif:Destroy() end
         end
     end)
-    
-    return notif
 end
 
--- ═══════════════════════════════════════════════════════════════════════════
+-- ═══════════════════════════════════════════════════════════════════════
 -- 🎆 إنشاء تأثيرات بصرية
--- ═══════════════════════════════════════════════════════════════════════════
+-- ═══════════════════════════════════════════════════════════════════════
 local function CreateParticles(parent)
     local container = Instance.new("Frame")
     container.Name = "Particles"
@@ -187,21 +214,21 @@ local function CreateParticles(parent)
     
     task.spawn(function()
         while container and container.Parent do
-            for i = 1, 3 do
+            for i = 1, 2 do
                 if not container or not container.Parent then break end
                 
                 local particle = Instance.new("Frame")
-                particle.Size = UDim2.new(0, math.random(3, 8), 0, math.random(3, 8))
+                particle.Size = UDim2.new(0, math.random(2, 6), 0, math.random(2, 6))
                 particle.Position = UDim2.new(math.random(), 0, 1.1, 0)
-                particle.BackgroundColor3 = i % 2 == 0 and Colors.Accent or Colors.Gold
-                particle.BackgroundTransparency = 0.3
+                particle.BackgroundColor3 = i % 2 == 0 and C.Accent or C.Gold
+                particle.BackgroundTransparency = 0.4
                 particle.BorderSizePixel = 0
                 particle.ZIndex = 2
                 particle.Parent = container
                 AddCorner(particle, 10)
                 
-                local duration = math.random(30, 60) / 10
-                CreateTween(particle, {
+                local duration = math.random(40, 80) / 10
+                Tween(particle, {
                     Position = UDim2.new(math.random(), 0, -0.1, 0),
                     BackgroundTransparency = 1,
                     Rotation = math.random(-180, 180)
@@ -209,39 +236,39 @@ local function CreateParticles(parent)
                 
                 game:GetService("Debris"):AddItem(particle, duration + 1)
             end
-            task.wait(0.8)
+            task.wait(1)
         end
     end)
     
     return container
 end
 
--- ═══════════════════════════════════════════════════════════════════════════
--- 🎭 شاشة التحميل الفخمة
--- ═══════════════════════════════════════════════════════════════════════════
+-- ═══════════════════════════════════════════════════════════════════════
+-- 🎭 شاشة التحميل
+-- ═══════════════════════════════════════════════════════════════════════
 local function CreateLoadingScreen(parent)
     local loading = Instance.new("Frame")
     loading.Name = "LoadingScreen"
     loading.Size = UDim2.new(1, 0, 1, 0)
-    loading.BackgroundColor3 = Colors.Primary
+    loading.BackgroundColor3 = C.BG_Primary
     loading.ZIndex = 500
     loading.Parent = parent
     
     local grad = Instance.new("UIGradient")
     grad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Colors.Primary),
-        ColorSequenceKeypoint.new(0.5, Colors.Secondary),
+        ColorSequenceKeypoint.new(0, C.BG_Primary),
+        ColorSequenceKeypoint.new(0.5, C.BG_Secondary),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 10, 35))
     })
     grad.Rotation = 135
     grad.Parent = loading
     
     local logo = Instance.new("TextLabel")
-    logo.Size = UDim2.new(1, 0, 0, 70)
-    logo.Position = UDim2.new(0, 0, 0.32, 0)
+    logo.Size = UDim2.new(1, 0, 0, 65)
+    logo.Position = UDim2.new(0, 0, 0.3, 0)
     logo.Text = "🚀 WiliExplorer"
-    logo.TextColor3 = Colors.Accent
-    logo.TextSize = 40
+    logo.TextColor3 = C.Accent
+    logo.TextSize = 38
     logo.Font = Enum.Font.GothamBlack
     logo.BackgroundTransparency = 1
     logo.ZIndex = 501
@@ -249,93 +276,92 @@ local function CreateLoadingScreen(parent)
     
     task.spawn(function()
         while logo and logo.Parent do
-            CreateTween(logo, {TextColor3 = Colors.Cyan}, 1)
-            task.wait(1)
+            Tween(logo, {TextColor3 = C.Secondary}, 1.2)
+            task.wait(1.2)
             if not logo or not logo.Parent then break end
-            CreateTween(logo, {TextColor3 = Colors.Accent}, 1)
-            task.wait(1)
+            Tween(logo, {TextColor3 = C.Accent}, 1.2)
+            task.wait(1.2)
         end
     end)
     
     local vipBadge = Instance.new("TextLabel")
-    vipBadge.Size = UDim2.new(0, 130, 0, 32)
-    vipBadge.Position = UDim2.new(0.5, -65, 0.46, 0)
+    vipBadge.Size = UDim2.new(0, 125, 0, 30)
+    vipBadge.Position = UDim2.new(0.5, -62, 0.44, 0)
     vipBadge.Text = "👑 VIP ACCESS"
-    vipBadge.TextColor3 = Colors.Gold
-    vipBadge.TextSize = 13
+    vipBadge.TextColor3 = C.Gold
+    vipBadge.TextSize = 12
     vipBadge.Font = Enum.Font.GothamBlack
     vipBadge.BackgroundColor3 = Color3.fromRGB(30, 25, 15)
     vipBadge.ZIndex = 501
     vipBadge.Parent = loading
     AddCorner(vipBadge, 8)
-    AddStroke(vipBadge, Colors.Gold, 2)
+    AddStroke(vipBadge, C.Gold, 2)
     
     local progressBg = Instance.new("Frame")
-    progressBg.Size = UDim2.new(0.55, 0, 0, 7)
-    progressBg.Position = UDim2.new(0.225, 0, 0.57, 0)
-    progressBg.BackgroundColor3 = Colors.Tertiary
+    progressBg.Size = UDim2.new(0.5, 0, 0, 6)
+    progressBg.Position = UDim2.new(0.25, 0, 0.55, 0)
+    progressBg.BackgroundColor3 = Color3.fromRGB(25, 25, 50)
     progressBg.ZIndex = 501
     progressBg.Parent = loading
-    AddCorner(progressBg, 4)
+    AddCorner(progressBg, 3)
     
     local progressFill = Instance.new("Frame")
     progressFill.Size = UDim2.new(0, 0, 1, 0)
-    progressFill.BackgroundColor3 = Colors.Accent
+    progressFill.BackgroundColor3 = C.Accent
     progressFill.ZIndex = 502
     progressFill.Parent = progressBg
-    AddCorner(progressFill, 4)
+    AddCorner(progressFill, 3)
     
     local progGrad = Instance.new("UIGradient")
     progGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Colors.Pink),
-        ColorSequenceKeypoint.new(0.5, Colors.Accent),
-        ColorSequenceKeypoint.new(1, Colors.Cyan)
+        ColorSequenceKeypoint.new(0, C.Primary),
+        ColorSequenceKeypoint.new(0.5, C.Accent),
+        ColorSequenceKeypoint.new(1, C.Secondary)
     })
     progGrad.Parent = progressFill
     
     local loadingText = Instance.new("TextLabel")
-    loadingText.Size = UDim2.new(1, 0, 0, 22)
-    loadingText.Position = UDim2.new(0, 0, 0.63, 0)
+    loadingText.Size = UDim2.new(1, 0, 0, 20)
+    loadingText.Position = UDim2.new(0, 0, 0.6, 0)
     loadingText.Text = "جاري التحميل..."
-    loadingText.TextColor3 = Colors.TextSecondary
-    loadingText.TextSize = 13
+    loadingText.TextColor3 = C.Text_Secondary
+    loadingText.TextSize = 12
     loadingText.Font = Enum.Font.Gotham
     loadingText.BackgroundTransparency = 1
     loadingText.ZIndex = 501
     loadingText.Parent = loading
     
     local loadSteps = {
-        {text = "📦 جاري تحميل الوحدات...", progress = 0.2},
-        {text = "🎨 تهيئة الواجهة...", progress = 0.4},
-        {text = "🔐 فحص الأمان...", progress = 0.6},
-        {text = "⚡ تحسين الأداء...", progress = 0.8},
+        {text = "📦 جاري تحميل الوحدات...", progress = 0.15},
+        {text = "🔐 فحص الأمان...", progress = 0.3},
+        {text = "🎨 تحميل المظهر...", progress = 0.45},
+        {text = "⚙️ تهيئة النظام...", progress = 0.6},
+        {text = "🖥️ إنشاء الواجهة...", progress = 0.8},
         {text = "✨ تقريباً جاهز...", progress = 0.95},
-        {text = "🚀 مرحباً بك في WiliExplorer!", progress = 1}
+        {text = "🚀 مرحباً بك!", progress = 1}
     }
     
     task.spawn(function()
         for _, step in ipairs(loadSteps) do
             if not loading or not loading.Parent then break end
             loadingText.Text = step.text
-            CreateTween(progressFill, {Size = UDim2.new(step.progress, 0, 1, 0)}, 0.4)
-            task.wait(0.4)
+            Tween(progressFill, {Size = UDim2.new(step.progress, 0, 1, 0)}, 0.35)
+            task.wait(0.35)
         end
-        task.wait(0.4)
+        task.wait(0.3)
         if loading and loading.Parent then
-            CreateTween(loading, {BackgroundTransparency = 1}, 0.4)
-            task.wait(0.4)
-            if loading and loading.Parent then
-                loading:Destroy()
-            end
+            Tween(loading, {BackgroundTransparency = 1}, 0.4)
+            task.wait(0.45)
+            if loading and loading.Parent then loading:Destroy() end
         end
     end)
     
     return loading
 end
 
--- ═══════════════════════════════════════════════════════════════════════════
+-- ═══════════════════════════════════════════════════════════════════════
 -- 🎮 الدالة الرئيسية
--- ═══════════════════════════════════════════════════════════════════════════
+-- ═══════════════════════════════════════════════════════════════════════
 function MainFrame.Create()
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "WiliExplorerUI"
@@ -344,7 +370,7 @@ function MainFrame.Create()
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
     local success = pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
-    if not success then ScreenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui") end
+    if not success then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
     local viewport = workspace.CurrentCamera.ViewportSize
     local isMobile = viewport.X < 800
@@ -359,35 +385,35 @@ function MainFrame.Create()
     Frame.Name = "Main"
     Frame.Size = UDim2.new(0, frameWidth, 0, frameHeight)
     Frame.Position = UDim2.new(0.5, -frameWidth/2, 0.5, -frameHeight/2)
-    Frame.BackgroundColor3 = Colors.Primary
+    Frame.BackgroundColor3 = C.BG_Primary
     Frame.BorderSizePixel = 0
     Frame.ClipsDescendants = true
     Frame.Parent = ScreenGui
     
-    AddCorner(Frame, 18)
+    AddCorner(Frame, 16)
     
-    local MainStroke = AddStroke(Frame, Colors.Accent, 2)
+    local MainStroke = AddStroke(Frame, C.Accent, 2)
     task.spawn(function()
         while Frame and Frame.Parent do
-            CreateTween(MainStroke, {Color = Colors.Cyan}, 2)
+            Tween(MainStroke, {Color = C.Secondary}, 2)
             task.wait(2)
             if not Frame or not Frame.Parent then break end
-            CreateTween(MainStroke, {Color = Colors.Accent}, 2)
+            Tween(MainStroke, {Color = C.Accent}, 2)
             task.wait(2)
         end
     end)
 
     local Gradient = Instance.new("UIGradient")
     Gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Colors.Primary),
-        ColorSequenceKeypoint.new(0.5, Colors.Secondary),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 15, 60))
+        ColorSequenceKeypoint.new(0, C.BG_Primary),
+        ColorSequenceKeypoint.new(0.5, C.BG_Secondary),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 12, 45))
     })
     Gradient.Rotation = 135
     Gradient.Parent = Frame
 
     if Stars and Stars.Create then
-        Stars.Create(Frame, 80)
+        Stars.Create(Frame, 70)
     end
     
     CreateParticles(Frame)
@@ -398,45 +424,45 @@ function MainFrame.Create()
     -- ═══════════════════════════════
     local TopBar = Instance.new("Frame")
     TopBar.Name = "TopBar"
-    TopBar.Size = UDim2.new(1, 0, 0, 52)
-    TopBar.BackgroundColor3 = Color3.fromRGB(15, 18, 40)
-    TopBar.BackgroundTransparency = 0.15
+    TopBar.Size = UDim2.new(1, 0, 0, 48)
+    TopBar.BackgroundColor3 = C.BG_Header
+    TopBar.BackgroundTransparency = 0.1
     TopBar.BorderSizePixel = 0
     TopBar.ZIndex = 100
     TopBar.Parent = Frame
 
     local TopCorner = Instance.new("UICorner")
-    TopCorner.CornerRadius = UDim.new(0, 18)
+    TopCorner.CornerRadius = UDim.new(0, 16)
     TopCorner.Parent = TopBar
     
     local TopLine = Instance.new("Frame")
     TopLine.Size = UDim2.new(1, 0, 0, 2)
     TopLine.Position = UDim2.new(0, 0, 1, -2)
-    TopLine.BackgroundColor3 = Colors.Accent
+    TopLine.BackgroundColor3 = C.Accent
     TopLine.BorderSizePixel = 0
     TopLine.ZIndex = 101
     TopLine.Parent = TopBar
     
     task.spawn(function()
         while TopLine and TopLine.Parent do
-            CreateTween(TopLine, {BackgroundColor3 = Colors.Pink}, 1.5)
+            Tween(TopLine, {BackgroundColor3 = C.Primary}, 1.5)
             task.wait(1.5)
             if not TopLine or not TopLine.Parent then break end
-            CreateTween(TopLine, {BackgroundColor3 = Colors.Cyan}, 1.5)
+            Tween(TopLine, {BackgroundColor3 = C.Secondary}, 1.5)
             task.wait(1.5)
             if not TopLine or not TopLine.Parent then break end
-            CreateTween(TopLine, {BackgroundColor3 = Colors.Accent}, 1.5)
+            Tween(TopLine, {BackgroundColor3 = C.Accent}, 1.5)
             task.wait(1.5)
         end
     end)
 
     -- الشعار
     local Logo = Instance.new("TextLabel")
-    Logo.Size = UDim2.new(0, 180, 1, 0)
-    Logo.Position = UDim2.new(0, 12, 0, 0)
+    Logo.Size = UDim2.new(0, 170, 1, 0)
+    Logo.Position = UDim2.new(0, 10, 0, 0)
     Logo.Text = "🚀 WiliExplorer"
-    Logo.TextColor3 = Colors.Accent
-    Logo.TextSize = 20
+    Logo.TextColor3 = C.Accent
+    Logo.TextSize = 18
     Logo.Font = Enum.Font.GothamBlack
     Logo.BackgroundTransparency = 1
     Logo.TextXAlignment = Enum.TextXAlignment.Left
@@ -444,13 +470,13 @@ function MainFrame.Create()
     Logo.Parent = TopBar
     
     local LogoVIP = Instance.new("TextLabel")
-    LogoVIP.Size = UDim2.new(0, 32, 0, 16)
-    LogoVIP.Position = UDim2.new(0, 168, 0.5, -8)
+    LogoVIP.Size = UDim2.new(0, 30, 0, 14)
+    LogoVIP.Position = UDim2.new(0, 158, 0.5, -7)
     LogoVIP.Text = "VIP"
-    LogoVIP.TextColor3 = Colors.Primary
-    LogoVIP.TextSize = 9
+    LogoVIP.TextColor3 = C.BG_Primary
+    LogoVIP.TextSize = 8
     LogoVIP.Font = Enum.Font.GothamBlack
-    LogoVIP.BackgroundColor3 = Colors.Gold
+    LogoVIP.BackgroundColor3 = C.Gold
     LogoVIP.ZIndex = 102
     LogoVIP.Parent = TopBar
     AddCorner(LogoVIP, 4)
@@ -460,119 +486,108 @@ function MainFrame.Create()
     -- ═══════════════════════════════
     local KlimboBtn = Instance.new("TextButton")
     KlimboBtn.Name = "KlimboBtn"
-    KlimboBtn.Size = UDim2.new(0, 95, 0, 34)
-    KlimboBtn.Position = UDim2.new(1, -360, 0.5, -17)
+    KlimboBtn.Size = UDim2.new(0, 90, 0, 30)
+    KlimboBtn.Position = UDim2.new(1, -350, 0.5, -15)
     KlimboBtn.Text = "👑 KLIMBO"
-    KlimboBtn.TextColor3 = Colors.Gold
-    KlimboBtn.TextSize = 11
+    KlimboBtn.TextColor3 = C.Gold
+    KlimboBtn.TextSize = 10
     KlimboBtn.Font = Enum.Font.GothamBlack
-    KlimboBtn.BackgroundColor3 = Colors.Secondary
+    KlimboBtn.BackgroundColor3 = C.BG_Secondary
     KlimboBtn.ZIndex = 101
     KlimboBtn.Visible = false
     KlimboBtn.Parent = TopBar
-    AddCorner(KlimboBtn, 10)
+    AddCorner(KlimboBtn, 8)
     
-    local KlimboGradient = Instance.new("UIGradient")
-    KlimboGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Colors.Pink),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 50, 150)),
-        ColorSequenceKeypoint.new(1, Colors.Cyan)
-    })
-    KlimboGradient.Rotation = 45
-    KlimboGradient.Parent = KlimboBtn
-    
-    local KlimboStroke = AddStroke(KlimboBtn, Colors.Gold, 2)
+    local KlimboStroke = AddStroke(KlimboBtn, C.Gold, 2)
     
     task.spawn(function()
         while KlimboBtn and KlimboBtn.Parent do
-            CreateTween(KlimboStroke, {Color = Colors.Pink}, 1)
+            Tween(KlimboStroke, {Color = C.Primary}, 1)
             task.wait(1)
             if not KlimboBtn or not KlimboBtn.Parent then break end
-            CreateTween(KlimboStroke, {Color = Colors.Cyan}, 1)
+            Tween(KlimboStroke, {Color = C.Secondary}, 1)
             task.wait(1)
             if not KlimboBtn or not KlimboBtn.Parent then break end
-            CreateTween(KlimboStroke, {Color = Colors.Gold}, 1)
+            Tween(KlimboStroke, {Color = C.Gold}, 1)
             task.wait(1)
         end
     end)
     
     KlimboBtn.MouseEnter:Connect(function()
-        CreateTween(KlimboBtn, {Size = UDim2.new(0, 105, 0, 38)}, 0.2)
+        Tween(KlimboBtn, {Size = UDim2.new(0, 100, 0, 34)}, 0.15)
     end)
     KlimboBtn.MouseLeave:Connect(function()
-        CreateTween(KlimboBtn, {Size = UDim2.new(0, 95, 0, 34)}, 0.2)
+        Tween(KlimboBtn, {Size = UDim2.new(0, 90, 0, 30)}, 0.15)
     end)
 
     -- زر اللغة
     local LangBtn = Instance.new("TextButton")
-    LangBtn.Size = UDim2.new(0, 80, 0, 34)
-    LangBtn.Position = UDim2.new(1, -255, 0.5, -17)
+    LangBtn.Size = UDim2.new(0, 75, 0, 30)
+    LangBtn.Position = UDim2.new(1, -250, 0.5, -15)
     LangBtn.Text = "🌐 عربي"
-    LangBtn.TextColor3 = Colors.TextPrimary
-    LangBtn.TextSize = 12
+    LangBtn.TextColor3 = C.Text_Primary
+    LangBtn.TextSize = 11
     LangBtn.Font = Enum.Font.GothamBold
-    LangBtn.BackgroundColor3 = Color3.fromRGB(0, 130, 180)
+    LangBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 170)
     LangBtn.ZIndex = 101
     LangBtn.Parent = TopBar
-    AddCorner(LangBtn, 10)
-    AddStroke(LangBtn, Colors.Accent, 1, 0.5)
+    AddCorner(LangBtn, 8)
+    AddStroke(LangBtn, C.Accent, 1, 0.5)
 
     -- زر التصغير
     local MinBtn = Instance.new("TextButton")
-    MinBtn.Size = UDim2.new(0, 34, 0, 34)
-    MinBtn.Position = UDim2.new(1, -165, 0.5, -17)
+    MinBtn.Size = UDim2.new(0, 30, 0, 30)
+    MinBtn.Position = UDim2.new(1, -165, 0.5, -15)
     MinBtn.Text = "—"
-    MinBtn.TextColor3 = Colors.TextPrimary
-    MinBtn.TextSize = 20
+    MinBtn.TextColor3 = C.Text_Primary
+    MinBtn.TextSize = 18
     MinBtn.Font = Enum.Font.GothamBold
-    MinBtn.BackgroundColor3 = Color3.fromRGB(60, 70, 120)
+    MinBtn.BackgroundColor3 = Color3.fromRGB(55, 65, 110)
     MinBtn.ZIndex = 101
     MinBtn.Parent = TopBar
-    AddCorner(MinBtn, 10)
+    AddCorner(MinBtn, 8)
     
     MinBtn.MouseEnter:Connect(function()
-        CreateTween(MinBtn, {BackgroundColor3 = Color3.fromRGB(80, 90, 140)}, 0.2)
+        Tween(MinBtn, {BackgroundColor3 = Color3.fromRGB(70, 80, 130)}, 0.15)
     end)
     MinBtn.MouseLeave:Connect(function()
-        CreateTween(MinBtn, {BackgroundColor3 = Color3.fromRGB(60, 70, 120)}, 0.2)
+        Tween(MinBtn, {BackgroundColor3 = Color3.fromRGB(55, 65, 110)}, 0.15)
     end)
 
     -- زر الإغلاق
     local CloseBtn = Instance.new("TextButton")
-    CloseBtn.Size = UDim2.new(0, 34, 0, 34)
-    CloseBtn.Position = UDim2.new(1, -120, 0.5, -17)
+    CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+    CloseBtn.Position = UDim2.new(1, -125, 0.5, -15)
     CloseBtn.Text = "✕"
-    CloseBtn.TextColor3 = Colors.TextPrimary
-    CloseBtn.TextSize = 16
+    CloseBtn.TextColor3 = C.Text_Primary
+    CloseBtn.TextSize = 14
     CloseBtn.Font = Enum.Font.GothamBold
-    CloseBtn.BackgroundColor3 = Colors.Error
+    CloseBtn.BackgroundColor3 = C.Error
     CloseBtn.ZIndex = 101
     CloseBtn.Parent = TopBar
-    AddCorner(CloseBtn, 10)
+    AddCorner(CloseBtn, 8)
     
     CloseBtn.MouseEnter:Connect(function()
-        CreateTween(CloseBtn, {BackgroundColor3 = Color3.fromRGB(255, 100, 110)}, 0.2)
+        Tween(CloseBtn, {BackgroundColor3 = Color3.fromRGB(255, 90, 100)}, 0.15)
     end)
     CloseBtn.MouseLeave:Connect(function()
-        CreateTween(CloseBtn, {BackgroundColor3 = Colors.Error}, 0.2)
+        Tween(CloseBtn, {BackgroundColor3 = C.Error}, 0.15)
     end)
 
     CloseBtn.MouseButton1Click:Connect(function()
-        CreateTween(Frame, {Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)}, 0.3)
+        Tween(Frame, {Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)}, 0.3)
         task.wait(0.35)
-        if ScreenGui and ScreenGui.Parent then
-            ScreenGui:Destroy()
-        end
+        if ScreenGui and ScreenGui.Parent then ScreenGui:Destroy() end
     end)
 
     local minimized = false
     MinBtn.MouseButton1Click:Connect(function()
         minimized = not minimized
         if minimized then
-            CreateTween(Frame, {Size = UDim2.new(0, frameWidth, 0, 52)}, 0.3, Enum.EasingStyle.Back)
+            Tween(Frame, {Size = UDim2.new(0, frameWidth, 0, 48)}, 0.3, Enum.EasingStyle.Back)
             MinBtn.Text = "+"
         else
-            CreateTween(Frame, {Size = UDim2.new(0, frameWidth, 0, frameHeight)}, 0.3, Enum.EasingStyle.Back)
+            Tween(Frame, {Size = UDim2.new(0, frameWidth, 0, frameHeight)}, 0.3, Enum.EasingStyle.Back)
             MinBtn.Text = "—"
         end
     end)
@@ -580,32 +595,32 @@ function MainFrame.Create()
     -- معلومات المستخدم
     local UserInfo = Instance.new("Frame")
     UserInfo.Name = "UserInfo"
-    UserInfo.Size = UDim2.new(0, 140, 0, 34)
-    UserInfo.Position = UDim2.new(1, -70, 0.5, -17)
-    UserInfo.BackgroundColor3 = Colors.Tertiary
-    UserInfo.BackgroundTransparency = 0.5
+    UserInfo.Size = UDim2.new(0, 130, 0, 30)
+    UserInfo.Position = UDim2.new(1, -65, 0.5, -15)
+    UserInfo.BackgroundColor3 = Color3.fromRGB(22, 22, 45)
+    UserInfo.BackgroundTransparency = 0.4
     UserInfo.ZIndex = 101
     UserInfo.Visible = false
     UserInfo.Parent = TopBar
-    AddCorner(UserInfo, 10)
+    AddCorner(UserInfo, 8)
     
     local UserAvatar = Instance.new("ImageLabel")
-    UserAvatar.Size = UDim2.new(0, 26, 0, 26)
-    UserAvatar.Position = UDim2.new(0, 4, 0.5, -13)
-    UserAvatar.BackgroundColor3 = Colors.Accent
+    UserAvatar.Size = UDim2.new(0, 24, 0, 24)
+    UserAvatar.Position = UDim2.new(0, 3, 0.5, -12)
+    UserAvatar.BackgroundColor3 = C.Accent
     UserAvatar.ZIndex = 102
     UserAvatar.Parent = UserInfo
-    AddCorner(UserAvatar, 13)
+    AddCorner(UserAvatar, 12)
     pcall(function()
-        UserAvatar.Image = Players:GetUserThumbnailAsync(Players.LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+        UserAvatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
     end)
     
     local UserName = Instance.new("TextLabel")
-    UserName.Size = UDim2.new(1, -35, 1, 0)
-    UserName.Position = UDim2.new(0, 34, 0, 0)
-    UserName.Text = Players.LocalPlayer.Name:sub(1, 10)
-    UserName.TextColor3 = Colors.TextPrimary
-    UserName.TextSize = 10
+    UserName.Size = UDim2.new(1, -30, 1, 0)
+    UserName.Position = UDim2.new(0, 30, 0, 0)
+    UserName.Text = LocalPlayer.Name:sub(1, 10)
+    UserName.TextColor3 = C.Text_Primary
+    UserName.TextSize = 9
     UserName.Font = Enum.Font.GothamBold
     UserName.TextXAlignment = Enum.TextXAlignment.Left
     UserName.BackgroundTransparency = 1
@@ -617,8 +632,8 @@ function MainFrame.Create()
     -- ═══════════════════════════════
     local Content = Instance.new("Frame")
     Content.Name = "Content"
-    Content.Size = UDim2.new(1, 0, 1, -52)
-    Content.Position = UDim2.new(0, 0, 0, 52)
+    Content.Size = UDim2.new(1, 0, 1, -48)
+    Content.Position = UDim2.new(0, 0, 0, 48)
     Content.BackgroundTransparency = 1
     Content.ZIndex = 10
     Content.Parent = Frame
@@ -635,10 +650,10 @@ function MainFrame.Create()
 
     local Title = Instance.new("TextLabel")
     Title.Text = "🌌 WiliExplorer"
-    Title.Size = UDim2.new(1, 0, 0, 65)
-    Title.Position = UDim2.new(0, 0, 0.1, 0)
-    Title.TextColor3 = Colors.Accent
-    Title.TextSize = isMobile and 30 or 40
+    Title.Size = UDim2.new(1, 0, 0, 60)
+    Title.Position = UDim2.new(0, 0, 0.08, 0)
+    Title.TextColor3 = C.Accent
+    Title.TextSize = isMobile and 28 or 38
     Title.Font = Enum.Font.GothamBlack
     Title.BackgroundTransparency = 1
     Title.ZIndex = 51
@@ -646,129 +661,127 @@ function MainFrame.Create()
     
     task.spawn(function()
         while Title and Title.Parent do
-            CreateTween(Title, {TextColor3 = Colors.Cyan}, 1.5)
+            Tween(Title, {TextColor3 = C.Secondary}, 1.5)
             task.wait(1.5)
             if not Title or not Title.Parent then break end
-            CreateTween(Title, {TextColor3 = Colors.Accent}, 1.5)
+            Tween(Title, {TextColor3 = C.Accent}, 1.5)
             task.wait(1.5)
         end
     end)
 
-    local Lang = Language or {Get = function(k) return k end, Current = "en"}
-    
     local Subtitle = Instance.new("TextLabel")
     Subtitle.Text = Lang.Get("Welcome")
-    Subtitle.Size = UDim2.new(1, 0, 0, 28)
-    Subtitle.Position = UDim2.new(0, 0, 0.23, 0)
-    Subtitle.TextColor3 = Colors.TextSecondary
-    Subtitle.TextSize = 15
+    Subtitle.Size = UDim2.new(1, 0, 0, 25)
+    Subtitle.Position = UDim2.new(0, 0, 0.22, 0)
+    Subtitle.TextColor3 = C.Text_Secondary
+    Subtitle.TextSize = 14
     Subtitle.Font = Enum.Font.Gotham
     Subtitle.BackgroundTransparency = 1
     Subtitle.ZIndex = 51
     Subtitle.Parent = KeyScreen
     
     local VIPLabel = Instance.new("TextLabel")
-    VIPLabel.Size = UDim2.new(0, 135, 0, 32)
-    VIPLabel.Position = UDim2.new(0.5, -67, 0.31, 0)
+    VIPLabel.Size = UDim2.new(0, 130, 0, 28)
+    VIPLabel.Position = UDim2.new(0.5, -65, 0.3, 0)
     VIPLabel.Text = "👑 VIP EXCLUSIVE"
-    VIPLabel.TextColor3 = Colors.Gold
-    VIPLabel.TextSize = 12
+    VIPLabel.TextColor3 = C.Gold
+    VIPLabel.TextSize = 11
     VIPLabel.Font = Enum.Font.GothamBlack
-    VIPLabel.BackgroundColor3 = Color3.fromRGB(40, 35, 20)
+    VIPLabel.BackgroundColor3 = Color3.fromRGB(35, 30, 18)
     VIPLabel.ZIndex = 51
     VIPLabel.Parent = KeyScreen
     AddCorner(VIPLabel, 8)
-    AddStroke(VIPLabel, Colors.Gold, 2)
+    AddStroke(VIPLabel, C.Gold, 2)
 
     local KeyInputContainer = Instance.new("Frame")
-    KeyInputContainer.Size = UDim2.new(0.8, 0, 0, 55)
-    KeyInputContainer.Position = UDim2.new(0.1, 0, 0.43, 0)
-    KeyInputContainer.BackgroundColor3 = Color3.fromRGB(20, 25, 55)
+    KeyInputContainer.Size = UDim2.new(0.8, 0, 0, 50)
+    KeyInputContainer.Position = UDim2.new(0.1, 0, 0.42, 0)
+    KeyInputContainer.BackgroundColor3 = Color3.fromRGB(18, 22, 48)
     KeyInputContainer.ZIndex = 51
     KeyInputContainer.Parent = KeyScreen
-    AddCorner(KeyInputContainer, 14)
+    AddCorner(KeyInputContainer, 12)
     
-    local KeyInputStroke = AddStroke(KeyInputContainer, Colors.Accent, 2, 0.3)
+    local KeyInputStroke = AddStroke(KeyInputContainer, C.Accent, 2, 0.3)
     
     local KeyIcon = Instance.new("TextLabel")
-    KeyIcon.Size = UDim2.new(0, 45, 1, 0)
+    KeyIcon.Size = UDim2.new(0, 40, 1, 0)
     KeyIcon.Text = "🔑"
-    KeyIcon.TextSize = 22
+    KeyIcon.TextSize = 20
     KeyIcon.BackgroundTransparency = 1
     KeyIcon.ZIndex = 52
     KeyIcon.Parent = KeyInputContainer
     
     local KeyInput = Instance.new("TextBox")
-    KeyInput.Size = UDim2.new(1, -55, 1, 0)
-    KeyInput.Position = UDim2.new(0, 50, 0, 0)
+    KeyInput.Size = UDim2.new(1, -48, 1, 0)
+    KeyInput.Position = UDim2.new(0, 44, 0, 0)
     KeyInput.PlaceholderText = Lang.Get("EnterKey")
     KeyInput.Text = ""
-    KeyInput.TextColor3 = Colors.TextPrimary
-    KeyInput.PlaceholderColor3 = Colors.TextSecondary
+    KeyInput.TextColor3 = C.Text_Primary
+    KeyInput.PlaceholderColor3 = C.Text_Secondary
     KeyInput.Font = Enum.Font.Code
-    KeyInput.TextSize = 15
+    KeyInput.TextSize = 14
     KeyInput.ClearTextOnFocus = false
     KeyInput.BackgroundTransparency = 1
     KeyInput.TextXAlignment = Enum.TextXAlignment.Left
     KeyInput.ZIndex = 52
     KeyInput.Parent = KeyInputContainer
     
-    local KeyInputPad = Instance.new("UIPadding")
-    KeyInputPad.PaddingRight = UDim.new(0, 10)
-    KeyInputPad.Parent = KeyInput
+    local KeyPad = Instance.new("UIPadding")
+    KeyPad.PaddingRight = UDim.new(0, 8)
+    KeyPad.Parent = KeyInput
     
     KeyInput.Focused:Connect(function()
-        CreateTween(KeyInputStroke, {Color = Colors.Accent, Transparency = 0}, 0.2)
+        Tween(KeyInputStroke, {Color = C.Accent, Transparency = 0}, 0.2)
     end)
     KeyInput.FocusLost:Connect(function()
-        CreateTween(KeyInputStroke, {Transparency = 0.3}, 0.2)
+        Tween(KeyInputStroke, {Transparency = 0.3}, 0.2)
     end)
 
     local LoginBtn = Instance.new("TextButton")
     LoginBtn.Text = "🔓 " .. Lang.Get("Verify")
-    LoginBtn.Size = UDim2.new(0.65, 0, 0, 50)
-    LoginBtn.Position = UDim2.new(0.175, 0, 0.59, 0)
-    LoginBtn.BackgroundColor3 = Colors.Accent
-    LoginBtn.TextColor3 = Colors.Primary
+    LoginBtn.Size = UDim2.new(0.6, 0, 0, 45)
+    LoginBtn.Position = UDim2.new(0.2, 0, 0.57, 0)
+    LoginBtn.BackgroundColor3 = C.Accent
+    LoginBtn.TextColor3 = C.BG_Primary
     LoginBtn.Font = Enum.Font.GothamBlack
-    LoginBtn.TextSize = 16
+    LoginBtn.TextSize = 15
     LoginBtn.ZIndex = 51
     LoginBtn.Parent = KeyScreen
-    AddCorner(LoginBtn, 14)
+    AddCorner(LoginBtn, 12)
 
-    local LoginGradient = Instance.new("UIGradient")
-    LoginGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 245, 255)),
-        ColorSequenceKeypoint.new(0.5, Colors.Accent),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 152, 219))
+    local LoginGrad = Instance.new("UIGradient")
+    LoginGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 240, 255)),
+        ColorSequenceKeypoint.new(0.5, C.Accent),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 140, 200))
     })
-    LoginGradient.Rotation = 90
-    LoginGradient.Parent = LoginBtn
+    LoginGrad.Rotation = 90
+    LoginGrad.Parent = LoginBtn
     
     LoginBtn.MouseEnter:Connect(function()
-        CreateTween(LoginBtn, {Size = UDim2.new(0.67, 0, 0, 53)}, 0.2)
+        Tween(LoginBtn, {Size = UDim2.new(0.62, 0, 0, 48)}, 0.15)
     end)
     LoginBtn.MouseLeave:Connect(function()
-        CreateTween(LoginBtn, {Size = UDim2.new(0.65, 0, 0, 50)}, 0.2)
+        Tween(LoginBtn, {Size = UDim2.new(0.6, 0, 0, 45)}, 0.15)
     end)
     
     local HelpText = Instance.new("TextLabel")
-    HelpText.Size = UDim2.new(1, 0, 0, 22)
-    HelpText.Position = UDim2.new(0, 0, 0.76, 0)
+    HelpText.Size = UDim2.new(1, 0, 0, 20)
+    HelpText.Position = UDim2.new(0, 0, 0.74, 0)
     HelpText.Text = "💬 Need a key? Contact: @WiliExplorer"
-    HelpText.TextColor3 = Colors.TextSecondary
-    HelpText.TextSize = 11
+    HelpText.TextColor3 = C.Text_Secondary
+    HelpText.TextSize = 10
     HelpText.Font = Enum.Font.Gotham
     HelpText.BackgroundTransparency = 1
     HelpText.ZIndex = 51
     HelpText.Parent = KeyScreen
     
     local Copyright = Instance.new("TextLabel")
-    Copyright.Size = UDim2.new(1, 0, 0, 18)
+    Copyright.Size = UDim2.new(1, 0, 0, 16)
     Copyright.Position = UDim2.new(0, 0, 0.92, 0)
     Copyright.Text = "© 2025 WiliExplorer - All Rights Reserved"
-    Copyright.TextColor3 = Color3.fromRGB(80, 90, 120)
-    Copyright.TextSize = 10
+    Copyright.TextColor3 = Color3.fromRGB(70, 80, 110)
+    Copyright.TextSize = 9
     Copyright.Font = Enum.Font.Gotham
     Copyright.BackgroundTransparency = 1
     Copyright.ZIndex = 51
@@ -785,10 +798,9 @@ function MainFrame.Create()
     ExplorerScreen.ZIndex = 50
     ExplorerScreen.Parent = Content
     
-    -- ═══════════════════════════════════════════════════════════════════════
-    -- 🎯 حاوية KlimboMenu (الإصلاح الرئيسي)
-    -- ZIndex = 50 لتطابق ExplorerScreen وليس أعلى منه
-    -- ═══════════════════════════════════════════════════════════════════════
+    -- ═══════════════════════════════
+    -- حاوية KlimboMenu
+    -- ═══════════════════════════════
     local KlimboContainer = Instance.new("Frame")
     KlimboContainer.Name = "KlimboContainer"
     KlimboContainer.Size = UDim2.new(1, 0, 1, 0)
@@ -804,99 +816,90 @@ function MainFrame.Create()
         LangBtn.MouseButton1Click:Connect(function()
             Lang.Toggle()
             LangBtn.Text = Lang.Current == "en" and "🌐 عربي" or "🌐 English"
-            
             Subtitle.Text = Lang.Get("Welcome")
             KeyInput.PlaceholderText = Lang.Get("EnterKey")
             LoginBtn.Text = "🔓 " .. Lang.Get("Verify")
-            
-            ShowNotification(Frame, Lang.Current == "ar" and "تم تغيير اللغة للعربية" or "Language changed to English", "info", 2)
+            ShowNotification(Lang.Current == "ar" and "تم تغيير اللغة" or "Language changed", "info", 2)
             
             if ExplorerScreen.Visible then
                 ExplorerScreen:ClearAllChildren()
                 local Sidebar = SafeLoadModule("UI/Sidebar.lua", "Sidebar")
-                if Sidebar and Sidebar.Create then
-                    Sidebar.Create(ExplorerScreen)
-                end
+                if Sidebar and Sidebar.Create then Sidebar.Create(ExplorerScreen) end
             end
         end)
     end
 
     -- التحقق من المفتاح
     LoginBtn.MouseButton1Click:Connect(function()
-        CreateTween(LoginBtn, {Size = UDim2.new(0.63, 0, 0, 47)}, 0.1)
+        Tween(LoginBtn, {Size = UDim2.new(0.58, 0, 0, 42)}, 0.1)
         task.wait(0.1)
-        CreateTween(LoginBtn, {Size = UDim2.new(0.65, 0, 0, 50)}, 0.1)
+        Tween(LoginBtn, {Size = UDim2.new(0.6, 0, 0, 45)}, 0.1)
         
         LoginBtn.Text = "⏳ " .. Lang.Get("Verifying")
-        CreateTween(LoginBtn, {BackgroundColor3 = Color3.fromRGB(100, 150, 200)}, 0.3)
-        CreateTween(KeyInputStroke, {Color = Colors.Warning}, 0.3)
+        Tween(LoginBtn, {BackgroundColor3 = Color3.fromRGB(90, 140, 190)}, 0.3)
+        Tween(KeyInputStroke, {Color = C.Warning}, 0.3)
         task.wait(0.8)
         
         local keySuccess, data = KeySystem.Verify(KeyInput.Text)
         
         if keySuccess then
             LoginBtn.Text = "✅ " .. Lang.Get("Launching")
-            CreateTween(LoginBtn, {BackgroundColor3 = Colors.Success}, 0.3)
-            CreateTween(KeyInputStroke, {Color = Colors.Success}, 0.3)
-            
-            ShowNotification(Frame, "🎉 Welcome VIP! Access Granted", "success", 3)
+            Tween(LoginBtn, {BackgroundColor3 = C.Success}, 0.3)
+            Tween(KeyInputStroke, {Color = C.Success}, 0.3)
+            ShowNotification("🎉 Welcome VIP!", "success", 3)
             
             task.wait(1)
             
-            CreateTween(KeyScreen, {Position = UDim2.new(0, 0, -1, 0)}, 0.5, Enum.EasingStyle.Back)
+            Tween(KeyScreen, {Position = UDim2.new(0, 0, -1, 0)}, 0.5, Enum.EasingStyle.Back)
             task.wait(0.5)
             KeyScreen.Visible = false
             
             KlimboBtn.Visible = true
-            KlimboBtn.Size = UDim2.new(0, 0, 0, 34)
-            CreateTween(KlimboBtn, {Size = UDim2.new(0, 95, 0, 34)}, 0.4, Enum.EasingStyle.Back)
+            KlimboBtn.Size = UDim2.new(0, 0, 0, 30)
+            Tween(KlimboBtn, {Size = UDim2.new(0, 90, 0, 30)}, 0.4, Enum.EasingStyle.Back)
             
             UserInfo.Visible = true
-            LangBtn.Position = UDim2.new(1, -455, 0.5, -17)
-            MinBtn.Position = UDim2.new(1, -95, 0.5, -17)
-            CloseBtn.Position = UDim2.new(1, -52, 0.5, -17)
+            LangBtn.Position = UDim2.new(1, -440, 0.5, -15)
+            MinBtn.Position = UDim2.new(1, -88, 0.5, -15)
+            CloseBtn.Position = UDim2.new(1, -50, 0.5, -15)
             
             ExplorerScreen.Visible = true
             ExplorerScreen.Position = UDim2.new(0, 0, 1, 0)
-            CreateTween(ExplorerScreen, {Position = UDim2.new(0, 0, 0, 0)}, 0.5, Enum.EasingStyle.Back)
+            Tween(ExplorerScreen, {Position = UDim2.new(0, 0, 0, 0)}, 0.5, Enum.EasingStyle.Back)
             
             local Sidebar = SafeLoadModule("UI/Sidebar.lua", "Sidebar")
-            if Sidebar and Sidebar.Create then
-                Sidebar.Create(ExplorerScreen)
-            end
-            
+            if Sidebar and Sidebar.Create then Sidebar.Create(ExplorerScreen) end
         else
             LoginBtn.Text = "❌ " .. Lang.Get("Invalid")
-            CreateTween(LoginBtn, {BackgroundColor3 = Colors.Error}, 0.3)
-            CreateTween(KeyInputStroke, {Color = Colors.Error}, 0.3)
+            Tween(LoginBtn, {BackgroundColor3 = C.Error}, 0.3)
+            Tween(KeyInputStroke, {Color = C.Error}, 0.3)
             
             for i = 1, 3 do
-                CreateTween(KeyInputContainer, {Position = UDim2.new(0.1, 10, 0.43, 0)}, 0.05)
-                task.wait(0.05)
-                CreateTween(KeyInputContainer, {Position = UDim2.new(0.1, -10, 0.43, 0)}, 0.05)
-                task.wait(0.05)
+                Tween(KeyInputContainer, {Position = UDim2.new(0.1, 8, 0.42, 0)}, 0.04)
+                task.wait(0.04)
+                Tween(KeyInputContainer, {Position = UDim2.new(0.1, -8, 0.42, 0)}, 0.04)
+                task.wait(0.04)
             end
-            CreateTween(KeyInputContainer, {Position = UDim2.new(0.1, 0, 0.43, 0)}, 0.05)
+            Tween(KeyInputContainer, {Position = UDim2.new(0.1, 0, 0.42, 0)}, 0.04)
             
-            ShowNotification(Frame, "Invalid key! Please try again.", "error", 3)
+            ShowNotification("Invalid key!", "error", 3)
             
             task.wait(2)
             LoginBtn.Text = "🔓 " .. Lang.Get("Verify")
-            CreateTween(LoginBtn, {BackgroundColor3 = Colors.Accent}, 0.3)
-            CreateTween(KeyInputStroke, {Color = Colors.Accent, Transparency = 0.3}, 0.3)
+            Tween(LoginBtn, {BackgroundColor3 = C.Accent}, 0.3)
+            Tween(KeyInputStroke, {Color = C.Accent, Transparency = 0.3}, 0.3)
         end
     end)
     
     -- ═══════════════════════════════════════════════════════════════════════
-    -- 👑 زر KLIMBO - الإصلاح الكامل
+    -- 👑 زر KLIMBO
     -- ═══════════════════════════════════════════════════════════════════════
     KlimboBtn.MouseButton1Click:Connect(function()
-        CreateTween(KlimboBtn, {Size = UDim2.new(0, 90, 0, 32)}, 0.1)
+        Tween(KlimboBtn, {Size = UDim2.new(0, 85, 0, 28)}, 0.1)
         task.wait(0.1)
-        CreateTween(KlimboBtn, {Size = UDim2.new(0, 95, 0, 34)}, 0.1)
+        Tween(KlimboBtn, {Size = UDim2.new(0, 90, 0, 30)}, 0.1)
         
         if KlimboContainer.Visible then
-            -- ═══ إغلاق Klimbo ═══
             KlimboContainer:ClearAllChildren()
             KlimboContainer.Visible = false
             ExplorerScreen.Visible = true
@@ -904,12 +907,11 @@ function MainFrame.Create()
             return
         end
         
-        -- ═══ فتح Klimbo ═══
         if klimboLoading then return end
         klimboLoading = true
         
         KlimboBtn.Text = "⏳ Loading"
-        ShowNotification(Frame, "👑 Loading KLIMBO Menu...", "info", 2)
+        ShowNotification("👑 Loading KLIMBO...", "info", 2)
         
         task.spawn(function()
             local KlimboMenu = nil
@@ -918,66 +920,39 @@ function MainFrame.Create()
             for attempt = 1, 3 do
                 local ok, result = pcall(function()
                     local code = game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/KlimboMenu.lua", true)
-                    
-                    if not code or #code < 2000 then
-                        error("Incomplete download: " .. tostring(code and #code or 0) .. " bytes")
-                    end
-                    
-                    local fn = loadstring(code)
-                    if not fn then
-                        error("loadstring failed")
-                    end
-                    
-                    return fn()
+                    if not code or #code < 2000 then error("Incomplete") end
+                    return loadstring(code)()
                 end)
                 
                 if ok and result and type(result) == "table" and type(result.Create) == "function" then
                     KlimboMenu = result
                     loadSuccess = true
-                    print("✅ KlimboMenu loaded (attempt " .. attempt .. ")")
                     break
-                else
-                    warn("⚠️ KlimboMenu attempt " .. attempt .. "/3 failed: " .. tostring(result))
                 end
                 
-                if attempt < 3 then
-                    task.wait(1)
-                end
+                if attempt < 3 then task.wait(1) end
             end
             
             if loadSuccess and KlimboMenu then
-                -- ═══ الإصلاح الرئيسي: إظهار الحاوية أولاً ثم إنشاء القائمة ═══
                 KlimboContainer.Visible = true
                 ExplorerScreen.Visible = false
                 KlimboBtn.Text = "◀ BACK"
                 
-                local createOk, createErr = pcall(function()
+                local createOk = pcall(function()
                     KlimboMenu.Create(KlimboContainer)
                 end)
                 
                 if createOk then
-                    ShowNotification(Frame, "👑 KLIMBO Menu Ready!", "success", 2)
-                    print("🎉 KlimboMenu created successfully!")
-                    
-                    -- ═══ التحقق من أن العناصر فعلاً تظهر ═══
-                    task.wait(0.5)
-                    local childCount = #KlimboContainer:GetChildren()
-                    if childCount == 0 then
-                        warn("⚠️ KlimboContainer has no children! UI may not render.")
-                        ShowNotification(Frame, "⚠️ Menu loaded but may be empty", "warning", 3)
-                    else
-                        print("✅ KlimboContainer has " .. childCount .. " children")
-                    end
+                    ShowNotification("👑 KLIMBO Ready!", "success", 2)
                 else
-                    warn("❌ KlimboMenu.Create error: " .. tostring(createErr))
-                    ShowNotification(Frame, "❌ Menu error: " .. tostring(createErr):sub(1, 50), "error", 4)
                     KlimboContainer:ClearAllChildren()
                     KlimboContainer.Visible = false
                     ExplorerScreen.Visible = true
                     KlimboBtn.Text = "👑 KLIMBO"
+                    ShowNotification("❌ Error loading menu", "error", 3)
                 end
             else
-                ShowNotification(Frame, "❌ Failed to load KLIMBO Menu", "error", 4)
+                ShowNotification("❌ Failed to load KLIMBO", "error", 3)
                 KlimboContainer.Visible = false
                 ExplorerScreen.Visible = true
                 KlimboBtn.Text = "👑 KLIMBO"
@@ -987,19 +962,16 @@ function MainFrame.Create()
         end)
     end)
 
-    -- جعل النافذة قابلة للسحب
-    local dragging, dragInput, dragStart, startPos
+    -- سحب النافذة
+    local dragging, dragStart, startPos
     
     TopBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPos = Frame.Position
-            
             input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
             end)
         end
     end)
@@ -1030,10 +1002,10 @@ function MainFrame.Create()
             else
                 minimized = not minimized
                 if minimized then
-                    CreateTween(Frame, {Size = UDim2.new(0, frameWidth, 0, 52)}, 0.3, Enum.EasingStyle.Back)
+                    Tween(Frame, {Size = UDim2.new(0, frameWidth, 0, 48)}, 0.3, Enum.EasingStyle.Back)
                     MinBtn.Text = "+"
                 else
-                    CreateTween(Frame, {Size = UDim2.new(0, frameWidth, 0, frameHeight)}, 0.3, Enum.EasingStyle.Back)
+                    Tween(Frame, {Size = UDim2.new(0, frameWidth, 0, frameHeight)}, 0.3, Enum.EasingStyle.Back)
                     MinBtn.Text = "—"
                 end
             end
@@ -1045,7 +1017,6 @@ function MainFrame.Create()
     end)
 
     print("🚀 WiliExplorer VIP UI Ready!")
-    print("👑 Press K to toggle KLIMBO Menu")
     
     return ScreenGui
 end
