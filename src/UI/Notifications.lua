@@ -1,17 +1,15 @@
 --[[
     ═══════════════════════════════════════════════════════════════════════════
-    📢 WiliExplorer - Notifications System v2.0
+    🔔 WiliExplorer - Notification System v1.0
     ═══════════════════════════════════════════════════════════════════════════
     
-    ✅ Features:
-    • Mini notifications in corner
-    • Color coded by type
-    • Smooth animations
-    • Auto dismiss
-    • Queue system
-    • Counter badge
-    • Sound effects (optional)
-    • Swipe to dismiss
+    ✅ إشعارات صغيرة وجميلة
+    ✅ ألوان حسب النوع (نجاح/خطأ/تحذير/معلومات)
+    ✅ أنيميشن دخول/خروج سلس
+    ✅ صف انتظار (Queue)
+    ✅ تختفي تلقائياً
+    ✅ عداد الإشعارات
+    ✅ متوافق مع الهاتف
     
     ═══════════════════════════════════════════════════════════════════════════
 ]]
@@ -21,567 +19,467 @@ local Notifications = {}
 -- Services
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer
 
 -- ═══════════════════════════════════════════════════════════════════════
--- 🎨 NOTIFICATION THEME
+-- 🎨 الألوان والأيقونات
 -- ═══════════════════════════════════════════════════════════════════════
-local NotifTheme = {
-    -- Colors
-    Success = Color3.fromRGB(0, 200, 100),
-    Error = Color3.fromRGB(255, 50, 50),
-    Warning = Color3.fromRGB(255, 165, 0),
-    Info = Color3.fromRGB(100, 200, 255),
-    Debug = Color3.fromRGB(150, 150, 200),
-    
-    -- Background
-    Background = Color3.fromRGB(12, 12, 25),
-    BackgroundHover = Color3.fromRGB(18, 18, 35),
-    
-    -- Text
-    Text = Color3.fromRGB(255, 255, 255),
-    TextDim = Color3.fromRGB(180, 180, 200),
-    
-    -- Icons
-    Icons = {
-        Success = "✅",
-        Error = "❌",
-        Warning = "⚠️",
-        Info = "ℹ️",
-        Debug = "🔧",
-        Star = "⭐",
-        Fire = "🔥",
-        Lock = "🔒",
-        Unlock = "🔓",
-        Heart = "❤️",
-        Lightning = "⚡",
-        Crown = "👑",
-        Rocket = "🚀",
-        Shield = "🛡️",
-        Eye = "👁️",
-        Magic = "✨"
+local NotifTypes = {
+    success = {
+        icon = "✅",
+        color = Color3.fromRGB(0, 255, 100),
+        bgColor = Color3.fromRGB(10, 40, 25),
+        borderColor = Color3.fromRGB(0, 200, 80)
+    },
+    error = {
+        icon = "❌",
+        color = Color3.fromRGB(255, 50, 50),
+        bgColor = Color3.fromRGB(40, 10, 10),
+        borderColor = Color3.fromRGB(200, 40, 40)
+    },
+    warning = {
+        icon = "⚠️",
+        color = Color3.fromRGB(255, 165, 0),
+        bgColor = Color3.fromRGB(40, 30, 10),
+        borderColor = Color3.fromRGB(200, 130, 0)
+    },
+    info = {
+        icon = "ℹ️",
+        color = Color3.fromRGB(100, 200, 255),
+        bgColor = Color3.fromRGB(10, 25, 40),
+        borderColor = Color3.fromRGB(80, 160, 200)
+    },
+    vip = {
+        icon = "👑",
+        color = Color3.fromRGB(255, 215, 0),
+        bgColor = Color3.fromRGB(40, 35, 15),
+        borderColor = Color3.fromRGB(200, 170, 0)
+    },
+    game = {
+        icon = "🎮",
+        color = Color3.fromRGB(138, 43, 226),
+        bgColor = Color3.fromRGB(30, 15, 45),
+        borderColor = Color3.fromRGB(110, 35, 180)
     }
 }
 
 -- ═══════════════════════════════════════════════════════════════════════
--- 📊 NOTIFICATION DATA
+-- 📦 المتغيرات
 -- ═══════════════════════════════════════════════════════════════════════
-local NotificationQueue = {}
-local ActiveNotifications = {}
-local NotificationCounter = 0
-local MaxNotifications = 5
-local NotificationContainer = nil
-local CounterBadge = nil
+local NotifContainer = nil
+local NotifQueue = {}
+local ActiveNotifs = {}
+local MaxNotifs = 5
+local NotifCount = 0
 
 -- ═══════════════════════════════════════════════════════════════════════
--- 🛠️ UTILITY FUNCTIONS
--- ═══════════════════════════════════════════════════════════════════════
-local function CreateCorner(parent, radius)
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, radius or 10)
-    corner.Parent = parent
-    return corner
-end
-
-local function CreateStroke(parent, color, thickness, transparency)
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = color or Color3.fromRGB(255, 255, 255)
-    stroke.Thickness = thickness or 1
-    stroke.Transparency = transparency or 0
-    stroke.Parent = parent
-    return stroke
-end
-
-local function CreateGradient(parent, colors, rotation)
-    local gradient = Instance.new("UIGradient")
-    gradient.Color = colors or ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200))
-    })
-    gradient.Rotation = rotation or 0
-    gradient.Parent = parent
-    return gradient
-end
-
--- ═══════════════════════════════════════════════════════════════════════
--- 🎯 CREATE NOTIFICATION CONTAINER
+-- 🛠️ دوال مساعدة
 -- ═══════════════════════════════════════════════════════════════════════
 local function CreateContainer()
-    if NotificationContainer and NotificationContainer.Parent then
-        return NotificationContainer
-    end
+    if NotifContainer and NotifContainer.Parent then return NotifContainer end
     
-    -- Create ScreenGui
     local gui = Instance.new("ScreenGui")
     gui.Name = "WiliNotifications"
     gui.ResetOnSpawn = false
     gui.IgnoreGuiInset = true
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
-    -- Try CoreGui first, fallback to PlayerGui
-    local success = pcall(function()
-        gui.Parent = game:GetService("CoreGui")
-    end)
-    if not success then
-        gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-    end
+    pcall(function() gui.Parent = CoreGui end)
+    if not gui.Parent then gui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
     
-    -- Container Frame
-    NotificationContainer = Instance.new("Frame")
-    NotificationContainer.Name = "NotifContainer"
-    NotificationContainer.Size = UDim2.new(0, 280, 1, -20)
-    NotificationContainer.Position = UDim2.new(1, -290, 0, 10)
-    NotificationContainer.BackgroundTransparency = 1
-    NotificationContainer.Parent = gui
+    NotifContainer = Instance.new("Frame")
+    NotifContainer.Name = "Container"
+    NotifContainer.Size = UDim2.new(0, 280, 1, -20)
+    NotifContainer.Position = UDim2.new(1, -290, 0, 10)
+    NotifContainer.BackgroundTransparency = 1
+    NotifContainer.Parent = gui
     
-    -- Layout
     local layout = Instance.new("UIListLayout")
     layout.Padding = UDim.new(0, 6)
     layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
     layout.SortOrder = Enum.SortOrder.LayoutOrder
-    layout.Parent = NotificationContainer
+    layout.Parent = NotifContainer
     
-    -- Padding
-    local padding = Instance.new("UIPadding")
-    padding.PaddingBottom = UDim.new(0, 5)
-    padding.PaddingRight = UDim.new(0, 5)
-    padding.Parent = NotificationContainer
+    local pad = Instance.new("UIPadding")
+    pad.PaddingBottom = UDim.new(0, 5)
+    pad.PaddingRight = UDim.new(0, 5)
+    pad.Parent = NotifContainer
     
-    -- Counter Badge
-    CounterBadge = Instance.new("Frame")
-    CounterBadge.Name = "CounterBadge"
-    CounterBadge.Size = UDim2.new(0, 24, 0, 24)
-    CounterBadge.Position = UDim2.new(1, -30, 0, 5)
-    CounterBadge.BackgroundColor3 = Color3.fromRGB(255, 0, 100)
-    CounterBadge.Visible = false
-    CounterBadge.ZIndex = 100
-    CounterBadge.Parent = gui
-    CreateCorner(CounterBadge, 12)
-    
-    local counterText = Instance.new("TextLabel")
-    counterText.Name = "CounterText"
-    counterText.Size = UDim2.new(1, 0, 1, 0)
-    counterText.BackgroundTransparency = 1
-    counterText.Text = "0"
-    counterText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    counterText.TextSize = 12
-    counterText.Font = Enum.Font.GothamBold
-    counterText.ZIndex = 101
-    counterText.Parent = CounterBadge
-    
-    return NotificationContainer
+    return NotifContainer
+end
+
+local function Tween(obj, props, duration, style, direction)
+    if not obj or not obj.Parent then return end
+    return TweenService:Create(obj, TweenInfo.new(
+        duration or 0.3,
+        style or Enum.EasingStyle.Quart,
+        direction or Enum.EasingDirection.Out
+    ), props):Play()
 end
 
 -- ═══════════════════════════════════════════════════════════════════════
--- 🎨 UPDATE COUNTER BADGE
+-- 🔔 إنشاء إشعار واحد
 -- ═══════════════════════════════════════════════════════════════════════
-local function UpdateCounter()
-    if not CounterBadge then return end
-    
-    local count = #ActiveNotifications
-    if count > 0 then
-        CounterBadge.Visible = true
-        CounterBadge.CounterText.Text = tostring(count)
-        
-        -- Pulse animation
-        TweenService:Create(CounterBadge, TweenInfo.new(0.2), {
-            Size = UDim2.new(0, 28, 0, 28)
-        }):Play()
-        task.wait(0.2)
-        TweenService:Create(CounterBadge, TweenInfo.new(0.2), {
-            Size = UDim2.new(0, 24, 0, 24)
-        }):Play()
-    else
-        CounterBadge.Visible = false
-    end
-end
-
--- ═══════════════════════════════════════════════════════════════════════
--- 🎯 CREATE SINGLE NOTIFICATION
--- ═══════════════════════════════════════════════════════════════════════
-local function CreateNotification(data)
+local function CreateSingleNotif(message, notifType, duration, title)
     local container = CreateContainer()
+    local typeData = NotifTypes[notifType] or NotifTypes.info
     
-    -- Notification Frame
+    NotifCount = NotifCount + 1
+    local notifId = NotifCount
+    
+    -- الإطار الرئيسي
     local notif = Instance.new("Frame")
-    notif.Name = "Notification"
-    notif.Size = UDim2.new(1, 0, 0, 50)
-    notif.BackgroundColor3 = NotifTheme.Background
+    notif.Name = "Notif_" .. notifId
+    notif.Size = UDim2.new(1, 0, 0, 0) -- يبدأ بحجم 0
+    notif.BackgroundColor3 = typeData.bgColor
     notif.BorderSizePixel = 0
-    notif.ZIndex = 50
+    notif.ClipsDescendants = true
+    notif.ZIndex = 1000
+    notif.LayoutOrder = -notifId
     notif.Parent = container
-    CreateCorner(notif, 10)
     
-    -- Stroke
-    local stroke = CreateStroke(notif, data.color or NotifTheme.Info, 2, 0.3)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = notif
     
-    -- Gradient Background
-    local gradient = CreateGradient(notif, ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 40)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 10, 25))
-    }), 135)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = typeData.borderColor
+    stroke.Thickness = 1.5
+    stroke.Transparency = 0.3
+    stroke.Parent = notif
     
-    -- Color Bar (Left side)
-    local colorBar = Instance.new("Frame")
-    colorBar.Name = "ColorBar"
-    colorBar.Size = UDim2.new(0, 4, 0.8, 0)
-    colorBar.Position = UDim2.new(0, 4, 0.1, 0)
-    colorBar.BackgroundColor3 = data.color or NotifTheme.Info
-    colorBar.BorderSizePixel = 0
-    colorBar.ZIndex = 51
-    colorBar.Parent = notif
-    CreateCorner(colorBar, 2)
+    -- شريط جانبي ملون
+    local sideBar = Instance.new("Frame")
+    sideBar.Size = UDim2.new(0, 4, 1, 0)
+    sideBar.BackgroundColor3 = typeData.color
+    sideBar.BorderSizePixel = 0
+    sideBar.ZIndex = 1001
+    sideBar.Parent = notif
     
-    -- Icon
+    -- الأيقونة
     local icon = Instance.new("TextLabel")
-    icon.Name = "Icon"
     icon.Size = UDim2.new(0, 35, 0, 35)
-    icon.Position = UDim2.new(0, 12, 0.5, -17)
-    icon.Text = data.icon or "ℹ️"
-    icon.TextSize = 18
+    icon.Position = UDim2.new(0, 10, 0.5, -17)
+    icon.Text = typeData.icon
+    icon.TextSize = 20
     icon.BackgroundTransparency = 1
-    icon.ZIndex = 52
+    icon.ZIndex = 1002
     icon.Parent = notif
     
-    -- Title
-    local title = Instance.new("TextLabel")
-    title.Name = "Title"
-    title.Size = UDim2.new(1, -90, 0, 18)
-    title.Position = UDim2.new(0, 50, 0, 6)
-    title.Text = data.title or "Notification"
-    title.TextColor3 = NotifTheme.Text
-    title.TextSize = 12
-    title.Font = Enum.Font.GothamBold
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    title.TextTruncate = Enum.TextTruncate.AtEnd
-    title.BackgroundTransparency = 1
-    title.ZIndex = 52
-    title.Parent = notif
+    -- العنوان (اختياري)
+    local titleLbl = nil
+    if title and title ~= "" then
+        titleLbl = Instance.new("TextLabel")
+        titleLbl.Size = UDim2.new(1, -55, 0, 16)
+        titleLbl.Position = UDim2.new(0, 50, 0, 5)
+        titleLbl.Text = title
+        titleLbl.TextColor3 = typeData.color
+        titleLbl.TextSize = 11
+        titleLbl.Font = Enum.Font.GothamBold
+        titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+        titleLbl.TextTruncate = Enum.TextTruncate.AtEnd
+        titleLbl.BackgroundTransparency = 1
+        titleLbl.ZIndex = 1002
+        titleLbl.Parent = notif
+    end
     
-    -- Message
-    local message = Instance.new("TextLabel")
-    message.Name = "Message"
-    message.Size = UDim2.new(1, -90, 0, 16)
-    message.Position = UDim2.new(0, 50, 0, 26)
-    message.Text = data.message or ""
-    message.TextColor3 = NotifTheme.TextDim
-    message.TextSize = 10
-    message.Font = Enum.Font.Gotham
-    message.TextXAlignment = Enum.TextXAlignment.Left
-    message.TextTruncate = Enum.TextTruncate.AtEnd
-    message.BackgroundTransparency = 1
-    message.ZIndex = 52
-    message.Parent = notif
+    -- الرسالة
+    local msg = Instance.new("TextLabel")
+    msg.Size = UDim2.new(1, -55, 0, 35)
+    msg.Position = UDim2.new(0, 50, title and 22 or 0, 0)
+    msg.Text = message
+    msg.TextColor3 = Color3.fromRGB(255, 255, 255)
+    msg.TextSize = 12
+    msg.Font = Enum.Font.Gotham
+    msg.TextXAlignment = Enum.TextXAlignment.Left
+    msg.TextWrapped = true
+    msg.TextTruncate = Enum.TextTruncate.AtEnd
+    msg.BackgroundTransparency = 1
+    msg.ZIndex = 1002
+    msg.Parent = notif
     
-    -- Time
-    local time = Instance.new("TextLabel")
-    time.Name = "Time"
-    time.Size = UDim2.new(0, 40, 0, 12)
-    time.Position = UDim2.new(1, -45, 0, 5)
-    time.Text = os.date("%H:%M")
-    time.TextColor3 = NotifTheme.TextDim
-    time.TextSize = 8
-    time.Font = Enum.Font.Gotham
-    time.TextXAlignment = Enum.TextXAlignment.Right
-    time.BackgroundTransparency = 1
-    time.ZIndex = 52
-    time.Parent = notif
+    -- شريط التقدم
+    local progressBg = Instance.new("Frame")
+    progressBg.Size = UDim2.new(1, -8, 0, 3)
+    progressBg.Position = UDim2.new(0, 4, 1, -5)
+    progressBg.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+    progressBg.BorderSizePixel = 0
+    progressBg.ZIndex = 1002
+    progressBg.Parent = notif
+    Instance.new("UICorner", progressBg).CornerRadius = UDim.new(1, 0)
     
-    -- Close Button
+    local progressFill = Instance.new("Frame")
+    progressFill.Size = UDim2.new(1, 0, 1, 0)
+    progressFill.BackgroundColor3 = typeData.color
+    progressFill.BorderSizePixel = 0
+    progressFill.ZIndex = 1003
+    progressFill.Parent = progressBg
+    Instance.new("UICorner", progressFill).CornerRadius = UDim.new(1, 0)
+    
+    -- زر إغلاق
     local closeBtn = Instance.new("TextButton")
-    closeBtn.Name = "CloseBtn"
     closeBtn.Size = UDim2.new(0, 20, 0, 20)
-    closeBtn.Position = UDim2.new(1, -25, 0, 5)
+    closeBtn.Position = UDim2.new(1, -25, 0, 3)
     closeBtn.Text = "✕"
-    closeBtn.TextColor3 = NotifTheme.TextDim
+    closeBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
     closeBtn.TextSize = 10
     closeBtn.Font = Enum.Font.GothamBold
     closeBtn.BackgroundTransparency = 1
-    closeBtn.ZIndex = 53
+    closeBtn.ZIndex = 1003
     closeBtn.Parent = notif
     
-    -- Progress Bar (Auto dismiss)
-    local progress = Instance.new("Frame")
-    progress.Name = "Progress"
-    progress.Size = UDim2.new(1, 0, 0, 2)
-    progress.Position = UDim2.new(0, 0, 1, -2)
-    progress.BackgroundColor3 = data.color or NotifTheme.Info
-    progress.BorderSizePixel = 0
-    progress.ZIndex = 51
-    progress.Parent = notif
+    -- ═══ أنيميشن الدخول ═══
+    local targetHeight = title and 60 or 45
     
-    -- ═══════════════════════════════════════════════════════════════════
-    -- 🎬 ANIMATIONS
-    -- ═══════════════════════════════════════════════════════════════════
+    -- تحديد الحجم الأولي
+    notif.Size = UDim2.new(1, 0, 0, 0)
+    notif.BackgroundTransparency = 1
+    stroke.Transparency = 1
+    icon.TextTransparency = 1
+    msg.TextTransparency = 1
+    if titleLbl then titleLbl.TextTransparency = 1 end
+    progressFill.BackgroundTransparency = 1
     
-    -- Slide in animation
-    notif.Position = UDim2.new(1, 0, 0, 0)
-    TweenService:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0, 0, 0, 0)
-    }):Play()
-    
-    -- Glow effect on entry
-    TweenService:Create(stroke, TweenInfo.new(0.5), {
-        Transparency = 0
-    }):Play()
-    task.delay(0.5, function()
-        if stroke and stroke.Parent then
-            TweenService:Create(stroke, TweenInfo.new(0.5), {
-                Transparency = 0.3
-            }):Play()
-        end
+    -- أنيميشن الظهور
+    task.spawn(function()
+        Tween(notif, {
+            Size = UDim2.new(1, 0, 0, targetHeight),
+            BackgroundTransparency = 0
+        }, 0.4, Enum.EasingStyle.Back)
+        
+        Tween(stroke, {Transparency = 0.3}, 0.3)
+        Tween(icon, {TextTransparency = 0}, 0.3)
+        Tween(msg, {TextTransparency = 0}, 0.3)
+        if titleLbl then Tween(titleLbl, {TextTransparency = 0}, 0.3) end
+        Tween(progressFill, {BackgroundTransparency = 0}, 0.3)
     end)
     
-    -- Progress bar animation
-    local duration = data.duration or 3
-    TweenService:Create(progress, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
-        Size = UDim2.new(0, 0, 0, 2)
-    }):Play()
+    -- ═══ شريط التقدم ═══
+    local dur = duration or 3
+    Tween(progressFill, {Size = UDim2.new(0, 0, 1, 0)}, dur, Enum.EasingStyle.Linear)
     
-    -- ═══════════════════════════════════════════════════════════════════
-    -- 🎯 INTERACTIONS
-    -- ═══════════════════════════════════════════════════════════════════
+    -- ═══ زر الإغلاق ═══
+    local function RemoveNotif()
+        Tween(notif, {
+            Size = UDim2.new(1, 0, 0, 0),
+            BackgroundTransparency = 1
+        }, 0.3)
+        Tween(stroke, {Transparency = 1}, 0.2)
+        Tween(icon, {TextTransparency = 1}, 0.2)
+        Tween(msg, {TextTransparency = 1}, 0.2)
+        if titleLbl then Tween(titleLbl, {TextTransparency = 1}, 0.2) end
+        
+        task.delay(0.35, function()
+            if notif and notif.Parent then
+                notif:Destroy()
+            end
+        end)
+    end
     
-    -- Hover effect
+    closeBtn.MouseButton1Click:Connect(RemoveNotif)
+    closeBtn.MouseEnter:Connect(function()
+        Tween(closeBtn, {TextColor3 = Color3.fromRGB(255, 255, 255)}, 0.1)
+    end)
+    closeBtn.MouseLeave:Connect(function()
+        Tween(closeBtn, {TextColor3 = Color3.fromRGB(150, 150, 150)}, 0.1)
+    end)
+    
+    -- ═══ إزالة تلقائية ═══
+    task.delay(dur, function()
+        RemoveNotif()
+    end)
+    
+    -- تأثير Hover
     notif.MouseEnter:Connect(function()
-        TweenService:Create(notif, TweenInfo.new(0.15), {
-            BackgroundColor3 = NotifTheme.BackgroundHover
-        }):Play()
-        TweenService:Create(stroke, TweenInfo.new(0.15), {
-            Transparency = 0
-        }):Play()
+        Tween(notif, {BackgroundColor3 = Color3.fromRGB(
+            typeData.bgColor.R * 255 + 10,
+            typeData.bgColor.G * 255 + 10,
+            typeData.bgColor.B * 255 + 10
+        )}, 0.2)
     end)
-    
     notif.MouseLeave:Connect(function()
-        TweenService:Create(notif, TweenInfo.new(0.15), {
-            BackgroundColor3 = NotifTheme.Background
-        }):Play()
-        TweenService:Create(stroke, TweenInfo.new(0.15), {
-            Transparency = 0.3
-        }):Play()
-    end)
-    
-    -- Close button
-    closeBtn.MouseButton1Click:Connect(function()
-        -- Slide out animation
-        TweenService:Create(notif, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            Position = UDim2.new(1, 0, 0, 0),
-            Size = UDim2.new(1, 0, 0, 0)
-        }):Play()
-        
-        task.wait(0.2)
-        
-        -- Remove from active list
-        for i, n in ipairs(ActiveNotifications) do
-            if n == notif then
-                table.remove(ActiveNotifications, i)
-                break
-            end
-        end
-        
-        notif:Destroy()
-        UpdateCounter()
-    end)
-    
-    -- ═══════════════════════════════════════════════════════════════════
-    -- ⏱️ AUTO DISMISS
-    -- ═══════════════════════════════════════════════════════════════════
-    task.delay(duration, function()
-        if notif and notif.Parent then
-            -- Fade out
-            TweenService:Create(notif, TweenInfo.new(0.3), {
-                BackgroundTransparency = 1
-            }):Play()
-            
-            TweenService:Create(stroke, TweenInfo.new(0.3), {
-                Transparency = 1
-            }):Play()
-            
-            TweenService:Create(title, TweenInfo.new(0.3), {
-                TextTransparency = 1
-            }):Play()
-            
-            TweenService:Create(message, TweenInfo.new(0.3), {
-                TextTransparency = 1
-            }):Play()
-            
-            TweenService:Create(icon, TweenInfo.new(0.3), {
-                TextTransparency = 1
-            }):Play()
-            
-            task.wait(0.3)
-            
-            -- Slide out
-            TweenService:Create(notif, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-                Position = UDim2.new(1, 0, 0, 0)
-            }):Play()
-            
-            task.wait(0.2)
-            
-            -- Remove
-            for i, n in ipairs(ActiveNotifications) do
-                if n == notif then
-                    table.remove(ActiveNotifications, i)
-                    break
-                end
-            end
-            
-            notif:Destroy()
-            UpdateCounter()
-        end
+        Tween(notif, {BackgroundColor3 = typeData.bgColor}, 0.2)
     end)
     
     return notif
 end
 
 -- ═══════════════════════════════════════════════════════════════════════
--- 📢 PUBLIC API
+-- 🔔 API العامة
 -- ═══════════════════════════════════════════════════════════════════════
 
-function Notifications.Show(options)
-    options = options or {}
-    
-    local data = {
-        title = options.title or "Notification",
-        message = options.message or "",
-        icon = options.icon or "ℹ️",
-        color = options.color or NotifTheme.Info,
-        duration = options.duration or 3,
-        type = options.type or "info"
+-- إشعار نجاح
+function Notifications.Success(message, title, duration)
+    return CreateSingleNotif(message, "success", duration or 3, title)
+end
+
+-- إشعار خطأ
+function Notifications.Error(message, title, duration)
+    return CreateSingleNotif(message, "error", duration or 4, title)
+end
+
+-- إشعار تحذير
+function Notifications.Warning(message, title, duration)
+    return CreateSingleNotif(message, "warning", duration or 3, title)
+end
+
+-- إشعار معلومات
+function Notifications.Info(message, title, duration)
+    return CreateSingleNotif(message, "info", duration or 3, title)
+end
+
+-- إشعار VIP
+function Notifications.VIP(message, title, duration)
+    return CreateSingleNotif(message, "vip", duration or 4, title)
+end
+
+-- إشعار لعبة
+function Notifications.Game(message, title, duration)
+    return CreateSingleNotif(message, "game", duration or 3, title)
+end
+
+-- إشعار مخصص
+function Notifications.Custom(message, icon, color, duration, title)
+    NotifTypes.custom = {
+        icon = icon or "📢",
+        color = color or Color3.fromRGB(200, 200, 200),
+        bgColor = Color3.fromRGB(25, 25, 40),
+        borderColor = color or Color3.fromRGB(150, 150, 150)
     }
-    
-    -- Set color based on type if not specified
-    if not options.color then
-        if data.type == "success" then
-            data.color = NotifTheme.Success
-            data.icon = data.icon == "ℹ️" and "✅" or data.icon
-        elseif data.type == "error" then
-            data.color = NotifTheme.Error
-            data.icon = data.icon == "ℹ️" and "❌" or data.icon
-        elseif data.type == "warning" then
-            data.color = NotifTheme.Warning
-            data.icon = data.icon == "ℹ️" and "⚠️" or data.icon
-        elseif data.type == "debug" then
-            data.color = NotifTheme.Debug
-            data.icon = data.icon == "ℹ️" and "🔧" or data.icon
-        end
-    end
-    
-    -- Check queue limit
-    if #ActiveNotifications >= MaxNotifications then
-        -- Remove oldest
-        local oldest = table.remove(ActiveNotifications, 1)
-        if oldest and oldest.Parent then
-            oldest:Destroy()
-        end
-    end
-    
-    -- Create notification
-    local notif = CreateNotification(data)
-    table.insert(ActiveNotifications, notif)
-    
-    -- Update counter
-    NotificationCounter = NotificationCounter + 1
-    UpdateCounter()
-    
-    return notif
+    return CreateSingleNotif(message, "custom", duration or 3, title)
 end
 
--- Convenience methods
-function Notifications.Success(title, message, duration)
-    return Notifications.Show({
-        title = title,
-        message = message,
-        type = "success",
-        duration = duration
-    })
+-- إشعار سريع
+function Notifications.Quick(message)
+    return CreateSingleNotif(message, "info", 1.5)
 end
 
-function Notifications.Error(title, message, duration)
-    return Notifications.Show({
-        title = title,
-        message = message,
-        type = "error",
-        duration = duration
-    })
-end
-
-function Notifications.Warning(title, message, duration)
-    return Notifications.Show({
-        title = title,
-        message = message,
-        type = "warning",
-        duration = duration
-    })
-end
-
-function Notifications.Info(title, message, duration)
-    return Notifications.Show({
-        title = title,
-        message = message,
-        type = "info",
-        duration = duration
-    })
-end
-
-function Notifications.Debug(title, message, duration)
-    return Notifications.Show({
-        title = title,
-        message = message,
-        type = "debug",
-        duration = duration
-    })
-end
-
-function Notifications.Custom(title, message, icon, color, duration)
-    return Notifications.Show({
-        title = title,
-        message = message,
-        icon = icon,
-        color = color,
-        duration = duration
-    })
-end
-
--- Clear all notifications
+-- مسح كل الإشعارات
 function Notifications.ClearAll()
-    for _, notif in ipairs(ActiveNotifications) do
-        if notif and notif.Parent then
-            notif:Destroy()
+    if NotifContainer then
+        for _, child in ipairs(NotifContainer:GetChildren()) do
+            if child:IsA("Frame") then
+                child:Destroy()
+            end
         end
     end
-    ActiveNotifications = {}
-    UpdateCounter()
 end
 
--- Get notification count
+-- تحديث عدد الإشعارات
 function Notifications.GetCount()
-    return #ActiveNotifications
-end
-
--- Set max notifications
-function Notifications.SetMax(max)
-    MaxNotifications = max
-end
-
--- Set theme
-function Notifications.SetTheme(theme)
-    for key, value in pairs(theme) do
-        if NotifTheme[key] then
-            NotifTheme[key] = value
+    if NotifContainer then
+        local count = 0
+        for _, child in ipairs(NotifContainer:GetChildren()) do
+            if child:IsA("Frame") then count = count + 1 end
         end
+        return count
+    end
+    return 0
+end
+
+-- ═══════════════════════════════════════════════════════════════════════
+-- 📱 دعم الهاتف - إشعار عائم
+-- ═══════════════════════════════════════════════════════════════════════
+local FloatingBtn = nil
+
+function Notifications.CreateFloatingButton(callback)
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "WiliFloating"
+    gui.ResetOnSpawn = false
+    gui.IgnoreGuiInset = true
+    
+    pcall(function() gui.Parent = CoreGui end)
+    if not gui.Parent then gui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
+    
+    FloatingBtn = Instance.new("ImageButton")
+    FloatingBtn.Name = "FloatingBtn"
+    FloatingBtn.Size = UDim2.new(0, 50, 0, 50)
+    FloatingBtn.Position = UDim2.new(1, -65, 0.5, -25)
+    FloatingBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
+    FloatingBtn.BorderSizePixel = 0
+    FloatingBtn.Image = ""
+    FloatingBtn.Parent = gui
+    
+    Instance.new("UICorner", FloatingBtn).CornerRadius = UDim.new(1, 0)
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(255, 215, 0)
+    stroke.Thickness = 2
+    stroke.Parent = FloatingBtn
+    
+    local icon = Instance.new("TextLabel")
+    icon.Size = UDim2.new(1, 0, 1, 0)
+    icon.Text = "👑"
+    icon.TextSize = 24
+    icon.BackgroundTransparency = 1
+    icon.ZIndex = 10
+    icon.Parent = FloatingBtn
+    
+    -- تأثير نبضي
+    task.spawn(function()
+        while FloatingBtn and FloatingBtn.Parent do
+            TweenService:Create(stroke, TweenInfo.new(1), {Thickness = 3, Transparency = 0.3}):Play()
+            task.wait(1)
+            if not FloatingBtn or not FloatingBtn.Parent then break end
+            TweenService:Create(stroke, TweenInfo.new(1), {Thickness = 2, Transparency = 0}):Play()
+            task.wait(1)
+        end
+    end)
+    
+    -- سحب الزر
+    local dragging, dragStart, startPos
+    
+    FloatingBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = FloatingBtn.Position
+        end
+    end)
+    
+    FloatingBtn.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            FloatingBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    FloatingBtn.MouseButton1Click:Connect(function()
+        if callback then callback() end
+    end)
+    
+    -- Hover effects
+    FloatingBtn.MouseEnter:Connect(function()
+        TweenService:Create(FloatingBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 55, 0, 55)}):Play()
+    end)
+    FloatingBtn.MouseLeave:Connect(function()
+        TweenService:Create(FloatingBtn, TweenInfo.new(0.2), {Size = UDim2.new(0, 50, 0, 50)}):Play()
+    end)
+    
+    return FloatingBtn
+end
+
+-- إزالة الزر العائم
+function Notifications.RemoveFloatingButton()
+    if FloatingBtn and FloatingBtn.Parent then
+        FloatingBtn.Parent:Destroy()
+        FloatingBtn = nil
     end
 end
 
--- Initialize
-Notifications.Show({
-    title = "WiliExplorer",
-    message = "Notifications system loaded!",
-    icon = "👑",
-    type = "success",
-    duration = 2
-})
+-- ═══════════════════════════════════════════════════════════════════════
+-- 🎯 تهيئة النظام
+-- ═══════════════════════════════════════════════════════════════════════
+Notifications.NotifTypes = NotifTypes
+
+print("🔔 Notification System v1.0 Loaded!")
 
 return Notifications
