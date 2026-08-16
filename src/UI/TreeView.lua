@@ -1,7 +1,10 @@
 local TreeView = {}
 
-local FileScanner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Core/FileScanner.lua", true))()
-local Language = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Utils/Language.lua", true))()
+local function GetModule(name)
+    return assert(_G.WiliModules and _G.WiliModules[name], "TreeView dependency missing: " .. name)
+end
+local FileScanner = GetModule("FileScanner")
+local Language = GetModule("Language")
 
 local TweenService = game:GetService("TweenService")
 
@@ -51,7 +54,7 @@ function TreeView.Create(parent, rootInstance, onBack)
     local CountLabel = Instance.new("TextLabel")
     CountLabel.Size = UDim2.new(0, 200, 0, 15)
     CountLabel.Position = UDim2.new(0, 100, 0, 28)
-    CountLabel.Text = FileScanner.CountDescendants(rootInstance) .. " " .. Language.Get("Items")
+    CountLabel.Text = #rootInstance:GetChildren() .. " " .. Language.Get("DirectItems")
     CountLabel.TextColor3 = Color3.fromRGB(150, 170, 200)
     CountLabel.TextSize = 12
     CountLabel.Font = Enum.Font.Gotham
@@ -84,12 +87,37 @@ function TreeView.Create(parent, rootInstance, onBack)
     SStroke.Transparency = 0.6
     SStroke.Parent = SearchBox
 
+    -- فلاتر سريعة قابلة للتمرير ومناسبة للمس
+    local FilterBar = Instance.new("ScrollingFrame")
+    FilterBar.Size = UDim2.new(1, -20, 0, 36)
+    FilterBar.Position = UDim2.new(0, 10, 0, 120)
+    FilterBar.BackgroundTransparency = 1
+    FilterBar.BorderSizePixel = 0
+    FilterBar.ScrollBarThickness = 0
+    FilterBar.ScrollingDirection = Enum.ScrollingDirection.X
+    FilterBar.AutomaticCanvasSize = Enum.AutomaticSize.X
+    FilterBar.ZIndex = 25
+    FilterBar.Parent = parent
+
+    local FilterLayout = Instance.new("UIListLayout")
+    FilterLayout.FillDirection = Enum.FillDirection.Horizontal
+    FilterLayout.Padding = UDim.new(0, 6)
+    FilterLayout.Parent = FilterBar
+
+    local activeFilter = "all"
+    local filterButtons = {}
+    local filters = {
+        {id = "all", text = "● All"}, {id = "script", text = "⌘ Scripts"},
+        {id = "model", text = "◆ Models"}, {id = "image", text = "▧ Images"},
+        {id = "sound", text = "♫ Sounds"}, {id = "value", text = "# Values"}
+    }
+
     -- ===================================
     -- منطقة الشجرة
     -- ===================================
     local Scroll = Instance.new("ScrollingFrame")
-    Scroll.Size = UDim2.new(1, -20, 1, -135)
-    Scroll.Position = UDim2.new(0, 10, 0, 125)
+    Scroll.Size = UDim2.new(1, -20, 1, -174)
+    Scroll.Position = UDim2.new(0, 10, 0, 164)
     Scroll.BackgroundColor3 = Color3.fromRGB(10, 12, 30)
     Scroll.BackgroundTransparency = 0.5
     Scroll.BorderSizePixel = 0
@@ -98,6 +126,29 @@ function TreeView.Create(parent, rootInstance, onBack)
     Scroll.ZIndex = 25
     Scroll.Parent = parent
     Instance.new("UICorner", Scroll).CornerRadius = UDim.new(0, 12)
+
+    local SearchResults = Instance.new("ScrollingFrame")
+    SearchResults.Name = "CompleteSearchResults"
+    SearchResults.Size = Scroll.Size
+    SearchResults.Position = Scroll.Position
+    SearchResults.BackgroundColor3 = Color3.fromRGB(10, 12, 30)
+    SearchResults.BackgroundTransparency = 0.1
+    SearchResults.BorderSizePixel = 0
+    SearchResults.ScrollBarThickness = 5
+    SearchResults.ScrollBarImageColor3 = Color3.fromRGB(0, 212, 255)
+    SearchResults.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    SearchResults.CanvasSize = UDim2.new()
+    SearchResults.Visible = false
+    SearchResults.ZIndex = 35
+    SearchResults.Parent = parent
+    Instance.new("UICorner", SearchResults).CornerRadius = UDim.new(0, 12)
+    local SearchLayout = Instance.new("UIListLayout")
+    SearchLayout.Padding = UDim.new(0, 6)
+    SearchLayout.Parent = SearchResults
+    local SearchPadding = Instance.new("UIPadding")
+    SearchPadding.PaddingTop, SearchPadding.PaddingBottom = UDim.new(0, 7), UDim.new(0, 10)
+    SearchPadding.PaddingLeft, SearchPadding.PaddingRight = UDim.new(0, 7), UDim.new(0, 7)
+    SearchPadding.Parent = SearchResults
 
     local Layout = Instance.new("UIListLayout")
     Layout.Padding = UDim.new(0, 3)
@@ -116,67 +167,79 @@ function TreeView.Create(parent, rootInstance, onBack)
     -- ===================================
     local allItems = {}
     local orderCounter = 0
+    local UpdateCanvasSize
+    local RenderCompleteSearch
 
-    local function GetTypeColor(className)
-        if className:find("Script") or className == "ModuleScript" then
-            return Color3.fromRGB(0, 255, 136)
-        elseif className:find("Part") or className == "Model" or className == "UnionOperation" then
-            return Color3.fromRGB(0, 212, 255)
-        elseif className:find("Sound") then
-            return Color3.fromRGB(255, 200, 50)
-        elseif className:find("Decal") or className:find("Texture") or className:find("Image") then
-            return Color3.fromRGB(255, 100, 150)
-        elseif className:find("Gui") or className:find("Frame") or className:find("Text") then
-            return Color3.fromRGB(200, 150, 255)
-        elseif className:find("Light") then
-            return Color3.fromRGB(255, 255, 100)
-        elseif className:find("Value") then
-            return Color3.fromRGB(150, 200, 255)
-        elseif className == "Folder" then
-            return Color3.fromRGB(255, 200, 50)
-        elseif className:find("Remote") or className:find("Bindable") then
-            return Color3.fromRGB(255, 150, 50)
-        else
-            return Color3.fromRGB(180, 190, 210)
-        end
+    local function MatchesCategory(instance, category)
+        if category == "all" then return true end
+        if category == "script" then return instance:IsA("BaseScript") or instance:IsA("ModuleScript") end
+        if category == "model" then return instance:IsA("Model") or instance:IsA("BasePart") end
+        if category == "image" then return instance:IsA("Decal") or instance:IsA("Texture") or instance:IsA("ImageLabel") or instance:IsA("ImageButton") end
+        if category == "sound" then return instance:IsA("Sound") end
+        if category == "value" then return instance:IsA("ValueBase") end
+        return true
     end
 
-    local function GetBadge(instance, hasChildren)
-        if instance:IsA("BaseScript") or instance:IsA("ModuleScript") then
-            local ok, src = pcall(function() return instance.Source end)
-            if ok and src and #src > 0 then
-                return "CODE", Color3.fromRGB(0, 255, 136)
-            else
-                return "LOCKED", Color3.fromRGB(255, 80, 80)
-            end
-        elseif instance:IsA("Sound") then
-            return "SOUND", Color3.fromRGB(255, 200, 50)
-        elseif instance:IsA("Decal") or instance:IsA("Texture") then
-            return "IMAGE", Color3.fromRGB(255, 100, 150)
-        elseif instance:IsA("BasePart") then
-            return "PART", Color3.fromRGB(0, 180, 255)
-        elseif instance:IsA("GuiObject") then
-            return "GUI", Color3.fromRGB(200, 150, 255)
-        elseif hasChildren then
-            return "FOLDER", Color3.fromRGB(255, 200, 50)
-        elseif instance:IsA("ValueBase") then
-            return "VALUE", Color3.fromRGB(150, 200, 255)
+    local function ApplyFilters()
+        local query = SearchBox.Text:lower():match("^%s*(.-)%s*$")
+        for _, entry in ipairs(allItems) do
+            local instance = entry.instance
+            local path = ""
+            pcall(function() path = instance:GetFullName() end)
+            local matchesQuery = query == ""
+                or instance.Name:lower():find(query, 1, true) ~= nil
+                or instance.ClassName:lower():find(query, 1, true) ~= nil
+                or path:lower():find(query, 1, true) ~= nil
+            entry.frame.Visible = matchesQuery and MatchesCategory(instance, activeFilter)
         end
-        return "", Color3.fromRGB(100, 100, 100)
+        UpdateCanvasSize()
+    end
+
+    for _, filter in ipairs(filters) do
+        local button = Instance.new("TextButton")
+        button.AutomaticSize = Enum.AutomaticSize.X
+        button.Size = UDim2.new(0, 0, 0, 32)
+        button.BackgroundColor3 = filter.id == "all" and Color3.fromRGB(0, 150, 210) or Color3.fromRGB(25, 32, 58)
+        button.Text = filter.text
+        button.TextColor3 = Color3.fromRGB(240, 245, 255)
+        button.TextSize = 11
+        button.Font = Enum.Font.GothamBold
+        button.ZIndex = 26
+        button.Parent = FilterBar
+        Instance.new("UICorner", button).CornerRadius = UDim.new(0, 8)
+        local padding = Instance.new("UIPadding")
+        padding.PaddingLeft, padding.PaddingRight = UDim.new(0, 12), UDim.new(0, 12)
+        padding.Parent = button
+        filterButtons[filter.id] = button
+        button.MouseButton1Click:Connect(function()
+            activeFilter = filter.id
+            for id, filterButton in pairs(filterButtons) do
+                TweenService:Create(filterButton, TweenInfo.new(0.14), {
+                    BackgroundColor3 = id == activeFilter and Color3.fromRGB(0, 150, 210) or Color3.fromRGB(25, 32, 58)
+                }):Play()
+            end
+            if SearchBox.Text ~= "" and RenderCompleteSearch then
+                RenderCompleteSearch(SearchBox.Text:lower())
+            else
+                ApplyFilters()
+            end
+        end)
     end
 
     local function SortChildren(children)
+        local childCounts = setmetatable({}, {__mode = "k"})
+        for _, child in ipairs(children) do childCounts[child] = #child:GetChildren() end
         table.sort(children, function(a, b)
-            local aFolder = #a:GetChildren() > 0
-            local bFolder = #b:GetChildren() > 0
+            local aFolder = childCounts[a] > 0
+            local bFolder = childCounts[b] > 0
             if aFolder ~= bFolder then return aFolder end
             return a.Name:lower() < b.Name:lower()
         end)
         return children
     end
 
-    local function UpdateCanvasSize()
-        wait()
+    UpdateCanvasSize = function()
+        task.wait()
         Scroll.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 20)
     end
 
@@ -184,10 +247,11 @@ function TreeView.Create(parent, rootInstance, onBack)
     -- إنشاء عنصر واحد
     -- ===================================
     local function CreateItem(instance, depth, layoutOrder)
-        local info = FileScanner.GetInfo(instance)
+        local info = FileScanner.GetBasicInfo(instance)
         local hasChildren = info.Children > 0
-        local typeColor = GetTypeColor(info.ClassName)
-        local badgeText, badgeColor = GetBadge(instance, hasChildren)
+        local typeColor = info.Color
+        local badgeText = hasChildren and "FOLDER" or tostring(info.Category or info.ClassName):upper():sub(1, 10)
+        local badgeColor = info.Color
 
         local Item = Instance.new("TextButton")
         Item.Name = "Item_" .. layoutOrder
@@ -337,7 +401,7 @@ function TreeView.Create(parent, rootInstance, onBack)
                         -- إغلاق
                         entry.expanded = false
                         Arrow.Text = "+"
-                        Arrow.TextColor3 = GetTypeColor(child.ClassName)
+                        Arrow.TextColor3 = FileScanner.GetTypeData(child).color
                         RemoveDescendantItems(child)
                         UpdateCanvasSize()
                     else
@@ -351,7 +415,7 @@ function TreeView.Create(parent, rootInstance, onBack)
                 end)
             else
                 Item.MouseButton1Click:Connect(function()
-                    local FileViewer = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/FileViewer.lua", true))()
+                    local FileViewer = GetModule("FileViewer")
                     FileViewer.Open(parent.Parent, child)
                 end)
             end
@@ -417,7 +481,7 @@ function TreeView.Create(parent, rootInstance, onBack)
                 if entry.expanded then
                     entry.expanded = false
                     Arrow.Text = "+"
-                    Arrow.TextColor3 = GetTypeColor(child.ClassName)
+                    Arrow.TextColor3 = FileScanner.GetTypeData(child).color
                     RemoveDescendantItems(child)
                     UpdateCanvasSize()
                 else
@@ -430,7 +494,7 @@ function TreeView.Create(parent, rootInstance, onBack)
             end)
         else
             Item.MouseButton1Click:Connect(function()
-                local FileViewer = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/FileViewer.lua", true))()
+                local FileViewer = GetModule("FileViewer")
                 FileViewer.Open(parent.Parent, child)
             end)
         end
@@ -441,17 +505,57 @@ function TreeView.Create(parent, rootInstance, onBack)
     -- ===================================
     -- البحث
     -- ===================================
-    SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-        local query = SearchBox.Text:lower()
-        for _, entry in ipairs(allItems) do
-            if query == "" then
-                entry.frame.Visible = true
-            else
-                local name = entry.instance.Name:lower()
-                local className = entry.instance.ClassName:lower()
-                entry.frame.Visible = (name:find(query) ~= nil) or (className:find(query) ~= nil)
-            end
+    local searchGeneration = 0
+    local activeSearchToken
+    local function ClearSearchResults()
+        for _, child in ipairs(SearchResults:GetChildren()) do
+            if child:IsA("GuiObject") then child:Destroy() end
         end
+    end
+    RenderCompleteSearch = function(query)
+        searchGeneration = searchGeneration + 1
+        local generation = searchGeneration
+        if activeSearchToken then activeSearchToken.cancelled = true end
+        if query == "" then SearchResults.Visible = false ApplyFilters() return end
+        SearchResults.Visible = true
+        ClearSearchResults()
+        task.spawn(function()
+            local token = {cancelled = false}
+            activeSearchToken = token
+            local results = FileScanner.Search(rootInstance, query, {
+                searchIn = "both", maxResults = 150, batchSize = 120,
+                scanLimit = 25000, token = token
+            })
+            if generation ~= searchGeneration or not SearchResults.Parent then token.cancelled = true return end
+            for _, instance in ipairs(results) do
+                if MatchesCategory(instance, activeFilter) then
+                    local info = FileScanner.GetBasicInfo(instance)
+                    local row = Instance.new("TextButton")
+                    row.Size = UDim2.new(1, -4, 0, 52)
+                    row.BackgroundColor3 = Color3.fromRGB(20, 25, 55)
+                    row.Text = info.Icon .. "  " .. info.Name .. "\n    " .. info.ClassName .. "  •  " .. info.FullName
+                    row.TextColor3 = Color3.fromRGB(242, 247, 255)
+                    row.TextSize = 11
+                    row.Font = Enum.Font.Gotham
+                    row.TextXAlignment = Enum.TextXAlignment.Left
+                    row.TextTruncate = Enum.TextTruncate.AtEnd
+                    row.AutoButtonColor = false
+                    row.ZIndex = 36
+                    row.Parent = SearchResults
+                    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 9)
+                    local padding = Instance.new("UIPadding")
+                    padding.PaddingLeft, padding.PaddingRight = UDim.new(0, 12), UDim.new(0, 12)
+                    padding.Parent = row
+                    row.MouseButton1Click:Connect(function()
+                        FileViewer.Open(parent.Parent, instance)
+                    end)
+                end
+            end
+        end)
+    end
+    SearchBox.PlaceholderText = Language.Get("SearchAll")
+    SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        RenderCompleteSearch(SearchBox.Text:lower():match("^%s*(.-)%s*$"))
     end)
 
     -- ===================================

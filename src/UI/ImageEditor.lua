@@ -232,6 +232,8 @@ function ImageEditor.Open(parent, instance, onClose)
     controlsScroll.BackgroundTransparency = 1
     controlsScroll.ScrollBarThickness = 3
     controlsScroll.ScrollBarImageColor3 = Colors.Accent
+    controlsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    controlsScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
     controlsScroll.ZIndex = 1001
     controlsScroll.Parent = controls
     
@@ -352,12 +354,16 @@ function ImageEditor.Open(parent, instance, onClose)
         
         local dragging = false
         
-        knob.MouseButton1Down:Connect(function() dragging = true end)
+        knob.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+            end
+        end)
         game:GetService("UserInputService").InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
         end)
         game:GetService("UserInputService").InputChanged:Connect(function(input)
-            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                 local pos = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
                 local val = min + (max - min) * pos
                 valLbl.Text = string.format("%.2f", val)
@@ -474,21 +480,49 @@ function ImageEditor.Open(parent, instance, onClose)
         Notify("تم نسخ الرابط!")
     end)
     
+    -- ═══ تخطيط متجاوب للهواتف والاتجاه الأفقي ═══
+    local camera = workspace.CurrentCamera
+    local viewportConnection
+    local function UpdateResponsiveLayout()
+        local viewport = camera and camera.ViewportSize or Vector2.new(900, 600)
+        local compact = viewport.X < 720
+        window.Size = compact and UDim2.new(1, -16, 1, -24) or UDim2.new(0, math.min(960, viewport.X - 60), 0, math.min(680, viewport.Y - 60))
+        window.Position = compact and UDim2.new(0, 8, 0, 12) or UDim2.new(0.5, -math.min(960, viewport.X - 60) / 2, 0.5, -math.min(680, viewport.Y - 60) / 2)
+        title.Size = UDim2.new(1, -70, 1, 0)
+        title.TextSize = compact and 14 or 18
+        if compact then
+            previewFrame.Size = UDim2.new(1, 0, 0.42, -5)
+            controls.Size = UDim2.new(1, 0, 0.58, -5)
+            controls.Position = UDim2.new(0, 0, 0.42, 5)
+        else
+            previewFrame.Size = UDim2.new(0.6, -10, 1, 0)
+            controls.Size = UDim2.new(0.4, -10, 1, 0)
+            controls.Position = UDim2.new(0.6, 10, 0, 0)
+        end
+    end
+    if camera then viewportConnection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateResponsiveLayout) end
+    UpdateResponsiveLayout()
+
     -- ═══ أحداث الإغلاق ═══
     closeBtn.MouseButton1Click:Connect(function()
+        if viewportConnection then viewportConnection:Disconnect() end
         gui:Destroy()
         if onClose then onClose() end
     end)
     
     overlay.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if viewportConnection then viewportConnection:Disconnect() end
             gui:Destroy()
             if onClose then onClose() end
         end
     end)
     
     return {
-        close = function() gui:Destroy() end
+        close = function()
+            if viewportConnection then viewportConnection:Disconnect() end
+            gui:Destroy()
+        end
     }
 end
 

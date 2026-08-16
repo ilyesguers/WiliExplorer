@@ -1,0 +1,14 @@
+# Generated releases and local caches
+build/
+dist/
+release/
+WiliExplorer/
+*.min.lua
+*.obfuscated.lua
+
+# Tooling
+node_modules/
+.luacheckcache
+.stylua-cache/
+.DS_Store
+*.log

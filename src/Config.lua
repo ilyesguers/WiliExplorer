@@ -1,104 +1,96 @@
 return {
     Name = "WiliExplorer",
-    Version = "5.0.0",
-    Build = "2026.07.21",
+    Version = "6.1.0",
+    Build = "2026.08.16",
     DefaultLanguage = "ar",
     Theme = "space",
     LOADED = false,
     
     -- معلومات التطبيق
     Author = "ilyesguers",
-    Description = "Ultimate Roblox Explorer & Exploit Suite",
+    Description = "Professional responsive Roblox experience explorer and asset toolkit",
     
     -- الإعدادات الافتراضية
     Settings = {
         -- الواجهة
+        language = "ar",
+        theme = "space",
+        version = "6.1.0",
         uiScale = 1,
+        responsiveLayout = true,
+        compactMode = "auto",
+        reducedMotion = false,
+        highContrast = false,
+        touchTargetSize = 44,
         showNotifications = true,
         notificationDuration = 3,
         showFloatingButton = true,
         
-        -- KlimboMenu
-        klimboPosition = {x = 0.5, y = 0.5},
-        klimboSize = {w = 700, h = 500},
-        
-        -- ESP
-        espEnabled = false,
-        espNames = true,
-        espHealth = true,
-        espDistance = true,
-        espHighlight = true,
-        
-        -- Aimbot
-        aimbotEnabled = false,
-        aimbotFOV = 200,
-        aimbotSmoothness = 0.5,
-        aimbotTargetPart = "Head",
-        
-        -- Player
-        walkSpeed = 16,
-        jumpPower = 50,
-        flySpeed = 50,
-        
-        -- الأمان
-        antiKick = false,
-        antiAFK = false,
+        -- وحدة المطوّر
+        consoleLastTab = "overview",
+        scanBatchSize = 100,
+        scanObjectLimit = 15000,
+        powerSaver = "auto",
         
         -- المظهر
         spaceEffects = true,
         particlesEnabled = true,
         animationsEnabled = true
     },
+
+    -- لا يمكن حماية سر داخل عميل عام. ضع Endpoint لخدمة تحقق خادمية.
+    Security = {
+        RequireKey = false,
+        Endpoint = "",
+        RequestTimeout = 10,
+        AllowStudioBypass = true,
+        AllowOfflineKeys = false
+    },
+
+    Distribution = {
+        Channel = "development",
+        Ref = "main",
+        Repository = "https://raw.githubusercontent.com/ilyesguers/WiliExplorer/"
+    },
     
     -- الملفات المطلوبة
     Modules = {
         Core = {
             "FileScanner",
-            "FileEditor",
-            "FileActions",
-            "TreeBuilder",
-            "ErrorHandler",
-            "GameAnalyzer",
-            "AdvancedTools",
-            "PropertyEditor"
+            "GameAnalyzer"
         },
         Security = {
             "KeySystem",
-            "Keys",
-            "AntiTamper",
             "HWID"
         },
         Theme = {
             "Colors",
-            "Fonts",
-            "Animations",
+            "Assets",
             "Stars"
         },
         UI = {
             "MainFrame",
             "Sidebar",
-            "TreeView",
             "FileViewer",
+            "TreeView",
             "KlimboMenu",
-            "AdvancedUI",
             "AnalyzerUI",
-            "ContentPanel",
             "ContextMenu",
             "ErrorPopup",
             "ImageEditor",
-            "KeyScreen",
             "Notifications",
             "PropertiesPanel",
             "SearchBar",
-            "SmartMenu",
-            "SoundEditor",
-            "TopBar"
+            "SoundEditor"
         },
         Utils = {
             "HTTP",
             "Highlighter",
             "Icons",
-            "JSON",
+            "DesignSystem",
+            "UIHelpers",
+            "Logger",
+            "Lifecycle",
             "Language",
             "SaveSystem"
         }

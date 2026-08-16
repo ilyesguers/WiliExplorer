@@ -13,6 +13,10 @@
 
 local AnalyzerUI = {}
 
+local function GetModule(name)
+    return assert(_G.WiliModules and _G.WiliModules[name], "AnalyzerUI dependency missing: " .. name)
+end
+
 -- Services
 local TweenService = game:GetService("TweenService")
 local StarterGui = game:GetService("StarterGui")
@@ -21,6 +25,7 @@ local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer
+local Language = GetModule("Language")
 
 -- ═══════════════════════════════════════════════════════════════════════
 -- 🎨 الألوان
@@ -43,6 +48,15 @@ local C = {
     TextDim = Color3.fromRGB(150, 170, 200),
     Border = Color3.fromRGB(40, 40, 70)
 }
+local ThemeColors = _G.WiliModules and _G.WiliModules.Colors and _G.WiliModules.Colors.Current
+if ThemeColors then
+    C.BG, C.BG2, C.BG3 = ThemeColors.BG_Primary, ThemeColors.BG_Secondary, ThemeColors.BG_Tertiary
+    C.Card, C.CardHover = ThemeColors.BG_Card, ThemeColors.BG_CardHover
+    C.Accent, C.Gold, C.Green = ThemeColors.Accent, ThemeColors.Gold, ThemeColors.Success
+    C.Red, C.Orange, C.Purple = ThemeColors.Error, ThemeColors.Warning, ThemeColors.Purple
+    C.Pink, C.Cyan = ThemeColors.Pink, ThemeColors.Cyan
+    C.Text, C.TextDim, C.Border = ThemeColors.Text_Primary, ThemeColors.Text_Secondary, ThemeColors.Border
+end
 
 -- ═══════════════════════════════════════════════════════════════════════
 -- 🛠️ دوال مساعدة
@@ -96,20 +110,7 @@ end
 -- ═══════════════════════════════════════════════════════════════════════
 function AnalyzerUI.Create(parent, onBack)
     -- تحميل GameAnalyzer
-    local GameAnalyzer = nil
-    local ok = pcall(function()
-        GameAnalyzer = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Core/GameAnalyzer.lua", true))()
-    end)
-    
-    if not ok or not GameAnalyzer then
-        -- محاولة تحميل من الذاكرة
-        if _G.WiliModules and _G.WiliModules.GameAnalyzer then
-            GameAnalyzer = _G.WiliModules.GameAnalyzer
-        else
-            warn("❌ Failed to load GameAnalyzer!")
-            return
-        end
-    end
+    local GameAnalyzer = GetModule("GameAnalyzer")
     
     -- ═══ النافذة الرئيسية ═══
     local MainFrame = Instance.new("Frame")
@@ -149,7 +150,7 @@ function AnalyzerUI.Create(parent, onBack)
     local Title = Instance.new("TextLabel")
     Title.Size = UDim2.new(0.5, 0, 1, 0)
     Title.Position = UDim2.new(0, 12, 0, 0)
-    Title.Text = "🔬 GAME ANALYZER"
+    Title.Text = "🔬 " .. Language.Get("GameAnalyzer")
     Title.TextColor3 = C.Accent
     Title.TextSize = 18
     Title.Font = Enum.Font.GothamBold
@@ -162,7 +163,7 @@ function AnalyzerUI.Create(parent, onBack)
     local BackBtn = Instance.new("TextButton")
     BackBtn.Size = UDim2.new(0, 75, 0, 32)
     BackBtn.Position = UDim2.new(1, -165, 0.5, -16)
-    BackBtn.Text = "◀ Back"
+    BackBtn.Text = "‹ " .. Language.Get("Back")
     BackBtn.TextColor3 = C.Text
     BackBtn.TextSize = 12
     BackBtn.Font = Enum.Font.GothamBold
@@ -180,7 +181,7 @@ function AnalyzerUI.Create(parent, onBack)
     local ScanBtn = Instance.new("TextButton")
     ScanBtn.Size = UDim2.new(0, 75, 0, 32)
     ScanBtn.Position = UDim2.new(1, -82, 0.5, -16)
-    ScanBtn.Text = "🔍 Scan"
+    ScanBtn.Text = "⌕ " .. Language.Get("ScanGame")
     ScanBtn.TextColor3 = C.BG
     ScanBtn.TextSize = 12
     ScanBtn.Font = Enum.Font.GothamBold
@@ -591,7 +592,11 @@ function AnalyzerUI.Create(parent, onBack)
         
         -- تفعيل أول Tab
         if tabButtons["Sensitive"] then
-            tabButtons["Sensitive"].btn.MouseButton1Click:Fire()
+            pages["Sensitive"].Visible = true
+            local data = tabButtons["Sensitive"]
+            data.btn.BackgroundColor3 = data.color
+            data.btn.TextColor3 = C.BG
+            data.stroke.Transparency = 0
         end
     end
     
@@ -603,25 +608,21 @@ function AnalyzerUI.Create(parent, onBack)
         
         task.spawn(function()
             local results = GameAnalyzer.Scan(function(progress)
-                Title.Text = "🔬 Scanning... " .. progress.percent .. "%"
+                Title.Text = "⌕ " .. Language.Get("ScanningGame") .. " " .. progress.percent .. "%"
             end)
             
             scanResults = results
             BuildUI(results)
             
             isScanning = false
-            ScanBtn.Text = "🔍 Scan"
-            Title.Text = "🔬 GAME ANALYZER"
+            ScanBtn.Text = "⌕ " .. Language.Get("ScanGame")
+            Title.Text = "🔬 " .. Language.Get("GameAnalyzer")
             
             Notify("تم الفحص! " .. results.summary.totalScanned .. " عنصر")
         end)
     end)
     
-    -- فحص تلقائي عند البناء
-    task.spawn(function()
-        task.wait(0.5)
-        ScanBtn.MouseButton1Click:Fire()
-    end)
+    -- لا يبدأ الفحص تلقائياً على الهاتف؛ ينتظر طلب المستخدم لتجنب تجميد غير متوقع.
 end
 
 print("🔬 Analyzer UI v3.0 Loaded!")

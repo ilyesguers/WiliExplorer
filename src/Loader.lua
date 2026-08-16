@@ -1,227 +1,140 @@
---[[
-    ═══════════════════════════════════════════════════════════════════════════
-    🚀 WiliExplorer - Loader v4.0 (Ultimate Edition)
-    ═══════════════════════════════════════════════════════════════════════════
-    
-    ✅ تحميل ذكي مع معالجة أخطاء
-    ✅ شاشة تحميل جميلة
-    ✅ تحديث تلقائي
-    ✅ حماية من التكرار
-    
-    ═══════════════════════════════════════════════════════════════════════════
-]]
+-- WiliExplorer bootstrap loader v6.1
+-- Config-driven, cache-aware, and free of artificial per-module delays.
 
--- حماية من التكرار
 if _G.WiliExplorerLoaded then
-    warn("⚠️ WiliExplorer is already loaded!")
-    return
+    warn("WiliExplorer is already loaded")
+    return _G.WiliModules
 end
 _G.WiliExplorerLoaded = true
 
-local VERSION = "5.0.0"
-local BASE_URL = "https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/"
+local BOOTSTRAP_REF = "main"
+local REPOSITORY = "https://raw.githubusercontent.com/ilyesguers/WiliExplorer/"
+local BASE_URL = REPOSITORY .. BOOTSTRAP_REF .. "/src/"
+local Modules, LoadOrder, LoadErrors = {}, {}, {}
+local startedAt = tick()
 
-print("═══════════════════════════════════════════════")
-print("🚀 WiliExplorer v" .. VERSION .. " - Loading...")
-print("═══════════════════════════════════════════════")
+local function cacheSupported()
+    return writefile and readfile and isfile and isfolder and makefolder
+end
 
-local Modules = {}
-local LoadOrder = {}
-local StartTime = tick()
+local function ensureFolder(path)
+    if cacheSupported() and not isfolder(path) then pcall(function() makefolder(path) end) end
+end
 
--- ═══════════════════════════════════════════════════════════════════════
--- 📥 نظام التحميل الذكي
--- ═══════════════════════════════════════════════════════════════════════
-local function LoadModule(path, name, required)
+local function cachePath(path)
+    local version = (_G.WiliConfig and _G.WiliConfig.Version) or "bootstrap"
+    return "WiliExplorer/cache/" .. version .. "/" .. path:gsub("/", "_")
+end
+
+local function fetch(path)
     local url = BASE_URL .. path
-    local displayName = name or path
-    
-    local success, response = pcall(function()
-        return game:HttpGet(url, true)
-    end)
-    
-    if not success or not response or response == "" then
-        if required then
-            warn("❌ CRITICAL: Failed to load " .. displayName)
-        else
-            warn("⚠️ Optional: Failed to load " .. displayName)
-        end
+    local ok, source = pcall(function() return game:HttpGet(url, true) end)
+    if ok and type(source) == "string" and #source > 0 then return source, true end
+    local pathToCache = cachePath(path)
+    if cacheSupported() and isfile(pathToCache) then
+        local cacheOk, cached = pcall(function() return readfile(pathToCache) end)
+        if cacheOk and type(cached) == "string" and #cached > 0 then return cached, false end
+    end
+    return nil, false, tostring(source)
+end
+
+local function writeCache(path, source)
+    if not cacheSupported() then return end
+    ensureFolder("WiliExplorer")
+    ensureFolder("WiliExplorer/cache")
+    ensureFolder("WiliExplorer/cache/" .. ((_G.WiliConfig and _G.WiliConfig.Version) or "bootstrap"))
+    pcall(function() writefile(cachePath(path), source) end)
+end
+
+local function loadModule(path, name, required)
+    if Modules[name] ~= nil then return Modules[name] end
+    local source, fromNetwork, fetchError = fetch(path)
+    if not source then
+        LoadErrors[name] = "Fetch failed: " .. tostring(fetchError)
+        if required then warn("Required module failed: " .. name) end
         return nil
     end
-    
-    local func, err = loadstring(response)
-    if not func then
-        warn("❌ Parse error in " .. displayName .. ": " .. tostring(err))
+    local chunk, parseError = loadstring(source)
+    if not chunk then
+        LoadErrors[name] = "Parse failed: " .. tostring(parseError)
+        if required then warn("Required module has invalid syntax: " .. name) end
         return nil
     end
-    
-    local ok, result = pcall(func)
+    if fromNetwork then writeCache(path, source) end
+    local ok, result = pcall(chunk)
     if not ok then
-        warn("❌ Execution error in " .. displayName .. ": " .. tostring(result))
+        LoadErrors[name] = "Runtime failed: " .. tostring(result)
+        if required then warn("Required module crashed: " .. name .. " - " .. tostring(result)) end
         return nil
     end
-    
-    table.insert(LoadOrder, displayName)
+    Modules[name] = result
+    table.insert(LoadOrder, name)
     return result
 end
 
--- ═══════════════════════════════════════════════════════════════════════
--- 📦 تحميل الملفات بالترتيب الصحيح
--- ═══════════════════════════════════════════════════════════════════════
+-- Bootstrap the single source of truth first.
+Modules.Config = loadModule("Config.lua", "Config", true)
+if not Modules.Config then
+    _G.WiliExplorerLoaded = false
+    error("WiliExplorer cannot start without Config")
+end
+_G.WiliConfig = Modules.Config
 
--- المرحلة 1: الأساسية
-print("📦 Phase 1: Core Systems...")
-Modules.Config = LoadModule("Config.lua", "Config", true)
-task.wait(0.05)
+-- A release can pin this to a tag/commit in Config without changing the loader.
+local distribution = Modules.Config.Distribution or {}
+if distribution.Repository then REPOSITORY = distribution.Repository end
+if distribution.Ref and distribution.Ref ~= "" then BOOTSTRAP_REF = distribution.Ref end
+BASE_URL = REPOSITORY .. BOOTSTRAP_REF .. "/src/"
 
-Modules.Colors = LoadModule("Theme/Colors.lua", "Colors", true)
-task.wait(0.05)
+local required = {Colors = true, Language = true, KeySystem = true, FileScanner = true, MainFrame = true}
+local folders = {Security = "Security", Theme = "Theme", Utils = "Utils", Core = "Core", UI = "UI"}
+local configOrder = {"Theme", "Utils", "Security", "Core", "UI"}
 
-Modules.Language = LoadModule("Utils/Language.lua", "Language", true)
-task.wait(0.05)
-
-Modules.Icons = LoadModule("Utils/Icons.lua", "Icons", false)
-task.wait(0.05)
-
--- المرحلة 2: الأمان
-print("🔐 Phase 2: Security...")
-Modules.KeySystem = LoadModule("Security/KeySystem.lua", "KeySystem", true)
-task.wait(0.05)
-
-Modules.AntiTamper = LoadModule("Security/AntiTamper.lua", "AntiTamper", false)
-task.wait(0.05)
-
-Modules.HWID = LoadModule("Security/HWID.lua", "HWID", false)
-task.wait(0.05)
-
--- المرحلة 3: المظهر
-print("🎨 Phase 3: Theme...")
-Modules.Stars = LoadModule("Theme/Stars.lua", "Stars", true)
-task.wait(0.05)
-
-Modules.Animations = LoadModule("Theme/Animations.lua", "Animations", false)
-task.wait(0.05)
-
-Modules.Fonts = LoadModule("Theme/Fonts.lua", "Fonts", false)
-task.wait(0.05)
-
--- المرحلة 4: الأدوات
-print("🔧 Phase 4: Utils...")
-Modules.HTTP = LoadModule("Utils/HTTP.lua", "HTTP", false)
-task.wait(0.05)
-
-Modules.JSON = LoadModule("Utils/JSON.lua", "JSON", false)
-task.wait(0.05)
-
-Modules.SaveSystem = LoadModule("Utils/SaveSystem.lua", "SaveSystem", false)
-task.wait(0.05)
-
-Modules.Highlighter = LoadModule("Utils/Highlighter.lua", "Highlighter", false)
-task.wait(0.05)
-
--- المرحلة 5: النواة
-print("⚙️ Phase 5: Core Modules...")
-Modules.FileScanner = LoadModule("Core/FileScanner.lua", "FileScanner", true)
-task.wait(0.1)
-
-Modules.GameAnalyzer = LoadModule("Core/GameAnalyzer.lua", "GameAnalyzer", true)
-task.wait(0.1)
-
-Modules.AdvancedTools = LoadModule("Core/AdvancedTools.lua", "AdvancedTools", false)
-task.wait(0.1)
-
-Modules.FileActions = LoadModule("Core/FileActions.lua", "FileActions", false)
-task.wait(0.05)
-
-Modules.FileEditor = LoadModule("Core/FileEditor.lua", "FileEditor", false)
-task.wait(0.05)
-
-Modules.PropertyEditor = LoadModule("Core/PropertyEditor.lua", "PropertyEditor", false)
-task.wait(0.05)
-
-Modules.TreeBuilder = LoadModule("Core/TreeBuilder.lua", "TreeBuilder", false)
-task.wait(0.05)
-
-Modules.ErrorHandler = LoadModule("Core/ErrorHandler.lua", "ErrorHandler", false)
-task.wait(0.05)
-
--- المرحلة 6: واجهة المستخدم
-print("🖥️ Phase 6: UI Components...")
-Modules.Notifications = LoadModule("UI/Notifications.lua", "Notifications", false)
-task.wait(0.05)
-
-Modules.ContextMenu = LoadModule("UI/ContextMenu.lua", "ContextMenu", false)
-task.wait(0.05)
-
-Modules.SearchBar = LoadModule("UI/SearchBar.lua", "SearchBar", false)
-task.wait(0.05)
-
-Modules.ErrorPopup = LoadModule("UI/ErrorPopup.lua", "ErrorPopup", false)
-task.wait(0.05)
-
-Modules.ImageEditor = LoadModule("UI/ImageEditor.lua", "ImageEditor", false)
-task.wait(0.05)
-
-Modules.SoundEditor = LoadModule("UI/SoundEditor.lua", "SoundEditor", false)
-task.wait(0.05)
-
-Modules.PropertiesPanel = LoadModule("UI/PropertiesPanel.lua", "PropertiesPanel", false)
-task.wait(0.05)
-
-Modules.FileViewer = LoadModule("UI/FileViewer.lua", "FileViewer", true)
-task.wait(0.1)
-
-Modules.TreeView = LoadModule("UI/TreeView.lua", "TreeView", true)
-task.wait(0.05)
-
-Modules.Sidebar = LoadModule("UI/Sidebar.lua", "Sidebar", true)
-task.wait(0.05)
-
-Modules.SmartMenu = LoadModule("UI/SmartMenu.lua", "SmartMenu", false)
-task.wait(0.05)
-
-Modules.AdvancedUI = LoadModule("UI/AdvancedUI.lua", "AdvancedUI", false)
-task.wait(0.05)
-
-Modules.AnalyzerUI = LoadModule("UI/AnalyzerUI.lua", "AnalyzerUI", false)
-task.wait(0.05)
-
--- المرحلة 7: الواجهة الرئيسية
-print("🎮 Phase 7: Main UI...")
-Modules.KlimboMenu = LoadModule("UI/KlimboMenu.lua", "KlimboMenu", true)
-task.wait(0.1)
-
-Modules.MainFrame = LoadModule("UI/MainFrame.lua", "MainFrame", true)
-task.wait(0.1)
-
--- ═══════════════════════════════════════════════════════════════════════
--- 💾 تخزين Modules عالمياً
--- ═══════════════════════════════════════════════════════════════════════
+-- Publish early so modules can resolve already-loaded dependencies without re-fetching.
 _G.WiliModules = Modules
 
--- ═══════════════════════════════════════════════════════════════════════
--- 🎮 إنشاء الواجهة
--- ═══════════════════════════════════════════════════════════════════════
-local LoadTime = math.floor((tick() - StartTime) * 100) / 100
-
-print("═══════════════════════════════════════════════")
-print("✅ Loaded " .. #LoadOrder .. " modules in " .. LoadTime .. "s")
-print("═══════════════════════════════════════════════")
-
-if Modules.MainFrame and Modules.MainFrame.Create then
-    local ok, err = pcall(function()
-        Modules.MainFrame.Create()
-    end)
-    
-    if ok then
-        print("═══════════════════════════════════════════════")
-        print("🎉 WiliExplorer v" .. VERSION .. " Ready!")
-        print("═══════════════════════════════════════════════")
-    else
-        warn("❌ Failed to create UI: " .. tostring(err))
+for _, category in ipairs(configOrder) do
+    local names = Modules.Config.Modules and Modules.Config.Modules[category] or {}
+    for _, name in ipairs(names) do
+        if name ~= "MainFrame" then
+            loadModule(folders[category] .. "/" .. name .. ".lua", name, required[name] == true)
+        end
     end
-else
-    warn("❌ MainFrame module not loaded!")
 end
 
+-- Apply persisted preferences once, after all support modules exist.
+if Modules.SaveSystem and Modules.SaveSystem.Init then
+    pcall(function()
+        local saved = Modules.SaveSystem.Init()
+        if Modules.Language and Modules.Language.Set and saved.language then Modules.Language.Set(saved.language) end
+        if Modules.Colors and Modules.Colors.SetTheme and saved.theme then
+            local themeName = saved.theme:sub(1, 1):upper() .. saved.theme:sub(2):lower()
+            Modules.Colors.SetTheme(themeName)
+        end
+    end)
+end
+
+-- MainFrame is intentionally last; all optional capabilities are available by then.
+Modules.MainFrame = loadModule("UI/MainFrame.lua", "MainFrame", true)
+Modules.LoadReport = {
+    version = Modules.Config.Version,
+    ref = BOOTSTRAP_REF,
+    loaded = LoadOrder,
+    errors = LoadErrors,
+    duration = tick() - startedAt
+}
+
+if not Modules.MainFrame or type(Modules.MainFrame.Create) ~= "function" then
+    _G.WiliExplorerLoaded = false
+    error("WiliExplorer UI failed to load")
+end
+
+local ok, uiOrError = pcall(Modules.MainFrame.Create)
+if not ok then
+    _G.WiliExplorerLoaded = false
+    warn("WiliExplorer UI error: " .. tostring(uiOrError))
+    return Modules
+end
+
+print(string.format("WiliExplorer %s ready • %d modules • %.2fs", Modules.Config.Version, #LoadOrder, tick() - startedAt))
 return Modules

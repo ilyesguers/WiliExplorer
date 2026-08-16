@@ -155,10 +155,15 @@ function SoundEditor.Open(parent, instance, onClose)
     Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 8)
     
     -- المحتوى
-    local content = Instance.new("Frame")
+    local content = Instance.new("ScrollingFrame")
     content.Size = UDim2.new(1, -20, 1, -70)
     content.Position = UDim2.new(0, 10, 0, 55)
     content.BackgroundTransparency = 1
+    content.BorderSizePixel = 0
+    content.ScrollBarThickness = 3
+    content.ScrollBarImageColor3 = Colors.Accent
+    content.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    content.CanvasSize = UDim2.new(0, 0, 0, 0)
     content.ZIndex = 999
     content.Parent = window
     
@@ -395,12 +400,16 @@ function SoundEditor.Open(parent, instance, onClose)
         
         local dragging = false
         
-        knob.MouseButton1Down:Connect(function() dragging = true end)
+        knob.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+            end
+        end)
         game:GetService("UserInputService").InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
         end)
         game:GetService("UserInputService").InputChanged:Connect(function(input)
-            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                 local pos = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
                 local val = min + (max - min) * pos
                 valLbl.Text = string.format("%.2f", val)
@@ -504,6 +513,26 @@ function SoundEditor.Open(parent, instance, onClose)
         Notify("تم تغيير Sound ID!")
     end)
     
+    -- ═══ تخطيط متجاوب ومريح للمس ═══
+    local camera = workspace.CurrentCamera
+    local viewportConnection
+    local function UpdateResponsiveLayout()
+        local viewport = camera and camera.ViewportSize or Vector2.new(900, 600)
+        local compact = viewport.X < 560
+        local width = compact and math.max(300, viewport.X - 16) or math.min(520, viewport.X - 50)
+        local height = compact and math.max(300, viewport.Y - 24) or math.max(300, math.min(650, viewport.Y - 50))
+        window.Size = UDim2.new(0, width, 0, height)
+        window.Position = UDim2.new(0.5, -width / 2, 0.5, -height / 2)
+        title.Size = UDim2.new(1, -70, 1, 0)
+        title.TextSize = compact and 14 or 18
+        playBtn.Size = UDim2.new(0.32, -6, 0, 44)
+        stopBtn.Size = UDim2.new(0.32, -6, 0, 44)
+        restartBtn.Size = UDim2.new(0.32, -6, 0, 44)
+        controlsLayout.Padding = UDim.new(0, compact and 5 or 10)
+    end
+    if camera then viewportConnection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateResponsiveLayout) end
+    UpdateResponsiveLayout()
+
     -- ═══ تحديث شريط التقدم ═══
     local progressConnection
     progressConnection = RunService.Heartbeat:Connect(function()
@@ -532,13 +561,15 @@ function SoundEditor.Open(parent, instance, onClose)
     -- ═══ إغلاق ═══
     closeBtn.MouseButton1Click:Connect(function()
         progressConnection:Disconnect()
+        if viewportConnection then viewportConnection:Disconnect() end
         gui:Destroy()
         if onClose then onClose() end
     end)
     
     overlay.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             progressConnection:Disconnect()
+            if viewportConnection then viewportConnection:Disconnect() end
             gui:Destroy()
             if onClose then onClose() end
         end
@@ -547,6 +578,7 @@ function SoundEditor.Open(parent, instance, onClose)
     return {
         close = function()
             progressConnection:Disconnect()
+            if viewportConnection then viewportConnection:Disconnect() end
             gui:Destroy()
         end
     }

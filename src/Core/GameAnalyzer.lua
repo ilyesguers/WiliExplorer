@@ -110,6 +110,7 @@ local Keywords = {
 -- 🛠️ دوال مساعدة
 -- ═══════════════════════════════════════════════════════════════════════
 GameAnalyzer.Results = {scripts = {}, sounds = {}, images = {}, remotes = {}, values = {}, sensitive = {}, editable = {}, modules = {}, players = {}, gameInfo = {}}
+local FrozenValues = setmetatable({}, {__mode = "k"})
 
 local function Notify(message, icon, color)
     pcall(function()
@@ -211,16 +212,21 @@ function GameAnalyzer.Scan(onProgress)
     local scannedCount = 0
     local batchCount = 0
 
-    -- معلومات اللعبة
-    pcall(function()
-        results.gameInfo = {
-            name = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name or "Unknown",
-            placeId = game.PlaceId, jobId = game.JobId,
-            playerCount = #Players:GetPlayers(), maxPlayers = Players.MaxPlayers,
-            serverTime = math.floor(workspace.DistributedGameTime),
-            fps = math.floor(1/RunService.RenderStepped:Wait())
-        }
+    -- معلومات اللعبة: لا نوقف خيط الفحص لانتظار RenderStepped.
+    local experienceName = "Unknown"
+    local productOk, productInfo = pcall(function()
+        return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
     end)
+    if productOk and productInfo and productInfo.Name then experienceName = productInfo.Name end
+    local measuredFPS = 60
+    pcall(function() measuredFPS = math.floor(workspace:GetRealPhysicsFPS() + 0.5) end)
+    results.gameInfo = {
+        name = experienceName,
+        placeId = game.PlaceId, jobId = game.JobId,
+        playerCount = #Players:GetPlayers(), maxPlayers = Players.MaxPlayers,
+        serverTime = math.floor(workspace.DistributedGameTime),
+        fps = measuredFPS
+    }
 
     -- معلومات اللاعبين
     for _, player in ipairs(Players:GetPlayers()) do
@@ -342,17 +348,26 @@ function GameAnalyzer.Scan(onProgress)
 
         if onProgress then pcall(function() onProgress({current = scannedCount, total = CONFIG.MAX_INSTANCES, percent = math.floor((scannedCount/CONFIG.MAX_INSTANCES)*100), currentService = serviceData.name}) end) end
 
-        local descendants = {}
-        pcall(function() descendants = serviceData.service:GetDescendants() end)
-
-        for i, instance in ipairs(descendants) do
-            if (tick() - startTime) > CONFIG.MAX_SCAN_TIME then break end
-            pcall(function() ProcessInstance(instance) end)
+        -- اجتياز تدريجي لا يبني مصفوفة GetDescendants ضخمة في الذاكرة.
+        local queue = {}
+        pcall(function() queue = serviceData.service:GetChildren() end)
+        while #queue > 0 do
+            if (tick() - startTime) > CONFIG.MAX_SCAN_TIME or scannedCount >= CONFIG.MAX_INSTANCES then break end
+            local instance = table.remove(queue)
+            pcall(function()
+                ProcessInstance(instance)
+                for _, child in ipairs(instance:GetChildren()) do table.insert(queue, child) end
+            end)
             scannedCount = scannedCount + 1
             batchCount = batchCount + 1
-            if batchCount >= CONFIG.BATCH_SIZE then batchCount = 0; task.wait(CONFIG.BATCH_DELAY) end
+            if batchCount >= CONFIG.BATCH_SIZE then
+                batchCount = 0
+                if onProgress then pcall(function() onProgress({current = scannedCount, total = CONFIG.MAX_INSTANCES, percent = math.floor((scannedCount / CONFIG.MAX_INSTANCES) * 100), currentService = serviceData.name}) end) end
+                task.wait(CONFIG.BATCH_DELAY)
+            end
         end
-        task.wait(CONFIG.BATCH_DELAY * 2)
+        table.clear(queue)
+        task.wait(CONFIG.BATCH_DELAY)
     end
 
     -- ترتيب السكريبتات الحساسة
@@ -370,149 +385,12 @@ end
 -- ═══════════════════════════════════════════════════════════════════════
 -- 🖥️ واجهة العرض
 -- ═══════════════════════════════════════════════════════════════════════
-function GameAnalyzer.OpenUI(parent)
-    local results = GameAnalyzer.Results
-    if results.summary.totalScanned == 0 then Notify("قم بعمل Scan أولاً!", "⚠️", C.Orange); return end
-
-    local gui = Instance.new("ScreenGui")
-    gui.Name = "WiliAnalyzerUI"; gui.ResetOnSpawn = false; gui.IgnoreGuiInset = true; gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    pcall(function() gui.Parent = CoreGui end)
-    if not gui.Parent then gui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
-
-    local overlay = Instance.new("Frame"); overlay.Size = UDim2.new(1, 0, 1, 0); overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0); overlay.BackgroundTransparency = 0.4; overlay.ZIndex = 998; overlay.Parent = gui
-
-    local window = Instance.new("Frame"); window.Size = UDim2.new(0.95, 0, 0.92, 0); window.Position = UDim2.new(0.025, 0, 0.04, 0); window.BackgroundColor3 = C.BG; window.BorderSizePixel = 0; window.ZIndex = 999; window.Parent = gui
-    Instance.new("UICorner", window).CornerRadius = UDim.new(0, 14)
-    local ws = Instance.new("UIStroke"); ws.Color = C.Accent; ws.Thickness = 2; ws.Parent = window
-
-    -- Header
-    local header = Instance.new("Frame"); header.Size = UDim2.new(1, 0, 0, 45); header.BackgroundColor3 = C.BG2; header.BorderSizePixel = 0; header.ZIndex = 1000; header.Parent = window
-    Instance.new("UICorner", header).CornerRadius = UDim.new(0, 14)
-    local hl = Instance.new("Frame"); hl.Size = UDim2.new(1, 0, 0, 2); hl.Position = UDim2.new(0, 0, 1, -2); hl.BackgroundColor3 = C.Accent; hl.BorderSizePixel = 0; hl.ZIndex = 1001; hl.Parent = header
-
-    local title = Instance.new("TextLabel"); title.Size = UDim2.new(0.5, 0, 1, 0); title.Position = UDim2.new(0, 12, 0, 0); title.Text = "🔬 Game Analyzer - " .. results.gameInfo.name; title.TextColor3 = C.Accent; title.TextSize = 16; title.Font = Enum.Font.GothamBold; title.TextXAlignment = Enum.TextXAlignment.Left; title.TextTruncate = Enum.TextTruncate.AtEnd; title.BackgroundTransparency = 1; title.ZIndex = 1001; title.Parent = header
-
-    local infoLbl = Instance.new("TextLabel"); infoLbl.Size = UDim2.new(0.4, 0, 1, 0); infoLbl.Position = UDim2.new(0.5, 0, 0, 0)
-    infoLbl.Text = string.format("📊 %s | 📜 %s | 🔊 %s | 🖼️ %s", FormatNumber(results.summary.totalScanned), results.summary.totalScripts, results.summary.totalSounds, results.summary.totalImages)
-    infoLbl.TextColor3 = C.TextDim; infoLbl.TextSize = 10; infoLbl.Font = Enum.Font.Gotham; infoLbl.BackgroundTransparency = 1; infoLbl.ZIndex = 1001; infoLbl.Parent = header
-
-    local closeBtn = Instance.new("TextButton"); closeBtn.Size = UDim2.new(0, 30, 0, 30); closeBtn.Position = UDim2.new(1, -38, 0.5, -15); closeBtn.Text = "✕"; closeBtn.TextColor3 = C.Text; closeBtn.TextSize = 14; closeBtn.Font = Enum.Font.GothamBold; closeBtn.BackgroundColor3 = C.Red; closeBtn.ZIndex = 1001; closeBtn.Parent = header
-    Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
-    closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
-
-    -- Tabs
-    local tabBar = Instance.new("Frame"); tabBar.Size = UDim2.new(1, -16, 0, 28); tabBar.Position = UDim2.new(0, 8, 0, 48); tabBar.BackgroundTransparency = 1; tabBar.ZIndex = 1000; tabBar.Parent = window
-    local tl = Instance.new("UIListLayout"); tl.FillDirection = Enum.FillDirection.Horizontal; tl.Padding = UDim.new(0, 4); tl.Parent = tabBar
-
-    local content = Instance.new("Frame"); content.Size = UDim2.new(1, -16, 1, -85); content.Position = UDim2.new(0, 8, 0, 80); content.BackgroundTransparency = 1; content.ZIndex = 1000; content.Parent = window
-
-    local pages, tabButtons = {}, {}
-
-    local function CreateTab(name, icon, color, count)
-        local btn = Instance.new("TextButton"); btn.Size = UDim2.new(0, 85, 1, 0); btn.Text = icon .. " " .. tostring(count or 0); btn.TextSize = 10; btn.Font = Enum.Font.GothamBold; btn.BackgroundColor3 = C.Card; btn.ZIndex = 1001; btn.Parent = tabBar
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-        local s = Instance.new("UIStroke"); s.Color = color; s.Thickness = 1; s.Transparency = 0.6; s.Parent = btn
-        local page = Instance.new("ScrollingFrame"); page.Name = name; page.Size = UDim2.new(1, 0, 1, 0); page.BackgroundTransparency = 1; page.ScrollBarThickness = 3; page.ScrollBarImageColor3 = color; page.Visible = false; page.ZIndex = 1001; page.Parent = content
-        local pl = Instance.new("UIListLayout"); pl.Padding = UDim.new(0, 4); pl.Parent = page
-        local pp = Instance.new("UIPadding"); pp.PaddingLeft = UDim.new(0, 2); pp.PaddingRight = UDim.new(0, 2); pp.PaddingTop = UDim.new(0, 2); pp.PaddingBottom = UDim.new(0, 8); pp.Parent = page
-        pl:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() page.CanvasSize = UDim2.new(0, 0, 0, pl.AbsoluteContentSize.Y + 10) end)
-        pages[name] = page; tabButtons[name] = {btn = btn, stroke = s, color = color}
-        btn.MouseButton1Click:Connect(function()
-            for n, p in pairs(pages) do p.Visible = (n == name) end
-            for n, d in pairs(tabButtons) do d.btn.BackgroundColor3 = (n == name) and d.color or C.Card; d.btn.TextColor3 = (n == name) and C.BG or C.Text; d.stroke.Transparency = (n == name) and 0 or 0.6 end
-        end)
-        return page
+function GameAnalyzer.OpenUI(parent, onBack)
+    local AnalyzerUI = _G.WiliModules and _G.WiliModules.AnalyzerUI
+    if not AnalyzerUI or type(AnalyzerUI.Create) ~= "function" then
+        return nil, "AnalyzerUI module is not loaded"
     end
-
-    local function CreateItemCard(page, item, itemType)
-        local card = Instance.new("Frame"); card.Size = UDim2.new(1, -4, 0, 48); card.BackgroundColor3 = C.Card; card.ZIndex = 1002; card.Parent = page
-        Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
-        local cs = Instance.new("UIStroke"); cs.Color = C.Border; cs.Thickness = 1; cs.Transparency = 0.5; cs.Parent = card
-
-        local ti = Instance.new("TextLabel"); ti.Size = UDim2.new(0, 30, 0, 30); ti.Position = UDim2.new(0, 5, 0.5, -15); ti.TextSize = 16; ti.BackgroundTransparency = 1; ti.ZIndex = 1003; ti.Parent = card
-        local nl = Instance.new("TextLabel"); nl.Size = UDim2.new(0.45, 0, 0, 18); nl.Position = UDim2.new(0, 38, 0, 4); nl.TextColor3 = C.Text; nl.TextSize = 11; nl.Font = Enum.Font.GothamBold; nl.TextXAlignment = Enum.TextXAlignment.Left; nl.TextTruncate = Enum.TextTruncate.AtEnd; nl.BackgroundTransparency = 1; nl.ZIndex = 1003; nl.Parent = card
-        local pl2 = Instance.new("TextLabel"); pl2.Size = UDim2.new(0.45, 0, 0, 14); pl2.Position = UDim2.new(0, 38, 0, 24); pl2.TextColor3 = C.TextDim; pl2.TextSize = 8; pl2.Font = Enum.Font.Gotham; pl2.TextXAlignment = Enum.TextXAlignment.Left; pl2.TextTruncate = Enum.TextTruncate.AtEnd; pl2.BackgroundTransparency = 1; pl2.ZIndex = 1003; pl2.Parent = card
-        local badge = Instance.new("TextLabel"); badge.Size = UDim2.new(0, 55, 0, 18); badge.Position = UDim2.new(0.5, 5, 0.5, -9); badge.TextSize = 8; badge.Font = Enum.Font.GothamBold; badge.TextColor3 = C.BG; badge.ZIndex = 1003; badge.Parent = card
-        Instance.new("UICorner", badge).CornerRadius = UDim.new(0, 5)
-
-        local function AB(text, posX, color, cb)
-            local b = Instance.new("TextButton"); b.Size = UDim2.new(0, 45, 0, 20); b.Position = UDim2.new(0.7, posX, 0.5, -10); b.Text = text; b.TextColor3 = C.Text; b.TextSize = 8; b.Font = Enum.Font.GothamBold; b.BackgroundColor3 = color; b.ZIndex = 1003; b.Parent = card
-            Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4); b.MouseButton1Click:Connect(cb)
-        end
-
-        if itemType == "script" then
-            ti.Text = item.className == "LocalScript" and "📱" or item.className == "ModuleScript" and "📦" or "📜"
-            nl.Text = item.name; pl2.Text = item.path
-            if item.isSensitive then badge.Text = item.severity:upper(); badge.BackgroundColor3 = item.severity == "critical" and C.Red or item.severity == "high" and C.Orange or C.Gold; cs.Color = badge.BackgroundColor3
-            elseif item.readable then badge.Text = item.editable and "EDIT" or "READ"; badge.BackgroundColor3 = item.editable and C.Green or C.Accent
-            else badge.Text = "LOCKED"; badge.BackgroundColor3 = Color3.fromRGB(100, 100, 130) end
-            if item.readable then AB("👁️", 0, C.Accent, function() CopyToClipboard(GetSource(item.instance)); Notify("تم نسخ الكود!", "📋", C.Green) end) end
-            AB("📋", 50, Color3.fromRGB(60, 70, 110), function() CopyToClipboard(item.path); Notify("تم نسخ المسار!", "📋", C.Green) end)
-        elseif itemType == "sound" then
-            ti.Text = "🔊"; nl.Text = item.name; pl2.Text = item.soundId ~= "" and item.soundId or item.path
-            badge.Text = item.isPlaying and "▶ PLAY" or "STOP"; badge.BackgroundColor3 = item.isPlaying and C.Green or Color3.fromRGB(100, 100, 130)
-            AB("▶", 0, C.Green, function() pcall(function() if item.instance.IsPlaying then item.instance:Stop(); badge.Text = "STOP"; badge.BackgroundColor3 = Color3.fromRGB(100, 100, 130) else item.instance:Play(); badge.Text = "▶ PLAY"; badge.BackgroundColor3 = C.Green end end) end)
-            AB("📋", 50, Color3.fromRGB(60, 70, 110), function() CopyToClipboard(item.soundId); Notify("تم نسخ Sound ID!", "📋", C.Green) end)
-        elseif itemType == "image" then
-            ti.Text = "🖼️"; nl.Text = item.name; pl2.Text = item.imageId ~= "" and item.imageId or item.path
-            badge.Text = item.className; badge.BackgroundColor3 = C.Pink
-            AB("📋", 0, Color3.fromRGB(60, 70, 110), function() CopyToClipboard(item.imageId); Notify("تم نسخ Image ID!", "📋", C.Green) end)
-        elseif itemType == "remote" then
-            ti.Text = item.isEvent and "📡" or "📞"; nl.Text = item.name; pl2.Text = item.path
-            badge.Text = item.isEvent and "EVENT" or "FUNC"; badge.BackgroundColor3 = item.isEvent and C.Orange or C.Purple
-            AB("🔥", 0, C.Red, function() pcall(function() if item.isEvent then item.instance:FireServer(); Notify("تم إطلاق الـ Remote!", "🔥", C.Orange) else local r = item.instance:InvokeServer(); Notify("النتيجة: " .. tostring(r):sub(1, 30), "📞", C.Accent) end end) end)
-            AB("📋", 50, Color3.fromRGB(60, 70, 110), function() CopyToClipboard(item.path); Notify("تم نسخ المسار!", "📋", C.Green) end)
-        elseif itemType == "value" then
-            ti.Text = "📊"; nl.Text = item.name; pl2.Text = item.className .. " = " .. item.valueStr
-            badge.Text = item.className:gsub("Value", ""); badge.BackgroundColor3 = C.Cyan
-            AB("✏️", 0, C.Accent, function() pcall(function() if item.instance:IsA("NumberValue") or item.instance:IsA("IntValue") then item.instance.Value = tonumber(item.valueStr) or item.value elseif item.instance:IsA("BoolValue") then item.instance.Value = not item.value end end); Notify("تم التعديل!", "✅", C.Green) end)
-            AB("📋", 50, Color3.fromRGB(60, 70, 110), function() CopyToClipboard(item.valueStr); Notify("تم نسخ القيمة!", "📋", C.Green) end)
-        end
-
-        card.MouseEnter:Connect(function() Tween(card, {BackgroundColor3 = C.CardHover}, 0.15) end)
-        card.MouseLeave:Connect(function() Tween(card, {BackgroundColor3 = C.Card}, 0.15) end)
-    end
-
-    -- إنشاء التabs
-    CreateTab("Sensitive", "🔒", C.Red, #results.sensitive)
-    CreateTab("Editable", "✏️", C.Green, #results.editable)
-    CreateTab("Scripts", "📜", C.Accent, #results.scripts)
-    CreateTab("Sounds", "🔊", C.Green, #results.sounds)
-    CreateTab("Images", "🖼️", C.Pink, #results.images)
-    CreateTab("Remotes", "📡", C.Orange, #results.remotes)
-    CreateTab("Values", "📊", C.Cyan, #results.values)
-    CreateTab("Game", "🎮", C.Gold, 1)
-    CreateTab("Players", "👥", C.Accent, #results.players)
-
-    -- ملء المحتوى
-    for _, s in ipairs(results.sensitive) do CreateItemCard(pages["Sensitive"], s, "script") end
-    for _, s in ipairs(results.editable) do CreateItemCard(pages["Editable"], s, "script") end
-    for _, s in ipairs(results.scripts) do CreateItemCard(pages["Scripts"], s, "script") end
-    for _, s in ipairs(results.sounds) do CreateItemCard(pages["Sounds"], s, "sound") end
-    for _, s in ipairs(results.images) do CreateItemCard(pages["Images"], s, "image") end
-    for _, s in ipairs(results.remotes) do CreateItemCard(pages["Remotes"], s, "remote") end
-    for _, s in ipairs(results.values) do CreateItemCard(pages["Values"], s, "value") end
-
-    -- معلومات اللعبة
-    local gc = Instance.new("Frame"); gc.Size = UDim2.new(1, -4, 0, 180); gc.BackgroundColor3 = C.Card; gc.ZIndex = 1002; gc.Parent = pages["Game"]
-    Instance.new("UICorner", gc).CornerRadius = UDim.new(0, 10)
-    local gt = Instance.new("TextLabel"); gt.Size = UDim2.new(1, -16, 1, -10); gt.Position = UDim2.new(0, 8, 0, 5)
-    gt.Text = string.format("🎮 Game: %s\n📍 Place ID: %s\n👥 Players: %d/%d\n⏱️ Server Time: %ds\n🎯 FPS: %d\n\n📊 Scan Results:\n• Total: %s | Scripts: %d | Sounds: %d\n• Images: %d | Remotes: %d | Values: %d\n• Sensitive: %d | Editable: %d", results.gameInfo.name, results.gameInfo.placeId, results.gameInfo.playerCount, results.gameInfo.maxPlayers, results.gameInfo.serverTime, results.gameInfo.fps, FormatNumber(results.summary.totalScanned), results.summary.totalScripts, results.summary.totalSounds, results.summary.totalImages, results.summary.totalRemotes, results.summary.totalValues, results.summary.totalSensitive, results.summary.totalEditable)
-    gt.TextColor3 = C.Text; gt.TextSize = 11; gt.Font = Enum.Font.Gotham; gt.TextXAlignment = Enum.TextXAlignment.Left; gt.TextYAlignment = Enum.TextYAlignment.Top; gt.BackgroundTransparency = 1; gt.ZIndex = 1003; gt.Parent = gc
-
-    -- اللاعبين
-    for _, p in ipairs(results.players) do
-        local pc = Instance.new("Frame"); pc.Size = UDim2.new(1, -4, 0, 50); pc.BackgroundColor3 = C.Card; pc.ZIndex = 1002; pc.Parent = pages["Players"]
-        Instance.new("UICorner", pc).CornerRadius = UDim.new(0, 8)
-        local pn = Instance.new("TextLabel"); pn.Size = UDim2.new(0.5, 0, 0, 16); pn.Position = UDim2.new(0, 8, 0, 4); pn.Text = "👤 " .. p.name; pn.TextColor3 = C.Text; pn.TextSize = 10; pn.Font = Enum.Font.GothamBold; pn.TextXAlignment = Enum.TextXAlignment.Left; pn.BackgroundTransparency = 1; pn.ZIndex = 1003; pn.Parent = pc
-        local pi = Instance.new("TextLabel"); pi.Size = UDim2.new(1, -12, 0, 12); pi.Position = UDim2.new(0, 8, 0, 24)
-        pi.Text = string.format("ID: %d | Team: %s | HP: %s/%s | Speed: %s", p.userId, p.team, p.health or "?", p.maxHealth or "?", p.walkSpeed or "?")
-        pi.TextColor3 = C.TextDim; pi.TextSize = 8; pi.Font = Enum.Font.Gotham; pi.TextXAlignment = Enum.TextXAlignment.Left; pi.BackgroundTransparency = 1; pi.ZIndex = 1003; pi.Parent = pc
-    end
-
-    if tabButtons["Sensitive"] then tabButtons["Sensitive"].btn.MouseButton1Click:Fire() end
-    overlay.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then gui:Destroy() end end)
-    return gui
+    return AnalyzerUI.Create(parent, onBack)
 end
 
 -- ═══════════════════════════════════════════════════════════════════════
@@ -538,26 +416,37 @@ function GameAnalyzer.SetValueSafe(instance, newValue)
 end
 
 function GameAnalyzer.FreezeValue(instance, value)
-    if not _G.WiliFrozenValues then _G.WiliFrozenValues = {} end
-    local id = tostring(instance)
-    if _G.WiliFrozenValues[id] then _G.WiliFrozenValues[id].active = false end
-    local freezeData = {active = true, instance = instance, value = value}
-    _G.WiliFrozenValues[id] = freezeData
-    task.spawn(function() while freezeData.active and instance and instance.Parent do pcall(function() instance.Value = value end); task.wait(0.1) end end)
+    if not instance then return false end
+    if FrozenValues[instance] then FrozenValues[instance].active = false end
+    local freezeData = {active = true, value = value}
+    FrozenValues[instance] = freezeData
+    task.spawn(function()
+        while freezeData.active and instance.Parent do
+            pcall(function() instance.Value = freezeData.value end)
+            task.wait(0.15)
+        end
+        FrozenValues[instance] = nil
+    end)
     return true
 end
 
 function GameAnalyzer.UnfreezeValue(instance)
-    if not _G.WiliFrozenValues then return false end
-    local id = tostring(instance)
-    if _G.WiliFrozenValues[id] then _G.WiliFrozenValues[id].active = false; _G.WiliFrozenValues[id] = nil; return true end
-    return false
+    local data = instance and FrozenValues[instance]
+    if not data then return false end
+    data.active = false
+    FrozenValues[instance] = nil
+    return true
 end
 
 function GameAnalyzer.UnfreezeAll()
-    if not _G.WiliFrozenValues then return end
-    for id, data in pairs(_G.WiliFrozenValues) do data.active = false end
-    _G.WiliFrozenValues = {}
+    for instance, data in pairs(FrozenValues) do
+        data.active = false
+        FrozenValues[instance] = nil
+    end
+end
+
+function GameAnalyzer.Destroy()
+    GameAnalyzer.UnfreezeAll()
 end
 
 function GameAnalyzer.GetResults() return GameAnalyzer.Results end
