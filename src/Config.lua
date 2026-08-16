@@ -1,6 +1,6 @@
 return {
     Name = "WiliExplorer",
-    Version = "6.0.0",
+    Version = "6.1.0",
     Build = "2026.08.16",
     DefaultLanguage = "ar",
     Theme = "space",
@@ -13,6 +13,9 @@ return {
     -- الإعدادات الافتراضية
     Settings = {
         -- الواجهة
+        language = "ar",
+        theme = "space",
+        version = "6.1.0",
         uiScale = 1,
         responsiveLayout = true,
         compactMode = "auto",
@@ -23,60 +26,45 @@ return {
         notificationDuration = 3,
         showFloatingButton = true,
         
-        -- KlimboMenu
-        klimboPosition = {x = 0.5, y = 0.5},
-        klimboSize = {w = 700, h = 500},
-        
-        -- ESP
-        espEnabled = false,
-        espNames = true,
-        espHealth = true,
-        espDistance = true,
-        espHighlight = true,
-        
-        -- Aimbot
-        aimbotEnabled = false,
-        aimbotFOV = 200,
-        aimbotSmoothness = 0.5,
-        aimbotTargetPart = "Head",
-        
-        -- Player
-        walkSpeed = 16,
-        jumpPower = 50,
-        flySpeed = 50,
-        
-        -- الأمان
-        antiKick = false,
-        antiAFK = false,
+        -- وحدة المطوّر
+        consoleLastTab = "overview",
+        scanBatchSize = 100,
+        scanObjectLimit = 15000,
+        powerSaver = "auto",
         
         -- المظهر
         spaceEffects = true,
         particlesEnabled = true,
         animationsEnabled = true
     },
+
+    -- لا يمكن حماية سر داخل عميل عام. ضع Endpoint لخدمة تحقق خادمية.
+    Security = {
+        Endpoint = "",
+        RequestTimeout = 10,
+        AllowStudioBypass = true,
+        AllowOfflineKeys = false
+    },
+
+    Distribution = {
+        Channel = "development",
+        Ref = "main",
+        Repository = "https://raw.githubusercontent.com/ilyesguers/WiliExplorer/"
+    },
     
     -- الملفات المطلوبة
     Modules = {
         Core = {
             "FileScanner",
-            "FileEditor",
-            "FileActions",
-            "TreeBuilder",
-            "ErrorHandler",
             "GameAnalyzer",
-            "AdvancedTools",
-            "PropertyEditor"
+            "AdvancedTools"
         },
         Security = {
             "KeySystem",
-            "Keys",
-            "AntiTamper",
             "HWID"
         },
         Theme = {
             "Colors",
-            "Fonts",
-            "Animations",
             "Stars"
         },
         UI = {
@@ -87,24 +75,22 @@ return {
             "KlimboMenu",
             "AdvancedUI",
             "AnalyzerUI",
-            "ContentPanel",
             "ContextMenu",
             "ErrorPopup",
             "ImageEditor",
-            "KeyScreen",
             "Notifications",
             "PropertiesPanel",
             "SearchBar",
             "SmartMenu",
-            "SoundEditor",
-            "TopBar"
+            "SoundEditor"
         },
         Utils = {
             "HTTP",
             "Highlighter",
             "Icons",
             "DesignSystem",
-            "JSON",
+            "Logger",
+            "Lifecycle",
             "Language",
             "SaveSystem"
         }

@@ -96,17 +96,14 @@ end
 -- ═══════════════════════════════════════════════════════════════════════
 function AnalyzerUI.Create(parent, onBack)
     -- تحميل GameAnalyzer
-    local GameAnalyzer = nil
-    local ok = pcall(function()
-        GameAnalyzer = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Core/GameAnalyzer.lua", true))()
-    end)
-    
-    if not ok or not GameAnalyzer then
-        -- محاولة تحميل من الذاكرة
-        if _G.WiliModules and _G.WiliModules.GameAnalyzer then
-            GameAnalyzer = _G.WiliModules.GameAnalyzer
-        else
-            warn("❌ Failed to load GameAnalyzer!")
+    local GameAnalyzer = _G.WiliModules and _G.WiliModules.GameAnalyzer or nil
+    if not GameAnalyzer then
+        local ok
+        ok = pcall(function()
+            GameAnalyzer = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Core/GameAnalyzer.lua", true))()
+        end)
+        if not ok or not GameAnalyzer then
+            warn("Failed to load GameAnalyzer")
             return
         end
     end
@@ -591,7 +588,11 @@ function AnalyzerUI.Create(parent, onBack)
         
         -- تفعيل أول Tab
         if tabButtons["Sensitive"] then
-            tabButtons["Sensitive"].btn.MouseButton1Click:Fire()
+            pages["Sensitive"].Visible = true
+            local data = tabButtons["Sensitive"]
+            data.btn.BackgroundColor3 = data.color
+            data.btn.TextColor3 = C.BG
+            data.stroke.Transparency = 0
         end
     end
     
@@ -617,11 +618,7 @@ function AnalyzerUI.Create(parent, onBack)
         end)
     end)
     
-    -- فحص تلقائي عند البناء
-    task.spawn(function()
-        task.wait(0.5)
-        ScanBtn.MouseButton1Click:Fire()
-    end)
+    -- لا يبدأ الفحص تلقائياً على الهاتف؛ ينتظر طلب المستخدم لتجنب تجميد غير متوقع.
 end
 
 print("🔬 Analyzer UI v3.0 Loaded!")

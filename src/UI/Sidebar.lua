@@ -1,6 +1,6 @@
 local Sidebar = {}
 
-local Language = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Utils/Language.lua", true))()
+local Language = _G.WiliModules and _G.WiliModules.Language or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Utils/Language.lua", true))()
 
 local TweenService = game:GetService("TweenService")
 
@@ -158,7 +158,7 @@ function Sidebar.Create(parent)
         TweenService:Create(AnalyzerCard, TweenInfo.new(0.1), {Size = UDim2.new(1, -10, 0, 100)}):Play()
         
         local success, SmartMenu = pcall(function()
-            return loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/SmartMenu.lua", true))()
+            return _G.WiliModules and _G.WiliModules.SmartMenu or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/SmartMenu.lua", true))()
         end)
         
         if success and SmartMenu then
@@ -256,7 +256,7 @@ function Sidebar.Create(parent)
         TweenService:Create(AdvancedCard, TweenInfo.new(0.1), {Size = UDim2.new(1, -10, 0, 100)}):Play()
         
         parent:ClearAllChildren()
-        local AdvancedUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/AdvancedUI.lua", true))()
+        local AdvancedUI = _G.WiliModules and _G.WiliModules.AdvancedUI or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/AdvancedUI.lua", true))()
         AdvancedUI.Create(parent, function()
             parent:ClearAllChildren()
             Sidebar.Create(parent)
@@ -351,7 +351,7 @@ function Sidebar.Create(parent)
         TweenService:Create(AnalyzerAdvCard, TweenInfo.new(0.1), {Size = UDim2.new(1, -10, 0, 100)}):Play()
         
         parent:ClearAllChildren()
-        local AnalyzerUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/AnalyzerUI.lua", true))()
+        local AnalyzerUI = _G.WiliModules and _G.WiliModules.AnalyzerUI or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/AnalyzerUI.lua", true))()
         AnalyzerUI.Create(parent, function()
             parent:ClearAllChildren()
             Sidebar.Create(parent)
@@ -514,7 +514,7 @@ function Sidebar.Create(parent)
             
             if service then
                 parent:ClearAllChildren()
-                local TreeView = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/TreeView.lua", true))()
+                local TreeView = _G.WiliModules and _G.WiliModules.TreeView or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/TreeView.lua", true))()
                 TreeView.Create(parent, service, function()
                     parent:ClearAllChildren()
                     Sidebar.Create(parent)

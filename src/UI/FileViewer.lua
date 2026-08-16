@@ -1,6 +1,6 @@
 local FileViewer = {}
 
-local FileScanner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Core/FileScanner.lua", true))()
+local FileScanner = _G.WiliModules and _G.WiliModules.FileScanner or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Core/FileScanner.lua", true))()
 
 local TweenService = game:GetService("TweenService")
 
@@ -1142,7 +1142,7 @@ function FileViewer.Open(mainParent, instance, onClose)
         buttonText = "🔊  SOUND EDITOR"
         buttonAction = function(overlay)
             overlay.Visible = false
-            local SoundEditor = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/SoundEditor.lua", true))()
+            local SoundEditor = _G.WiliModules and _G.WiliModules.SoundEditor or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/SoundEditor.lua", true))()
             SoundEditor.Open(mainParent, instance, function()
                 overlay.Visible = true
             end)
@@ -1153,7 +1153,7 @@ function FileViewer.Open(mainParent, instance, onClose)
         buttonText = "🖼️  IMAGE EDITOR"
         buttonAction = function(overlay)
             overlay.Visible = false
-            local ImageEditor = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/ImageEditor.lua", true))()
+            local ImageEditor = _G.WiliModules and _G.WiliModules.ImageEditor or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/ImageEditor.lua", true))()
             ImageEditor.Open(mainParent, instance, function()
                 overlay.Visible = true
             end)

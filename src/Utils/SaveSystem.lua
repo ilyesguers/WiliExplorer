@@ -1,6 +1,6 @@
 --[[
     ═══════════════════════════════════════════════════════════════════════════
-    💾 WiliExplorer - Save System v1.0
+    💾 WiliExplorer - Save System v6.1
     ═══════════════════════════════════════════════════════════════════════════
     
     ✅ حفظ إعدادات المستخدم
@@ -32,59 +32,25 @@ local HistoryFile = SaveFolder .. "/history.json"
 -- ═══════════════════════════════════════════════════════════════════════
 -- 📦 الإعدادات الافتراضية
 -- ═══════════════════════════════════════════════════════════════════════
-local DefaultSettings = {
-    -- عام
-    language = "ar",
-    theme = "space",
-    version = "1.0.0",
-    
-    -- الواجهة
-    uiScale = 1,
-    showNotifications = true,
-    notificationDuration = 3,
-    showFloatingButton = true,
-    
-    -- KlimboMenu
-    klimboPosition = {x = 0.5, y = 0.5},
-    klimboSize = {w = 700, h = 500},
-    klimboMinimized = false,
-    lastTab = "Secrets",
-    
-    -- ESP
-    espEnabled = false,
-    espNames = true,
-    espHealth = true,
-    espDistance = true,
-    espHighlight = true,
-    
-    -- Aimbot
-    aimbotEnabled = false,
-    aimbotFOV = 200,
-    aimbotSmoothness = 0.5,
-    aimbotTargetPart = "Head",
-    
-    -- Player
-    walkSpeed = 16,
-    jumpPower = 50,
-    flySpeed = 50,
-    
-    -- مفاتيح مفضلة
-    favoriteKeys = {},
-    
-    -- سكريبتات محفوظة
-    savedScripts = {},
-    
-    -- إحصائيات
-    totalLaunches = 0,
-    totalTime = 0,
-    lastLaunch = ""
-}
+local RuntimeConfig = _G.WiliConfig or {}
+local DefaultSettings = {}
+for key, value in pairs(RuntimeConfig.Settings or {}) do DefaultSettings[key] = value end
+DefaultSettings.language = DefaultSettings.language or "ar"
+DefaultSettings.theme = DefaultSettings.theme or "space"
+DefaultSettings.version = RuntimeConfig.Version or DefaultSettings.version or "6.1.0"
+DefaultSettings.favoriteKeys = {}
+DefaultSettings.savedScripts = {}
+DefaultSettings.totalLaunches = 0
+DefaultSettings.totalTime = 0
+DefaultSettings.lastLaunch = ""
 
 -- ═══════════════════════════════════════════════════════════════════════
 -- 📦 البيانات الحالية
 -- ═══════════════════════════════════════════════════════════════════════
 local CurrentSettings = {}
 local IsDirty = false
+local SaveScheduled = false
+local AutoSaveRunning = false
 local AutoSaveInterval = 60 -- ثانية
 
 -- ═══════════════════════════════════════════════════════════════════════
@@ -230,13 +196,14 @@ function SaveSystem.Set(key, value)
     current[keys[#keys]] = value
     IsDirty = true
     
-    -- حفظ تلقائي عند التغيير
-    task.spawn(function()
-        task.wait(1)
-        if IsDirty then
-            SaveSystem.Save()
-        end
-    end)
+    -- Debounce: خيط واحد فقط مهما كثرت التغييرات المتتابعة.
+    if not SaveScheduled then
+        SaveScheduled = true
+        task.delay(1.5, function()
+            SaveScheduled = false
+            if IsDirty then SaveSystem.Save() end
+        end)
+    end
 end
 
 -- حذف قيمة
@@ -450,16 +417,22 @@ end
 -- ═══════════════════════════════════════════════════════════════════════
 function SaveSystem.StartAutoSave(interval)
     AutoSaveInterval = interval or 60
-    
+    if AutoSaveRunning then return end
+    AutoSaveRunning = true
     task.spawn(function()
-        while true do
+        while AutoSaveRunning do
             task.wait(AutoSaveInterval)
-            if IsDirty then
+            if AutoSaveRunning and IsDirty then
                 SaveSystem.Save()
                 SaveSystem.CreateBackup()
             end
         end
     end)
+end
+
+function SaveSystem.Destroy()
+    AutoSaveRunning = false
+    if IsDirty then SaveSystem.Save() end
 end
 
 -- ═══════════════════════════════════════════════════════════════════════
@@ -478,7 +451,7 @@ end
 function SaveSystem.Init()
     SaveSystem.Load()
     SaveSystem.StartAutoSave()
-    print("💾 Save System v1.0 Initialized!")
+    print("💾 Save System v6.1 Initialized!")
     return CurrentSettings
 end
 
@@ -488,6 +461,6 @@ end
 SaveSystem.Settings = CurrentSettings
 SaveSystem.DefaultSettings = DefaultSettings
 
-print("💾 Save System v1.0 Loaded!")
+print("💾 Save System v6.1 Loaded!")
 
 return SaveSystem

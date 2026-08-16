@@ -1,6 +1,6 @@
 --[[
     ═══════════════════════════════════════════════════════════════════════════
-    🚀 WiliExplorer - MainFrame v6.0 (Responsive Edition)
+    🚀 WiliExplorer - MainFrame v6.1 (Developer Edition)
     ═══════════════════════════════════════════════════════════════════════════
     
     ✅ واجهة موحدة ومتناسقة
@@ -416,12 +416,15 @@ function MainFrame.Create()
     Gradient.Rotation = 135
     Gradient.Parent = Frame
 
-    if Stars and Stars.Create then
-        Stars.Create(Frame, 70)
+    local SaveSystem = GetModule("SaveSystem")
+    local savedPowerMode = SaveSystem and SaveSystem.Get and SaveSystem.Get("powerSaver", "auto") or "auto"
+    local powerSaver = savedPowerMode == "auto" and isMobile or savedPowerMode == true
+    if Stars and Stars.Create and not powerSaver then
+        Stars.Create(Frame, isMobile and 20 or 50)
     end
     
-    -- Preserve frame rate on phones; desktop keeps the ambient particles.
-    if not isMobile then CreateParticles(Frame) end
+    -- Preserve frame rate and battery on phones/power-saver mode.
+    if not isMobile and not powerSaver then CreateParticles(Frame) end
     CreateLoadingScreen(Frame)
 
     -- ═══════════════════════════════
@@ -493,7 +496,7 @@ function MainFrame.Create()
     KlimboBtn.Name = "KlimboBtn"
     KlimboBtn.Size = UDim2.new(0, 90, 0, 30)
     KlimboBtn.Position = UDim2.new(1, -350, 0.5, -15)
-    KlimboBtn.Text = "👑 KLIMBO"
+    KlimboBtn.Text = "◈ DEV"
     KlimboBtn.TextColor3 = C.Gold
     KlimboBtn.TextSize = 10
     KlimboBtn.Font = Enum.Font.GothamBlack
@@ -879,6 +882,7 @@ function MainFrame.Create()
             Subtitle.Text = Lang.Get("Welcome")
             KeyInput.PlaceholderText = Lang.Get("EnterKey")
             LoginBtn.Text = "🔓 " .. Lang.Get("Verify")
+            if Lang.Apply then Lang.Apply(Frame) end
             ShowNotification(Lang.Current == "ar" and "تم تغيير اللغة" or "Language changed", "info", 2)
             
             if ExplorerScreen.Visible then
@@ -941,7 +945,7 @@ function MainFrame.Create()
             end
             Tween(KeyInputContainer, {Position = UDim2.new(0.1, 0, 0.42, 0)}, 0.04)
             
-            ShowNotification("Invalid key!", "error", 3)
+            ShowNotification(tostring(data or Lang.Get("Invalid")), "error", 4)
             
             task.wait(2)
             LoginBtn.Text = "🔓 " .. Lang.Get("Verify")
@@ -953,7 +957,7 @@ function MainFrame.Create()
     -- ═══════════════════════════════════════════════════════════════════════
     -- 👑 زر KLIMBO
     -- ═══════════════════════════════════════════════════════════════════════
-    KlimboBtn.MouseButton1Click:Connect(function()
+    local function ToggleDeveloperConsole()
         Tween(KlimboBtn, {Size = UDim2.new(0, 85, 0, 28)}, 0.1)
         task.wait(0.1)
         Tween(KlimboBtn, {Size = UDim2.new(0, 90, 0, 30)}, 0.1)
@@ -962,7 +966,7 @@ function MainFrame.Create()
             KlimboContainer:ClearAllChildren()
             KlimboContainer.Visible = false
             ExplorerScreen.Visible = true
-            KlimboBtn.Text = "👑 KLIMBO"
+            KlimboBtn.Text = "◈ DEV"
             return
         end
         
@@ -970,29 +974,14 @@ function MainFrame.Create()
         klimboLoading = true
         
         KlimboBtn.Text = "⏳ Loading"
-        ShowNotification("👑 Loading KLIMBO...", "info", 2)
+        ShowNotification("Loading Developer Console...", "info", 2)
         
         task.spawn(function()
-            local KlimboMenu = nil
-            local loadSuccess = false
+            -- الوحدة محمّلة مسبقاً بواسطة Loader؛ لا تنزيل أو تنفيذ خارجي عند كل نقرة.
+            local KlimboMenu = GetModule("KlimboMenu")
+            local loadSuccess = KlimboMenu and type(KlimboMenu.Create) == "function"
             
-            for attempt = 1, 3 do
-                local ok, result = pcall(function()
-                    local code = game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/KlimboMenu.lua", true)
-                    if not code or #code < 2000 then error("Incomplete") end
-                    return loadstring(code)()
-                end)
-                
-                if ok and result and type(result) == "table" and type(result.Create) == "function" then
-                    KlimboMenu = result
-                    loadSuccess = true
-                    break
-                end
-                
-                if attempt < 3 then task.wait(1) end
-            end
-            
-            if loadSuccess and KlimboMenu then
+            if loadSuccess then
                 KlimboContainer.Visible = true
                 ExplorerScreen.Visible = false
                 KlimboBtn.Text = "‹ BACK"
@@ -1002,24 +991,25 @@ function MainFrame.Create()
                 end)
                 
                 if createOk then
-                    ShowNotification("👑 KLIMBO Ready!", "success", 2)
+                    ShowNotification("Developer Console ready", "success", 2)
                 else
                     KlimboContainer:ClearAllChildren()
                     KlimboContainer.Visible = false
                     ExplorerScreen.Visible = true
-                    KlimboBtn.Text = "👑 KLIMBO"
+                    KlimboBtn.Text = "◈ DEV"
                     ShowNotification("❌ Error loading menu", "error", 3)
                 end
             else
-                ShowNotification("❌ Failed to load KLIMBO", "error", 3)
+                ShowNotification("Failed to load Developer Console", "error", 3)
                 KlimboContainer.Visible = false
                 ExplorerScreen.Visible = true
-                KlimboBtn.Text = "👑 KLIMBO"
+                KlimboBtn.Text = "◈ DEV"
             end
             
             klimboLoading = false
         end)
-    end)
+    end
+    KlimboBtn.MouseButton1Click:Connect(ToggleDeveloperConsole)
 
     -- سحب النافذة
     local dragging, dragStart, startPos
@@ -1041,7 +1031,7 @@ function MainFrame.Create()
         end
     end)
     
-    UserInputService.InputChanged:Connect(function(input)
+    local dragInputConnection = UserInputService.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
             Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
@@ -1049,7 +1039,7 @@ function MainFrame.Create()
     end)
 
     -- اختصارات لوحة المفاتيح
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    local shortcutConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if gameProcessed then return end
         
         if input.KeyCode == Enum.KeyCode.Escape then
@@ -1057,7 +1047,7 @@ function MainFrame.Create()
                 KlimboContainer:ClearAllChildren()
                 KlimboContainer.Visible = false
                 ExplorerScreen.Visible = true
-                KlimboBtn.Text = "👑 KLIMBO"
+                KlimboBtn.Text = "◈ DEV"
             else
                 minimized = not minimized
                 if minimized then
@@ -1071,11 +1061,21 @@ function MainFrame.Create()
         end
         
         if input.KeyCode == Enum.KeyCode.K and KlimboBtn.Visible then
-            KlimboBtn.MouseButton1Click:Fire()
+            ToggleDeveloperConsole()
         end
     end)
 
-    print("🚀 WiliExplorer VIP UI Ready!")
+    ScreenGui.Destroying:Connect(function()
+        if dragInputConnection then dragInputConnection:Disconnect() end
+        if shortcutConnection then shortcutConnection:Disconnect() end
+        local Analyzer = GetModule("GameAnalyzer")
+        if Analyzer and Analyzer.Destroy then pcall(Analyzer.Destroy) end
+        local Saves = GetModule("SaveSystem")
+        if Saves and Saves.Destroy then pcall(Saves.Destroy) end
+    end)
+
+    if Lang.Apply then Lang.Apply(Frame) end
+    print("WiliExplorer UI ready")
     
     return ScreenGui
 end

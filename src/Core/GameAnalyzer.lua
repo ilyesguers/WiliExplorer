@@ -110,6 +110,7 @@ local Keywords = {
 -- 🛠️ دوال مساعدة
 -- ═══════════════════════════════════════════════════════════════════════
 GameAnalyzer.Results = {scripts = {}, sounds = {}, images = {}, remotes = {}, values = {}, sensitive = {}, editable = {}, modules = {}, players = {}, gameInfo = {}}
+local FrozenValues = setmetatable({}, {__mode = "k"})
 
 local function Notify(message, icon, color)
     pcall(function()
@@ -211,16 +212,21 @@ function GameAnalyzer.Scan(onProgress)
     local scannedCount = 0
     local batchCount = 0
 
-    -- معلومات اللعبة
-    pcall(function()
-        results.gameInfo = {
-            name = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name or "Unknown",
-            placeId = game.PlaceId, jobId = game.JobId,
-            playerCount = #Players:GetPlayers(), maxPlayers = Players.MaxPlayers,
-            serverTime = math.floor(workspace.DistributedGameTime),
-            fps = math.floor(1/RunService.RenderStepped:Wait())
-        }
+    -- معلومات اللعبة: لا نوقف خيط الفحص لانتظار RenderStepped.
+    local experienceName = "Unknown"
+    local productOk, productInfo = pcall(function()
+        return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
     end)
+    if productOk and productInfo and productInfo.Name then experienceName = productInfo.Name end
+    local measuredFPS = 60
+    pcall(function() measuredFPS = math.floor(workspace:GetRealPhysicsFPS() + 0.5) end)
+    results.gameInfo = {
+        name = experienceName,
+        placeId = game.PlaceId, jobId = game.JobId,
+        playerCount = #Players:GetPlayers(), maxPlayers = Players.MaxPlayers,
+        serverTime = math.floor(workspace.DistributedGameTime),
+        fps = measuredFPS
+    }
 
     -- معلومات اللاعبين
     for _, player in ipairs(Players:GetPlayers()) do
@@ -342,17 +348,26 @@ function GameAnalyzer.Scan(onProgress)
 
         if onProgress then pcall(function() onProgress({current = scannedCount, total = CONFIG.MAX_INSTANCES, percent = math.floor((scannedCount/CONFIG.MAX_INSTANCES)*100), currentService = serviceData.name}) end) end
 
-        local descendants = {}
-        pcall(function() descendants = serviceData.service:GetDescendants() end)
-
-        for i, instance in ipairs(descendants) do
-            if (tick() - startTime) > CONFIG.MAX_SCAN_TIME then break end
-            pcall(function() ProcessInstance(instance) end)
+        -- اجتياز تدريجي لا يبني مصفوفة GetDescendants ضخمة في الذاكرة.
+        local queue = {}
+        pcall(function() queue = serviceData.service:GetChildren() end)
+        while #queue > 0 do
+            if (tick() - startTime) > CONFIG.MAX_SCAN_TIME or scannedCount >= CONFIG.MAX_INSTANCES then break end
+            local instance = table.remove(queue)
+            pcall(function()
+                ProcessInstance(instance)
+                for _, child in ipairs(instance:GetChildren()) do table.insert(queue, child) end
+            end)
             scannedCount = scannedCount + 1
             batchCount = batchCount + 1
-            if batchCount >= CONFIG.BATCH_SIZE then batchCount = 0; task.wait(CONFIG.BATCH_DELAY) end
+            if batchCount >= CONFIG.BATCH_SIZE then
+                batchCount = 0
+                if onProgress then pcall(function() onProgress({current = scannedCount, total = CONFIG.MAX_INSTANCES, percent = math.floor((scannedCount / CONFIG.MAX_INSTANCES) * 100), currentService = serviceData.name}) end) end
+                task.wait(CONFIG.BATCH_DELAY)
+            end
         end
-        task.wait(CONFIG.BATCH_DELAY * 2)
+        table.clear(queue)
+        task.wait(CONFIG.BATCH_DELAY)
     end
 
     -- ترتيب السكريبتات الحساسة
@@ -460,8 +475,8 @@ function GameAnalyzer.OpenUI(parent)
         elseif itemType == "remote" then
             ti.Text = item.isEvent and "📡" or "📞"; nl.Text = item.name; pl2.Text = item.path
             badge.Text = item.isEvent and "EVENT" or "FUNC"; badge.BackgroundColor3 = item.isEvent and C.Orange or C.Purple
-            AB("🔥", 0, C.Red, function() pcall(function() if item.isEvent then item.instance:FireServer(); Notify("تم إطلاق الـ Remote!", "🔥", C.Orange) else local r = item.instance:InvokeServer(); Notify("النتيجة: " .. tostring(r):sub(1, 30), "📞", C.Accent) end end) end)
-            AB("📋", 50, Color3.fromRGB(60, 70, 110), function() CopyToClipboard(item.path); Notify("تم نسخ المسار!", "📋", C.Green) end)
+            -- Inspection only: never invoke arbitrary server endpoints from the analyzer.
+            AB("📋", 0, Color3.fromRGB(60, 70, 110), function() CopyToClipboard(item.path); Notify("تم نسخ المسار!", "📋", C.Green) end)
         elseif itemType == "value" then
             ti.Text = "📊"; nl.Text = item.name; pl2.Text = item.className .. " = " .. item.valueStr
             badge.Text = item.className:gsub("Value", ""); badge.BackgroundColor3 = C.Cyan
@@ -510,7 +525,13 @@ function GameAnalyzer.OpenUI(parent)
         pi.TextColor3 = C.TextDim; pi.TextSize = 8; pi.Font = Enum.Font.Gotham; pi.TextXAlignment = Enum.TextXAlignment.Left; pi.BackgroundTransparency = 1; pi.ZIndex = 1003; pi.Parent = pc
     end
 
-    if tabButtons["Sensitive"] then tabButtons["Sensitive"].btn.MouseButton1Click:Fire() end
+    if tabButtons["Sensitive"] then
+        pages["Sensitive"].Visible = true
+        local first = tabButtons["Sensitive"]
+        first.btn.BackgroundColor3 = first.color
+        first.btn.TextColor3 = C.BG
+        first.stroke.Transparency = 0
+    end
     overlay.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then gui:Destroy() end end)
     return gui
 end
@@ -538,26 +559,37 @@ function GameAnalyzer.SetValueSafe(instance, newValue)
 end
 
 function GameAnalyzer.FreezeValue(instance, value)
-    if not _G.WiliFrozenValues then _G.WiliFrozenValues = {} end
-    local id = tostring(instance)
-    if _G.WiliFrozenValues[id] then _G.WiliFrozenValues[id].active = false end
-    local freezeData = {active = true, instance = instance, value = value}
-    _G.WiliFrozenValues[id] = freezeData
-    task.spawn(function() while freezeData.active and instance and instance.Parent do pcall(function() instance.Value = value end); task.wait(0.1) end end)
+    if not instance then return false end
+    if FrozenValues[instance] then FrozenValues[instance].active = false end
+    local freezeData = {active = true, value = value}
+    FrozenValues[instance] = freezeData
+    task.spawn(function()
+        while freezeData.active and instance.Parent do
+            pcall(function() instance.Value = freezeData.value end)
+            task.wait(0.15)
+        end
+        FrozenValues[instance] = nil
+    end)
     return true
 end
 
 function GameAnalyzer.UnfreezeValue(instance)
-    if not _G.WiliFrozenValues then return false end
-    local id = tostring(instance)
-    if _G.WiliFrozenValues[id] then _G.WiliFrozenValues[id].active = false; _G.WiliFrozenValues[id] = nil; return true end
-    return false
+    local data = instance and FrozenValues[instance]
+    if not data then return false end
+    data.active = false
+    FrozenValues[instance] = nil
+    return true
 end
 
 function GameAnalyzer.UnfreezeAll()
-    if not _G.WiliFrozenValues then return end
-    for id, data in pairs(_G.WiliFrozenValues) do data.active = false end
-    _G.WiliFrozenValues = {}
+    for instance, data in pairs(FrozenValues) do
+        data.active = false
+        FrozenValues[instance] = nil
+    end
+end
+
+function GameAnalyzer.Destroy()
+    GameAnalyzer.UnfreezeAll()
 end
 
 function GameAnalyzer.GetResults() return GameAnalyzer.Results end

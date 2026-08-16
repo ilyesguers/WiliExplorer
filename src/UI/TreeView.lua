@@ -1,7 +1,7 @@
 local TreeView = {}
 
-local FileScanner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Core/FileScanner.lua", true))()
-local Language = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Utils/Language.lua", true))()
+local FileScanner = _G.WiliModules and _G.WiliModules.FileScanner or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Core/FileScanner.lua", true))()
+local Language = _G.WiliModules and _G.WiliModules.Language or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Utils/Language.lua", true))()
 
 local TweenService = game:GetService("TweenService")
 
@@ -429,7 +429,7 @@ function TreeView.Create(parent, rootInstance, onBack)
                 end)
             else
                 Item.MouseButton1Click:Connect(function()
-                    local FileViewer = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/FileViewer.lua", true))()
+                    local FileViewer = _G.WiliModules and _G.WiliModules.FileViewer or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/FileViewer.lua", true))()
                     FileViewer.Open(parent.Parent, child)
                 end)
             end
@@ -508,7 +508,7 @@ function TreeView.Create(parent, rootInstance, onBack)
             end)
         else
             Item.MouseButton1Click:Connect(function()
-                local FileViewer = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/FileViewer.lua", true))()
+                local FileViewer = _G.WiliModules and _G.WiliModules.FileViewer or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/FileViewer.lua", true))()
                 FileViewer.Open(parent.Parent, child)
             end)
         end

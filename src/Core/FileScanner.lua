@@ -2431,10 +2431,17 @@ end
 
 function FileScanner.SortChildren(children, sortBy)
     sortBy = sortBy or "category" -- category, name, class
-    
+    -- GetInfo قد يقرأ Source وخصائص كثيرة؛ احسبه مرة واحدة لكل عنصر لا مرة لكل مقارنة.
+    local infoCache = setmetatable({}, {__mode = "k"})
+    local function CachedInfo(instance)
+        local info = infoCache[instance]
+        if not info then info = FileScanner.GetInfo(instance); infoCache[instance] = info end
+        return info
+    end
+
     table.sort(children, function(a, b)
-        local infoA = FileScanner.GetInfo(a)
-        local infoB = FileScanner.GetInfo(b)
+        local infoA = CachedInfo(a)
+        local infoB = CachedInfo(b)
         
         if sortBy == "category" then
             local catA = FileScanner.GetCategoryInfo(infoA.Category)

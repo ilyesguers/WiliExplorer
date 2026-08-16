@@ -4,7 +4,7 @@ local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 
 function AdvancedUI.Create(parent, onBack)
-    local AdvancedTools = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Core/AdvancedTools.lua", true))()
+    local AdvancedTools = _G.WiliModules and _G.WiliModules.AdvancedTools or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Core/AdvancedTools.lua", true))()
     
     -- ═══════════════════════════════
     -- الإطار الرئيسي

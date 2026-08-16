@@ -1,6 +1,6 @@
 local SmartMenu = {}
 
-local GameAnalyzer = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Core/GameAnalyzer.lua", true))()
+local GameAnalyzer = _G.WiliModules and _G.WiliModules.GameAnalyzer or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Core/GameAnalyzer.lua", true))()
 
 local TweenService = game:GetService("TweenService")
 
@@ -280,7 +280,7 @@ function SmartMenu.Open(mainParent)
                         elseif item.instance:IsA("ValueBase") then
                             -- فتح Value Editor
                             FullScreen.Visible = false
-                            local FileViewer = loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/FileViewer.lua", true))()
+                            local FileViewer = _G.WiliModules and _G.WiliModules.FileViewer or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/FileViewer.lua", true))()
                             FileViewer.OpenValueEditor(mainParent, item.instance, function()
                                 FullScreen.Visible = true
                             end)

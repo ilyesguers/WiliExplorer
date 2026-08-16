@@ -64,4 +64,18 @@ function Language.Alignment()
     return Language.IsRTL() and Enum.TextXAlignment.Right or Enum.TextXAlignment.Left
 end
 
+function Language.Apply(root)
+    if not root then return end
+    local rtl = Language.IsRTL()
+    for _, object in ipairs(root:GetDescendants()) do
+        if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
+            pcall(function() object.TextDirection = rtl and Enum.TextDirection.RightToLeft or Enum.TextDirection.LeftToRight end)
+            -- Preserve intentionally centered icon-only controls.
+            if object.TextXAlignment ~= Enum.TextXAlignment.Center or #object.Text > 3 then
+                object.TextXAlignment = rtl and Enum.TextXAlignment.Right or Enum.TextXAlignment.Left
+            end
+        end
+    end
+end
+
 return Language

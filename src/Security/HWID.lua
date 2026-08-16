@@ -1,72 +1,59 @@
---[[
-    ═══════════════════════════════════════════════════════════════════════════
-    💻 WiliExplorer - HWID System v1.0
-    ═══════════════════════════════════════════════════════════════════════════
-    
-    ✅ ربط الجهاز بالمفتاح
-    ✅ منع استخدام المفتاح على أجهزة متعددة
-    ✅ حماية من الابتزاز
-    
-    ═══════════════════════════════════════════════════════════════════════════
-]]
-
+-- Device identity capability wrapper.
+-- A UserId fallback is explicitly marked weak; it is never presented as hardware binding.
 local HWID = {}
 
--- Services
 local Players = game:GetService("Players")
-
+local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 
--- ═══════════════════════════════════════════════════════════════════════
--- 💻 الحصول على HWID
--- ═══════════════════════════════════════════════════════════════════════
-function HWID.GetHWID()
-    local hwid = ""
-    
-    -- محاولة 1: استخدام gethwid
+local cached
+
+local function hashIfAvailable(value)
+    local hashed = value
+    local ok = pcall(function()
+        if crypt and crypt.hash then hashed = crypt.hash(value, "sha256")
+        elseif syn and syn.crypt and syn.crypt.hash then hashed = syn.crypt.hash(value) end
+    end)
+    return ok and hashed or value
+end
+
+function HWID.GetInfo()
+    if cached then return cached end
+    local raw, source, strong = "", "none", false
+
     pcall(function()
         if gethwid then
-            hwid = gethwid()
+            raw = tostring(gethwid() or "")
+            source = "gethwid"
+            strong = raw ~= ""
         end
     end)
-    
-    -- محاولة 2: استخدام executor
-    if hwid == "" then
-        pcall(function()
-            local executor = identifyexecutor()
-            if executor then
-                hwid = executor .. "_" .. tostring(LocalPlayer.UserId)
-            end
-        end)
-    end
-    
-    -- محاولة 3: استخدام UserId
-    if hwid == "" then
-        hwid = "USER_" .. tostring(LocalPlayer.UserId)
-    end
-    
-    return hwid
-end
 
--- ═══════════════════════════════════════════════════════════════════════
--- 🔍 التحقق من HWID
--- ═══════════════════════════════════════════════════════════════════════
-function HWID.Verify(storedHWID)
-    local currentHWID = HWID.GetHWID()
-    return currentHWID == storedHWID
-end
+    if raw == "" then
+        -- Stable account identity only. This is not hardware identity.
+        raw = "ACCOUNT_" .. tostring(LocalPlayer and LocalPlayer.UserId or 0)
+        source = "account"
+        strong = false
+    end
 
--- ═══════════════════════════════════════════════════════════════════════
--- 📊 API
--- ═══════════════════════════════════════════════════════════════════════
-function HWID.GetInfo()
-    return {
-        hwid = HWID.GetHWID(),
-        userId = LocalPlayer.UserId,
-        username = LocalPlayer.Name
+    cached = {
+        hwid = hashIfAvailable(raw),
+        source = source,
+        strong = strong,
+        userId = LocalPlayer and LocalPlayer.UserId or 0,
+        username = LocalPlayer and LocalPlayer.Name or "Unknown"
     }
+    return cached
 end
 
-print("💻 HWID System v1.0 Loaded!")
+function HWID.GetHWID()
+    return HWID.GetInfo().hwid
+end
+
+function HWID.Verify(storedHWID, requireStrong)
+    local info = HWID.GetInfo()
+    if requireStrong and not info.strong then return false, "Strong device identity unavailable" end
+    return info.hwid == storedHWID
+end
 
 return HWID
