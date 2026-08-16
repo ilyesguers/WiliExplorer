@@ -102,7 +102,7 @@ function Sidebar.Create(parent)
         if not ok then UI.Notify(Language.Get("NavigationFailed") .. ": " .. tostring(err), "Error") end
     end
 
-    -- One analysis entry point replaces SmartMenu + AdvancedUI + duplicate analyzer cards.
+    -- A single analysis entry point replaces the removed duplicate analyzer pages.
     local Analysis = Instance.new("TextButton")
     Analysis.Name = "UnifiedAnalysis"
     Analysis.Size = UDim2.new(1, -2, 0, 92)

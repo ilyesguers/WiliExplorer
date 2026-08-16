@@ -2,7 +2,7 @@
 
 ## Access keys
 
-Production keys are **not stored in this repository**. `src/Security/Keys.lua` is intentionally empty. Configure `Config.Security.Endpoint` with an HTTPS endpoint that accepts a JSON verification request and returns an authoritative response such as:
+Production keys are **not stored in this repository**; the legacy `src/Security/Keys.lua` file has been removed. The app runs without a key by default (`Config.Security.RequireKey = false`). To require access keys, set `RequireKey = true`, configure `Config.Security.Endpoint` with an HTTPS endpoint, and return an authoritative response such as:
 
 ```json
 {

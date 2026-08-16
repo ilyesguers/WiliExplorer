@@ -40,6 +40,7 @@ return {
 
     -- لا يمكن حماية سر داخل عميل عام. ضع Endpoint لخدمة تحقق خادمية.
     Security = {
+        RequireKey = false,
         Endpoint = "",
         RequestTimeout = 10,
         AllowStudioBypass = true,

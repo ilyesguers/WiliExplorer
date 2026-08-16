@@ -867,6 +867,34 @@ function MainFrame.Create()
         ApplyResponsiveLayout(isMobile and "mobile" or "desktop", viewport)
     end
 
+    local launched = false
+    local function LaunchExplorer(animated)
+        if launched then return end
+        launched = true
+        authenticated = true
+        KeyScreen.Visible = false
+        KlimboBtn.Visible = true
+        UserInfo.Visible = true
+        ExplorerScreen.Visible = true
+        ExplorerScreen:ClearAllChildren()
+        ApplyResponsiveLayout(Design and Design.GetMode() or (isMobile and "mobile" or "desktop"), Design and Design.GetViewport() or viewport)
+        if animated then
+            KlimboBtn.Size = UDim2.new(0, 0, 0, 30)
+            Tween(KlimboBtn, {Size = UDim2.new(0, 90, 0, 30)}, 0.35, Enum.EasingStyle.Back)
+            ExplorerScreen.Position = UDim2.new(0, 0, 1, 0)
+            Tween(ExplorerScreen, {Position = UDim2.new(0, 0, 0, 0)}, 0.4, Enum.EasingStyle.Back)
+        else
+            ExplorerScreen.Position = UDim2.new(0, 0, 0, 0)
+        end
+        local Sidebar = GetModule("Sidebar")
+        if Sidebar and Sidebar.Create then Sidebar.Create(ExplorerScreen) end
+    end
+
+    local securityConfig = (_G.WiliConfig and _G.WiliConfig.Security) or {}
+    if securityConfig.RequireKey ~= true then
+        task.defer(function() LaunchExplorer(false) end)
+    end
+
     -- تحديث اللغة
     if LangBtn and Lang.Toggle then
         LangBtn.MouseButton1Click:Connect(function()
@@ -905,26 +933,10 @@ function MainFrame.Create()
             Tween(KeyInputStroke, {Color = C.Success}, 0.3)
             ShowNotification("🎉 Welcome VIP!", "success", 3)
             
-            task.wait(1)
-            
-            Tween(KeyScreen, {Position = UDim2.new(0, 0, -1, 0)}, 0.5, Enum.EasingStyle.Back)
-            task.wait(0.5)
-            KeyScreen.Visible = false
-            
-            KlimboBtn.Visible = true
-            KlimboBtn.Size = UDim2.new(0, 0, 0, 30)
-            Tween(KlimboBtn, {Size = UDim2.new(0, 90, 0, 30)}, 0.4, Enum.EasingStyle.Back)
-            
-            authenticated = true
-            UserInfo.Visible = true
-            ApplyResponsiveLayout(Design and Design.GetMode() or (isMobile and "mobile" or "desktop"), Design and Design.GetViewport() or viewport)
-            
-            ExplorerScreen.Visible = true
-            ExplorerScreen.Position = UDim2.new(0, 0, 1, 0)
-            Tween(ExplorerScreen, {Position = UDim2.new(0, 0, 0, 0)}, 0.5, Enum.EasingStyle.Back)
-            
-            local Sidebar = SafeLoadModule("UI/Sidebar.lua", "Sidebar")
-            if Sidebar and Sidebar.Create then Sidebar.Create(ExplorerScreen) end
+            task.wait(0.6)
+            Tween(KeyScreen, {Position = UDim2.new(0, 0, -1, 0)}, 0.35, Enum.EasingStyle.Back)
+            task.wait(0.35)
+            LaunchExplorer(true)
         else
             LoginBtn.Text = "❌ " .. Lang.Get("Invalid")
             Tween(LoginBtn, {BackgroundColor3 = C.Error}, 0.3)
