@@ -29,6 +29,24 @@ for (const file of ['src/UI/MainFrame.lua', 'src/UI/AnalyzerUI.lua', 'src/Core/G
   const source = fs.readFileSync(file, 'utf8');
   if (/MouseButton\w*:Fire\s*\(/.test(source)) failures.push(`${file}: RBXScriptSignal does not expose Fire()`);
 }
+const registryOnlyUI = ['Sidebar', 'TreeView', 'FileViewer', 'MainFrame', 'AnalyzerUI'];
+for (const name of registryOnlyUI) {
+  const file = `src/UI/${name}.lua`;
+  const source = fs.readFileSync(file, 'utf8');
+  if (source.includes('game:HttpGet')) failures.push(`${file}: UI modules must resolve dependencies through _G.WiliModules`);
+}
+const deprecatedFiles = ['src/Theme/Stars.lua', 'src/UI/FileViewer.lua', 'src/UI/Sidebar.lua', 'src/UI/TreeView.lua'];
+for (const file of deprecatedFiles) {
+  const source = fs.readFileSync(file, 'utf8');
+  if (/(^|[^.\w])spawn\s*\(/m.test(source)) failures.push(`${file}: use task.spawn`);
+  if (/(^|[^.\w])wait\s*\(/m.test(source)) failures.push(`${file}: use task.wait`);
+}
+for (const removed of ['src/Security/Keys.lua', 'src/Security/AntiTamper.lua']) {
+  if (fs.existsSync(removed)) failures.push(`${removed}: legacy security file must not ship`);
+}
+if (fs.readFileSync('src/Core/FileScanner.lua', 'utf8').includes('"RunContext"')) {
+  failures.push('src/Core/FileScanner.lua: deprecated RunContext property');
+}
 
 if (failures.length) {
   console.error(failures.join('\n'));

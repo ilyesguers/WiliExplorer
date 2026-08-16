@@ -1,6 +1,9 @@
 local FileViewer = {}
 
-local FileScanner = _G.WiliModules and _G.WiliModules.FileScanner or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/Core/FileScanner.lua", true))()
+local function GetModule(name)
+    return assert(_G.WiliModules and _G.WiliModules[name], "FileViewer dependency missing: " .. name)
+end
+local FileScanner = GetModule("FileScanner")
 
 local TweenService = game:GetService("TweenService")
 
@@ -53,12 +56,12 @@ local function ShowNotification(parent, message, color)
         Position = UDim2.new(0.5, -150, 0, 10)
     }):Play()
     
-    spawn(function()
-        wait(2.5)
+    task.spawn(function()
+        task.wait(2.5)
         TweenService:Create(Notif, TweenInfo.new(0.3), {
             Position = UDim2.new(0.5, -150, 0, -60)
         }):Play()
-        wait(0.3)
+        task.wait(0.3)
         Notif:Destroy()
     end)
 end
@@ -521,7 +524,7 @@ function FileViewer.OpenValueEditor(mainParent, instance, onExit)
                 CopyStatus.Text = "✅ COPIED"
                 CopyStatus.TextColor3 = Color3.fromRGB(0, 255, 136)
                 ShowNotification(FullScreen, "📋 Value copied!", Color3.fromRGB(0, 200, 100))
-                wait(1.5)
+                task.wait(1.5)
                 CopyStatus.Text = "Ready"
                 CopyStatus.TextColor3 = Color3.fromRGB(150, 150, 150)
             end
@@ -1142,7 +1145,7 @@ function FileViewer.Open(mainParent, instance, onClose)
         buttonText = "🔊  SOUND EDITOR"
         buttonAction = function(overlay)
             overlay.Visible = false
-            local SoundEditor = _G.WiliModules and _G.WiliModules.SoundEditor or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/SoundEditor.lua", true))()
+            local SoundEditor = GetModule("SoundEditor")
             SoundEditor.Open(mainParent, instance, function()
                 overlay.Visible = true
             end)
@@ -1153,7 +1156,7 @@ function FileViewer.Open(mainParent, instance, onClose)
         buttonText = "🖼️  IMAGE EDITOR"
         buttonAction = function(overlay)
             overlay.Visible = false
-            local ImageEditor = _G.WiliModules and _G.WiliModules.ImageEditor or loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/UI/ImageEditor.lua", true))()
+            local ImageEditor = GetModule("ImageEditor")
             ImageEditor.Open(mainParent, instance, function()
                 overlay.Visible = true
             end)
@@ -1190,12 +1193,12 @@ function FileViewer.Open(mainParent, instance, onClose)
         BStroke.Thickness = 3
         BStroke.Parent = BigBtn
 
-        spawn(function()
+        task.spawn(function()
             while BigBtn.Parent do
                 TweenService:Create(BStroke, TweenInfo.new(1), {Thickness = 5, Transparency = 0.4}):Play()
-                wait(1)
+                task.wait(1)
                 TweenService:Create(BStroke, TweenInfo.new(1), {Thickness = 3, Transparency = 0}):Play()
-                wait(1)
+                task.wait(1)
             end
         end)
 
@@ -1490,7 +1493,7 @@ function FileViewer.Open(mainParent, instance, onClose)
         local success = pcall(function() instance:Destroy() end)
         if success then
             ShowNotification(Window, "✅ Deleted!", Color3.fromRGB(0, 200, 100))
-            wait(1)
+            task.wait(1)
             Overlay:Destroy()
             if onClose then onClose() end
         else

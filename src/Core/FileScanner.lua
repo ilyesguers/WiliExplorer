@@ -1871,6 +1871,31 @@ end
 -- 📊 معلومات شاملة عن العنصر
 -- ═══════════════════════════════════════════════════════════════════════════
 
+function FileScanner.GetBasicInfo(instance)
+    if not instance then
+        return {Name = "", ClassName = "", FullName = "", Icon = "?", Color = Color3.fromRGB(150, 150, 150), Category = "Unknown", Children = 0}
+    end
+    local typeData = FileScanner.GetTypeData(instance)
+    local info = {
+        Name = instance.Name,
+        ClassName = instance.ClassName,
+        FullName = "",
+        Icon = typeData.icon,
+        Color = typeData.color,
+        Category = typeData.category,
+        Description = typeData.description,
+        CanOpen = typeData.canOpen,
+        CanEdit = typeData.canEdit,
+        CanCopy = typeData.canCopy,
+        CanDelete = typeData.canDelete,
+        Children = #instance:GetChildren(),
+        Parent = instance.Parent and instance.Parent.Name or "",
+        ParentClass = instance.Parent and instance.Parent.ClassName or ""
+    }
+    pcall(function() info.FullName = instance:GetFullName() end)
+    return info
+end
+
 function FileScanner.GetInfo(instance)
     local info = {
         -- معلومات أساسية
@@ -2117,7 +2142,7 @@ function FileScanner.GetProperties(instance)
         -- للأصوات
         "SoundId", "Volume", "Pitch", "PlaybackSpeed", "Looped", "Playing",
         -- للسكريبتات
-        "Disabled", "RunContext",
+        "Disabled",
         -- للشخصيات
         "Health", "MaxHealth", "WalkSpeed", "JumpPower", "JumpHeight",
         -- أخرى
@@ -2152,45 +2177,37 @@ function FileScanner.Search(parent, query, options)
     options = options or {}
     local results = {}
     local maxResults = options.maxResults or 100
-    local searchIn = options.searchIn or "name" -- name, class, both
+    local searchIn = options.searchIn or "both" -- name, class, path, both
     local caseSensitive = options.caseSensitive or false
-    
-    if not caseSensitive then
-        query = query:lower()
-    end
-    
-    local descendants = FileScanner.GetDescendants(parent)
-    
-    for _, instance in ipairs(descendants) do
-        if #results >= maxResults then break end
-        
-        local name = ""
-        local class = ""
-        pcall(function() 
-            name = instance.Name
-            class = instance.ClassName
-        end)
-        
-        if not caseSensitive then
-            name = name:lower()
-            class = class:lower()
-        end
-        
-        local match = false
-        if searchIn == "name" then
-            match = name:find(query, 1, true) ~= nil
-        elseif searchIn == "class" then
-            match = class:find(query, 1, true) ~= nil
-        else
-            match = name:find(query, 1, true) ~= nil or class:find(query, 1, true) ~= nil
-        end
-        
-        if match then
-            table.insert(results, instance)
+    local batchSize = options.batchSize or 150
+    local limit = options.scanLimit or 25000
+    local token = options.token
+    query = tostring(query or "")
+    if not caseSensitive then query = query:lower() end
+
+    local stack = parent and parent:GetChildren() or {}
+    local processed = 0
+    while #stack > 0 and #results < maxResults and processed < limit do
+        if token and token.cancelled then break end
+        local instance = table.remove(stack)
+        processed = processed + 1
+        local name, className, path = instance.Name, instance.ClassName, ""
+        if searchIn == "path" or searchIn == "both" then pcall(function() path = instance:GetFullName() end) end
+        if not caseSensitive then name, className, path = name:lower(), className:lower(), path:lower() end
+        local match = searchIn == "name" and name:find(query, 1, true)
+            or searchIn == "class" and className:find(query, 1, true)
+            or searchIn == "path" and path:find(query, 1, true)
+            or searchIn == "both" and (name:find(query, 1, true) or className:find(query, 1, true) or path:find(query, 1, true))
+        if match then table.insert(results, instance) end
+        local ok, children = pcall(function() return instance:GetChildren() end)
+        if ok then for _, child in ipairs(children) do table.insert(stack, child) end end
+        if processed % batchSize == 0 then
+            if options.onProgress then pcall(options.onProgress, processed, #results) end
+            task.wait()
         end
     end
-    
-    return results
+    table.clear(stack)
+    return results, {processed = processed, limited = processed >= limit}
 end
 
 -- البحث حسب الفئة
@@ -2435,7 +2452,7 @@ function FileScanner.SortChildren(children, sortBy)
     local infoCache = setmetatable({}, {__mode = "k"})
     local function CachedInfo(instance)
         local info = infoCache[instance]
-        if not info then info = FileScanner.GetInfo(instance); infoCache[instance] = info end
+        if not info then info = FileScanner.GetBasicInfo(instance); infoCache[instance] = info end
         return info
     end
 

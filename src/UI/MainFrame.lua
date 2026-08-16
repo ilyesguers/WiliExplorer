@@ -24,15 +24,8 @@ local function GetModule(name)
     return nil
 end
 
-local function SafeLoadModule(path, name)
-    local cached = GetModule(name)
-    if cached then return cached end
-    
-    local ok, result = pcall(function()
-        return loadstring(game:HttpGet("https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/" .. path, true))()
-    end)
-    if ok and result then return result end
-    return nil
+local function SafeLoadModule(_, name)
+    return GetModule(name)
 end
 
 local KeySystem = SafeLoadModule("Security/KeySystem.lua", "KeySystem")

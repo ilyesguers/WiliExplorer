@@ -48,7 +48,7 @@ function Stars.Create(parent, count)
         nebCorner.Parent = nebula
         
         -- حركة بطيئة
-        spawn(function()
+        task.spawn(function()
             while nebula.Parent do
                 local newPos = UDim2.new(
                     math.random(0, 100) / 100, 0,
@@ -105,8 +105,8 @@ function Stars.Create(parent, count)
         glow.Parent = star
         
         -- تلألؤ
-        spawn(function()
-            wait(math.random() * 3)
+        task.spawn(function()
+            task.wait(math.random() * 3)
             while star.Parent do
                 local duration = math.random(10, 30) / 10
                 local fade = TweenService:Create(
@@ -132,7 +132,7 @@ function Stars.Create(parent, count)
     -- 🪐 الكواكب الصغيرة
     -- ═══════════════════════════════
     for i = 1, 3 do
-        spawn(function()
+        task.spawn(function()
             while StarContainer.Parent do
                 local planet = Instance.new("Frame")
                 local size = math.random(8, 16)
@@ -186,7 +186,7 @@ function Stars.Create(parent, count)
                 moveTween.Completed:Wait()
                 planet:Destroy()
                 
-                wait(math.random(5, 15))
+                task.wait(math.random(5, 15))
             end
         end)
     end
@@ -194,9 +194,9 @@ function Stars.Create(parent, count)
     -- ═══════════════════════════════
     -- 👽 الأجسام الفضائية (UFO)
     -- ═══════════════════════════════
-    spawn(function()
+    task.spawn(function()
         while StarContainer.Parent do
-            wait(math.random(15, 30))
+            task.wait(math.random(15, 30))
             
             local ufo = Instance.new("Frame")
             ufo.Size = UDim2.new(0, 20, 0, 8)
@@ -231,7 +231,7 @@ function Stars.Create(parent, count)
             dGlow.Parent = dome
             
             -- حركة UFO متعرجة
-            spawn(function()
+            task.spawn(function()
                 for i = 1, 20 do
                     if not ufo.Parent then break end
                     local newY = math.random(15, 85) / 100
@@ -241,7 +241,7 @@ function Stars.Create(parent, count)
                         {Position = UDim2.new(ufo.Position.X.Scale, 0, newY, 0)}
                     )
                     tween:Play()
-                    wait(0.5)
+                    task.wait(0.5)
                 end
             end)
             
@@ -260,9 +260,9 @@ function Stars.Create(parent, count)
     -- ═══════════════════════════════
     -- ☄️ المذنبات (بذيول طويلة)
     -- ═══════════════════════════════
-    spawn(function()
+    task.spawn(function()
         while StarContainer.Parent do
-            wait(math.random(3, 8))
+            task.wait(math.random(3, 8))
             
             local comet = Instance.new("Frame")
             comet.Size = UDim2.new(0, 4, 0, 4)
@@ -286,8 +286,8 @@ function Stars.Create(parent, count)
             
             -- ذيل المذنب
             for j = 1, 8 do
-                spawn(function()
-                    wait(j * 0.05)
+                task.spawn(function()
+                    task.wait(j * 0.05)
                     if not comet.Parent then return end
                     
                     local tail = Instance.new("Frame")
@@ -332,9 +332,9 @@ function Stars.Create(parent, count)
     -- ═══════════════════════════════
     -- 🌠 النجوم المتساقطة السريعة
     -- ═══════════════════════════════
-    spawn(function()
+    task.spawn(function()
         while StarContainer.Parent do
-            wait(math.random(10, 25) / 10)
+            task.wait(math.random(10, 25) / 10)
             
             local shootingStar = Instance.new("Frame")
             shootingStar.Size = UDim2.new(0, 2, 0, 2)

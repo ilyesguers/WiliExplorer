@@ -56,8 +56,7 @@ return {
     Modules = {
         Core = {
             "FileScanner",
-            "GameAnalyzer",
-            "AdvancedTools"
+            "GameAnalyzer"
         },
         Security = {
             "KeySystem",
@@ -65,15 +64,15 @@ return {
         },
         Theme = {
             "Colors",
+            "Assets",
             "Stars"
         },
         UI = {
             "MainFrame",
             "Sidebar",
-            "TreeView",
             "FileViewer",
+            "TreeView",
             "KlimboMenu",
-            "AdvancedUI",
             "AnalyzerUI",
             "ContextMenu",
             "ErrorPopup",
@@ -81,7 +80,6 @@ return {
             "Notifications",
             "PropertiesPanel",
             "SearchBar",
-            "SmartMenu",
             "SoundEditor"
         },
         Utils = {
@@ -89,6 +87,7 @@ return {
             "Highlighter",
             "Icons",
             "DesignSystem",
+            "UIHelpers",
             "Logger",
             "Lifecycle",
             "Language",

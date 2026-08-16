@@ -2,6 +2,15 @@
 
 ## 6.1.0 — Developer Console
 
+### Explorer integration follow-up
+- Removed every independent `HttpGet` module download from the explorer UI; dependencies now come only from the Loader registry.
+- Rebuilt Sidebar with automatic layouts, direct-child counts, one analysis entry point, unified theme colors, and guarded navigation.
+- Added complete-tree batched search without reading script source during tree rendering.
+- Added shared `UIHelpers` and an administrator-managed `Theme/Assets` manifest with repository artwork workflow.
+- Removed deprecated `spawn`, `wait`, `RunContext`, and manual UI signal firing patterns from the affected paths.
+- Removed legacy SmartMenu, AdvancedUI, AdvancedTools, Keys, and AntiTamper files from the production source tree.
+- Collapsed the Core analyzer UI entry point into the single AnalyzerUI implementation.
+
 ### Added
 - Responsive, bilingual Developer Console replacing the legacy Klimbo menu.
 - Batched cancellable inspector with search, type filters, progress, and hard limits.
