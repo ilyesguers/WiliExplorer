@@ -1,6 +1,6 @@
 --[[
     ═══════════════════════════════════════════════════════════════════════════
-    🚀 WiliExplorer - MainFrame v5.0 (Ultimate Edition)
+    🚀 WiliExplorer - MainFrame v6.0 (Responsive Edition)
     ═══════════════════════════════════════════════════════════════════════════
     
     ✅ واجهة موحدة ومتناسقة
@@ -39,6 +39,7 @@ local KeySystem = SafeLoadModule("Security/KeySystem.lua", "KeySystem")
 local Stars = SafeLoadModule("Theme/Stars.lua", "Stars")
 local Language = SafeLoadModule("Utils/Language.lua", "Language")
 local Colors = SafeLoadModule("Theme/Colors.lua", "Colors")
+local Design = SafeLoadModule("Utils/DesignSystem.lua", "DesignSystem")
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -372,11 +373,14 @@ function MainFrame.Create()
     local success = pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
     if not success then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
-    local viewport = workspace.CurrentCamera.ViewportSize
+    local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1280, 720)
     local isMobile = viewport.X < 800
-    
-    local frameWidth = isMobile and viewport.X * 0.95 or 720
-    local frameHeight = isMobile and viewport.Y * 0.85 or 520
+    local initialSize = Design and Design.WindowSize(viewport) or Vector2.new(
+        isMobile and math.max(300, viewport.X - 18) or math.min(960, viewport.X - 60),
+        isMobile and math.max(300, viewport.Y - 24) or math.min(680, viewport.Y - 60)
+    )
+    local frameWidth = initialSize.X
+    local frameHeight = initialSize.Y
 
     -- ═══════════════════════════════
     -- الإطار الرئيسي
@@ -416,7 +420,8 @@ function MainFrame.Create()
         Stars.Create(Frame, 70)
     end
     
-    CreateParticles(Frame)
+    -- Preserve frame rate on phones; desktop keeps the ambient particles.
+    if not isMobile then CreateParticles(Frame) end
     CreateLoadingScreen(Frame)
 
     -- ═══════════════════════════════
@@ -460,7 +465,7 @@ function MainFrame.Create()
     local Logo = Instance.new("TextLabel")
     Logo.Size = UDim2.new(0, 170, 1, 0)
     Logo.Position = UDim2.new(0, 10, 0, 0)
-    Logo.Text = "🚀 WiliExplorer"
+    Logo.Text = "◈ WiliExplorer"
     Logo.TextColor3 = C.Accent
     Logo.TextSize = 18
     Logo.Font = Enum.Font.GothamBlack
@@ -649,7 +654,7 @@ function MainFrame.Create()
     KeyScreen.Parent = Content
 
     local Title = Instance.new("TextLabel")
-    Title.Text = "🌌 WiliExplorer"
+    Title.Text = "◈ WiliExplorer"
     Title.Size = UDim2.new(1, 0, 0, 60)
     Title.Position = UDim2.new(0, 0, 0.08, 0)
     Title.TextColor3 = C.Accent
@@ -779,7 +784,7 @@ function MainFrame.Create()
     local Copyright = Instance.new("TextLabel")
     Copyright.Size = UDim2.new(1, 0, 0, 16)
     Copyright.Position = UDim2.new(0, 0, 0.92, 0)
-    Copyright.Text = "© 2025 WiliExplorer - All Rights Reserved"
+    Copyright.Text = "© 2026 WiliExplorer • Responsive Edition"
     Copyright.TextColor3 = Color3.fromRGB(70, 80, 110)
     Copyright.TextSize = 9
     Copyright.Font = Enum.Font.Gotham
@@ -810,12 +815,67 @@ function MainFrame.Create()
     KlimboContainer.Parent = Content
     
     local klimboLoading = false
+    local authenticated = false
+
+    -- تخطيط تكيفي حقيقي: يعاد حسابه عند تدوير الهاتف أو تغيير حجم النافذة.
+    local function ApplyResponsiveLayout(mode, currentViewport)
+        local nextSize = Design and Design.WindowSize(currentViewport) or Vector2.new(
+            math.max(300, currentViewport.X - 18), math.max(300, currentViewport.Y - 24)
+        )
+        frameWidth, frameHeight = nextSize.X, nextSize.Y
+        local targetHeight = minimized and 48 or frameHeight
+        Frame.Size = UDim2.new(0, frameWidth, 0, targetHeight)
+        Frame.Position = UDim2.new(0.5, -frameWidth / 2, 0.5, -targetHeight / 2)
+
+        local compact = mode == "compact"
+        local mobile = compact or mode == "mobile"
+        Logo.Text = compact and "◈ Wili" or "◈ WiliExplorer"
+        Logo.Size = UDim2.new(0, compact and 105 or 165, 1, 0)
+        Logo.TextSize = compact and 15 or 18
+        LogoVIP.Visible = not mobile
+        UserInfo.Visible = authenticated and not mobile
+        Title.TextSize = compact and 25 or (mobile and 30 or 38)
+        KeyInputContainer.Size = UDim2.new(mobile and 0.9 or 0.72, 0, 0, mobile and 52 or 50)
+        KeyInputContainer.Position = UDim2.new(mobile and 0.05 or 0.14, 0, 0.42, 0)
+        LoginBtn.Size = UDim2.new(mobile and 0.9 or 0.5, 0, 0, 46)
+        LoginBtn.Position = UDim2.new(mobile and 0.05 or 0.25, 0, 0.57, 0)
+
+        CloseBtn.Position = UDim2.new(1, -40, 0.5, -15)
+        MinBtn.Position = UDim2.new(1, -76, 0.5, -15)
+        if compact then
+            LangBtn.Size = UDim2.new(0, 34, 0, 30)
+            LangBtn.Position = UDim2.new(1, -112, 0.5, -15)
+            LangBtn.Text = Lang.Current == "en" and "AR" or "EN"
+            KlimboBtn.Size = UDim2.new(0, 68, 0, 30)
+            KlimboBtn.Position = UDim2.new(1, -184, 0.5, -15)
+            KlimboBtn.Text = KlimboContainer.Visible and "‹ BACK" or "✦ MENU"
+        elseif mobile then
+            LangBtn.Size = UDim2.new(0, 68, 0, 30)
+            LangBtn.Position = UDim2.new(1, -150, 0.5, -15)
+            LangBtn.Text = Lang.Current == "en" and "AR عربي" or "EN English"
+            KlimboBtn.Position = UDim2.new(1, -246, 0.5, -15)
+        else
+            LangBtn.Size = UDim2.new(0, 78, 0, 30)
+            LangBtn.Position = UDim2.new(1, -166, 0.5, -15)
+            LangBtn.Text = Lang.Current == "en" and "AR  عربي" or "EN  English"
+            KlimboBtn.Position = UDim2.new(1, -264, 0.5, -15)
+            if UserInfo.Visible then
+                UserInfo.Position = UDim2.new(1, -410, 0.5, -15)
+            end
+        end
+    end
+
+    if Design and Design.BindResponsive then
+        Design.BindResponsive(ScreenGui, ApplyResponsiveLayout)
+    else
+        ApplyResponsiveLayout(isMobile and "mobile" or "desktop", viewport)
+    end
 
     -- تحديث اللغة
     if LangBtn and Lang.Toggle then
         LangBtn.MouseButton1Click:Connect(function()
             Lang.Toggle()
-            LangBtn.Text = Lang.Current == "en" and "🌐 عربي" or "🌐 English"
+            ApplyResponsiveLayout(Design and Design.GetMode() or (isMobile and "mobile" or "desktop"), Design and Design.GetViewport() or viewport)
             Subtitle.Text = Lang.Get("Welcome")
             KeyInput.PlaceholderText = Lang.Get("EnterKey")
             LoginBtn.Text = "🔓 " .. Lang.Get("Verify")
@@ -858,10 +918,9 @@ function MainFrame.Create()
             KlimboBtn.Size = UDim2.new(0, 0, 0, 30)
             Tween(KlimboBtn, {Size = UDim2.new(0, 90, 0, 30)}, 0.4, Enum.EasingStyle.Back)
             
+            authenticated = true
             UserInfo.Visible = true
-            LangBtn.Position = UDim2.new(1, -440, 0.5, -15)
-            MinBtn.Position = UDim2.new(1, -88, 0.5, -15)
-            CloseBtn.Position = UDim2.new(1, -50, 0.5, -15)
+            ApplyResponsiveLayout(Design and Design.GetMode() or (isMobile and "mobile" or "desktop"), Design and Design.GetViewport() or viewport)
             
             ExplorerScreen.Visible = true
             ExplorerScreen.Position = UDim2.new(0, 0, 1, 0)
@@ -936,7 +995,7 @@ function MainFrame.Create()
             if loadSuccess and KlimboMenu then
                 KlimboContainer.Visible = true
                 ExplorerScreen.Visible = false
-                KlimboBtn.Text = "◀ BACK"
+                KlimboBtn.Text = "‹ BACK"
                 
                 local createOk = pcall(function()
                     KlimboMenu.Create(KlimboContainer)

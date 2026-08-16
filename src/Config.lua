@@ -1,19 +1,24 @@
 return {
     Name = "WiliExplorer",
-    Version = "5.0.0",
-    Build = "2026.07.21",
+    Version = "6.0.0",
+    Build = "2026.08.16",
     DefaultLanguage = "ar",
     Theme = "space",
     LOADED = false,
     
     -- معلومات التطبيق
     Author = "ilyesguers",
-    Description = "Ultimate Roblox Explorer & Exploit Suite",
+    Description = "Professional responsive Roblox experience explorer and asset toolkit",
     
     -- الإعدادات الافتراضية
     Settings = {
         -- الواجهة
         uiScale = 1,
+        responsiveLayout = true,
+        compactMode = "auto",
+        reducedMotion = false,
+        highContrast = false,
+        touchTargetSize = 44,
         showNotifications = true,
         notificationDuration = 3,
         showFloatingButton = true,
@@ -98,6 +103,7 @@ return {
             "HTTP",
             "Highlighter",
             "Icons",
+            "DesignSystem",
             "JSON",
             "Language",
             "SaveSystem"

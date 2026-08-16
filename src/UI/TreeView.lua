@@ -84,12 +84,37 @@ function TreeView.Create(parent, rootInstance, onBack)
     SStroke.Transparency = 0.6
     SStroke.Parent = SearchBox
 
+    -- فلاتر سريعة قابلة للتمرير ومناسبة للمس
+    local FilterBar = Instance.new("ScrollingFrame")
+    FilterBar.Size = UDim2.new(1, -20, 0, 36)
+    FilterBar.Position = UDim2.new(0, 10, 0, 120)
+    FilterBar.BackgroundTransparency = 1
+    FilterBar.BorderSizePixel = 0
+    FilterBar.ScrollBarThickness = 0
+    FilterBar.ScrollingDirection = Enum.ScrollingDirection.X
+    FilterBar.AutomaticCanvasSize = Enum.AutomaticSize.X
+    FilterBar.ZIndex = 25
+    FilterBar.Parent = parent
+
+    local FilterLayout = Instance.new("UIListLayout")
+    FilterLayout.FillDirection = Enum.FillDirection.Horizontal
+    FilterLayout.Padding = UDim.new(0, 6)
+    FilterLayout.Parent = FilterBar
+
+    local activeFilter = "all"
+    local filterButtons = {}
+    local filters = {
+        {id = "all", text = "● All"}, {id = "script", text = "⌘ Scripts"},
+        {id = "model", text = "◆ Models"}, {id = "image", text = "▧ Images"},
+        {id = "sound", text = "♫ Sounds"}, {id = "value", text = "# Values"}
+    }
+
     -- ===================================
     -- منطقة الشجرة
     -- ===================================
     local Scroll = Instance.new("ScrollingFrame")
-    Scroll.Size = UDim2.new(1, -20, 1, -135)
-    Scroll.Position = UDim2.new(0, 10, 0, 125)
+    Scroll.Size = UDim2.new(1, -20, 1, -174)
+    Scroll.Position = UDim2.new(0, 10, 0, 164)
     Scroll.BackgroundColor3 = Color3.fromRGB(10, 12, 30)
     Scroll.BackgroundTransparency = 0.5
     Scroll.BorderSizePixel = 0
@@ -116,6 +141,59 @@ function TreeView.Create(parent, rootInstance, onBack)
     -- ===================================
     local allItems = {}
     local orderCounter = 0
+    local UpdateCanvasSize
+
+    local function MatchesCategory(instance, category)
+        if category == "all" then return true end
+        if category == "script" then return instance:IsA("BaseScript") or instance:IsA("ModuleScript") end
+        if category == "model" then return instance:IsA("Model") or instance:IsA("BasePart") end
+        if category == "image" then return instance:IsA("Decal") or instance:IsA("Texture") or instance:IsA("ImageLabel") or instance:IsA("ImageButton") end
+        if category == "sound" then return instance:IsA("Sound") end
+        if category == "value" then return instance:IsA("ValueBase") end
+        return true
+    end
+
+    local function ApplyFilters()
+        local query = SearchBox.Text:lower():match("^%s*(.-)%s*$")
+        for _, entry in ipairs(allItems) do
+            local instance = entry.instance
+            local path = ""
+            pcall(function() path = instance:GetFullName() end)
+            local matchesQuery = query == ""
+                or instance.Name:lower():find(query, 1, true) ~= nil
+                or instance.ClassName:lower():find(query, 1, true) ~= nil
+                or path:lower():find(query, 1, true) ~= nil
+            entry.frame.Visible = matchesQuery and MatchesCategory(instance, activeFilter)
+        end
+        UpdateCanvasSize()
+    end
+
+    for _, filter in ipairs(filters) do
+        local button = Instance.new("TextButton")
+        button.AutomaticSize = Enum.AutomaticSize.X
+        button.Size = UDim2.new(0, 0, 0, 32)
+        button.BackgroundColor3 = filter.id == "all" and Color3.fromRGB(0, 150, 210) or Color3.fromRGB(25, 32, 58)
+        button.Text = filter.text
+        button.TextColor3 = Color3.fromRGB(240, 245, 255)
+        button.TextSize = 11
+        button.Font = Enum.Font.GothamBold
+        button.ZIndex = 26
+        button.Parent = FilterBar
+        Instance.new("UICorner", button).CornerRadius = UDim.new(0, 8)
+        local padding = Instance.new("UIPadding")
+        padding.PaddingLeft, padding.PaddingRight = UDim.new(0, 12), UDim.new(0, 12)
+        padding.Parent = button
+        filterButtons[filter.id] = button
+        button.MouseButton1Click:Connect(function()
+            activeFilter = filter.id
+            for id, filterButton in pairs(filterButtons) do
+                TweenService:Create(filterButton, TweenInfo.new(0.14), {
+                    BackgroundColor3 = id == activeFilter and Color3.fromRGB(0, 150, 210) or Color3.fromRGB(25, 32, 58)
+                }):Play()
+            end
+            ApplyFilters()
+        end)
+    end
 
     local function GetTypeColor(className)
         if className:find("Script") or className == "ModuleScript" then
@@ -175,8 +253,8 @@ function TreeView.Create(parent, rootInstance, onBack)
         return children
     end
 
-    local function UpdateCanvasSize()
-        wait()
+    UpdateCanvasSize = function()
+        task.wait()
         Scroll.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 20)
     end
 
@@ -441,18 +519,7 @@ function TreeView.Create(parent, rootInstance, onBack)
     -- ===================================
     -- البحث
     -- ===================================
-    SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-        local query = SearchBox.Text:lower()
-        for _, entry in ipairs(allItems) do
-            if query == "" then
-                entry.frame.Visible = true
-            else
-                local name = entry.instance.Name:lower()
-                local className = entry.instance.ClassName:lower()
-                entry.frame.Visible = (name:find(query) ~= nil) or (className:find(query) ~= nil)
-            end
-        end
-    end)
+    SearchBox:GetPropertyChangedSignal("Text"):Connect(ApplyFilters)
 
     -- ===================================
     -- زر الرجوع

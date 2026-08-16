@@ -1,438 +1,346 @@
---[[
-    ═══════════════════════════════════════════════════════════════════════════
-    🔍 WiliExplorer - Search Bar v1.0
-    ═══════════════════════════════════════════════════════════════════════════
-    
-    ✅ بحث فوري (Instant Search)
-    ✅ اقتراحات ذكية
-    ✅ فلترة حسب النوع
-    ✅ تاريخ البحث
-    ✅ بحث متقدم (Regex)
-    ✅ تمييز النتائج
-    ✅ متوافق مع الهاتف
-    
-    ═══════════════════════════════════════════════════════════════════════════
-]]
-
+-- WiliExplorer smart search and filter controls v2
 local SearchBar = {}
 
--- Services
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
--- ═══════════════════════════════════════════════════════════════════════
--- 🎨 الألوان
--- ═══════════════════════════════════════════════════════════════════════
-local Colors = {
-    BG = Color3.fromRGB(15, 15, 30),
-    BGFocus = Color3.fromRGB(20, 20, 40),
-    Border = Color3.fromRGB(40, 40, 70),
-    BorderFocus = Color3.fromRGB(0, 212, 255),
-    Text = Color3.fromRGB(255, 255, 255),
-    Placeholder = Color3.fromRGB(120, 130, 160),
-    Accent = Color3.fromRGB(0, 212, 255),
-    Suggestion = Color3.fromRGB(25, 25, 50),
-    SuggestionHover = Color3.fromRGB(35, 35, 65),
-    Highlight = Color3.fromRGB(255, 215, 0)
+local P = {
+    BG = Color3.fromRGB(13, 18, 34), Raised = Color3.fromRGB(22, 29, 52),
+    Hover = Color3.fromRGB(31, 41, 70), Border = Color3.fromRGB(48, 61, 91),
+    Text = Color3.fromRGB(242, 247, 255), Muted = Color3.fromRGB(145, 162, 191),
+    Accent = Color3.fromRGB(55, 211, 255), AccentStrong = Color3.fromRGB(36, 156, 255)
 }
 
--- ═══════════════════════════════════════════════════════════════════════
--- 📦 المتغيرات
--- ═══════════════════════════════════════════════════════════════════════
 local SearchHistory = {}
-local MaxHistory = 10
+local MAX_HISTORY = 10
 
--- ═══════════════════════════════════════════════════════════════════════
--- 🛠️ دوال مساعدة
--- ═══════════════════════════════════════════════════════════════════════
-local function Tween(obj, props, duration)
-    if not obj or not obj.Parent then return end
-    TweenService:Create(obj, TweenInfo.new(duration or 0.2), props):Play()
+local function corner(parent, radius)
+    local value = Instance.new("UICorner")
+    value.CornerRadius = UDim.new(0, radius or 10)
+    value.Parent = parent
+    return value
 end
 
-local function AddToHistory(query)
-    if not query or query == "" then return end
-    
-    -- إزالة إذا كان موجود
-    for i, h in ipairs(SearchHistory) do
-        if h == query then
-            table.remove(SearchHistory, i)
-            break
-        end
+local function tween(object, props, duration)
+    if object and object.Parent then
+        TweenService:Create(object, TweenInfo.new(duration or 0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), props):Play()
     end
-    
-    -- إضافة في البداية
+end
+
+local function addHistory(query)
+    query = tostring(query or ""):match("^%s*(.-)%s*$")
+    if query == "" then return end
+    for index = #SearchHistory, 1, -1 do
+        if SearchHistory[index]:lower() == query:lower() then table.remove(SearchHistory, index) end
+    end
     table.insert(SearchHistory, 1, query)
-    
-    -- حد أقصى
-    if #SearchHistory > MaxHistory then
-        table.remove(SearchHistory)
-    end
+    while #SearchHistory > MAX_HISTORY do table.remove(SearchHistory) end
 end
 
-local function HighlightText(text, query)
-    if not query or query == "" then return text end
-    
-    local lowerText = text:lower()
-    local lowerQuery = query:lower()
-    local start = lowerText:find(lowerQuery, 1, true)
-    
-    if start then
-        local before = text:sub(1, start - 1)
-        local match = text:sub(start, start + #query - 1)
-        local after = text:sub(start + #query)
-        return before .. "«" .. match .. "»" .. after
-    end
-    
-    return text
+local function contains(text, query)
+    return tostring(text):lower():find(tostring(query):lower(), 1, true) ~= nil
 end
 
--- ═══════════════════════════════════════════════════════════════════════
--- 🔍 إنشاء شريط البحث
--- ═══════════════════════════════════════════════════════════════════════
 function SearchBar.Create(parent, options)
     options = options or {}
-    
-    -- الإطار الرئيسي
     local container = Instance.new("Frame")
-    container.Name = "SearchContainer"
-    container.Size = UDim2.new(1, 0, 0, 40)
-    container.BackgroundColor3 = Colors.BG
+    container.Name = "SmartSearch"
+    container.Size = options.size or UDim2.new(1, 0, 0, 44)
+    container.BackgroundColor3 = P.BG
     container.BorderSizePixel = 0
+    container.ClipsDescendants = false
     container.Parent = parent
-    
-    Instance.new("UICorner", container).CornerRadius = UDim.new(0, 10)
-    
+    corner(container, 11)
+
     local stroke = Instance.new("UIStroke")
-    stroke.Color = Colors.Border
-    stroke.Thickness = 1.5
+    stroke.Color = P.Border
+    stroke.Thickness = 1
     stroke.Parent = container
-    
-    -- أيقونة البحث
-    local searchIcon = Instance.new("TextLabel")
-    searchIcon.Size = UDim2.new(0, 35, 1, 0)
-    searchIcon.Position = UDim2.new(0, 5, 0, 0)
-    searchIcon.Text = "🔍"
-    searchIcon.TextSize = 16
-    searchIcon.BackgroundTransparency = 1
-    searchIcon.ZIndex = 10
-    searchIcon.Parent = container
-    
-    -- حقل الإدخال
+
+    local icon = Instance.new("TextLabel")
+    icon.Size = UDim2.new(0, 42, 1, 0)
+    icon.Text = "⌕"
+    icon.TextColor3 = P.Muted
+    icon.TextSize = 21
+    icon.Font = Enum.Font.GothamBold
+    icon.BackgroundTransparency = 1
+    icon.Parent = container
+
+    local actions = Instance.new("Frame")
+    actions.Size = UDim2.new(0, 70, 1, 0)
+    actions.Position = UDim2.new(1, -74, 0, 0)
+    actions.BackgroundTransparency = 1
+    actions.Parent = container
+
+    local actionLayout = Instance.new("UIListLayout")
+    actionLayout.FillDirection = Enum.FillDirection.Horizontal
+    actionLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    actionLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    actionLayout.Padding = UDim.new(0, 4)
+    actionLayout.Parent = actions
+
+    local clear = Instance.new("TextButton")
+    clear.Size = UDim2.new(0, 30, 0, 30)
+    clear.Text = "×"
+    clear.TextSize = 19
+    clear.TextColor3 = P.Muted
+    clear.BackgroundColor3 = P.Raised
+    clear.Visible = false
+    clear.Parent = actions
+    corner(clear, 8)
+
+    local filter = Instance.new("TextButton")
+    filter.Size = UDim2.new(0, 34, 0, 30)
+    filter.Text = "≡"
+    filter.TextSize = 18
+    filter.TextColor3 = P.Muted
+    filter.BackgroundColor3 = P.Raised
+    filter.Parent = actions
+    corner(filter, 8)
+
     local input = Instance.new("TextBox")
-    input.Name = "SearchInput"
-    input.Size = UDim2.new(1, -90, 1, -8)
-    input.Position = UDim2.new(0, 40, 0, 4)
-    input.PlaceholderText = options.placeholder or "🔍 Search..."
+    input.Name = "Input"
+    input.Size = UDim2.new(1, -122, 1, -4)
+    input.Position = UDim2.new(0, 42, 0, 2)
+    input.BackgroundTransparency = 1
     input.Text = ""
-    input.TextColor3 = Colors.Text
-    input.PlaceholderColor3 = Colors.Placeholder
-    input.Font = Enum.Font.Gotham
+    input.PlaceholderText = options.placeholder or "Search by name, class or path…"
+    input.PlaceholderColor3 = P.Muted
+    input.TextColor3 = P.Text
     input.TextSize = 14
+    input.Font = Enum.Font.GothamMedium
     input.TextXAlignment = Enum.TextXAlignment.Left
     input.ClearTextOnFocus = false
-    input.BackgroundTransparency = 1
-    input.ZIndex = 10
     input.Parent = container
-    
-    -- زر مسح
-    local clearBtn = Instance.new("TextButton")
-    clearBtn.Size = UDim2.new(0, 25, 0, 25)
-    clearBtn.Position = UDim2.new(1, -30, 0.5, -12)
-    clearBtn.Text = "✕"
-    clearBtn.TextColor3 = Colors.Placeholder
-    clearBtn.TextSize = 12
-    clearBtn.Font = Enum.Font.GothamBold
-    clearBtn.BackgroundTransparency = 1
-    clearBtn.Visible = false
-    clearBtn.ZIndex = 10
-    clearBtn.Parent = container
-    
-    -- زر فلتر
-    local filterBtn = Instance.new("TextButton")
-    filterBtn.Size = UDim2.new(0, 25, 0, 25)
-    filterBtn.Position = UDim2.new(1, -55, 0.5, -12)
-    filterBtn.Text = "⚙️"
-    filterBtn.TextSize = 14
-    filterBtn.BackgroundTransparency = 1
-    filterBtn.ZIndex = 10
-    filterBtn.Parent = container
-    
-    -- قائمة الاقتراحات
-    local suggestionsFrame = Instance.new("Frame")
-    suggestionsFrame.Name = "Suggestions"
-    suggestionsFrame.Size = UDim2.new(1, 0, 0, 0)
-    suggestionsFrame.Position = UDim2.new(0, 0, 1, 5)
-    suggestionsFrame.BackgroundColor3 = Colors.BG
-    suggestionsFrame.BorderSizePixel = 0
-    suggestionsFrame.ClipsDescendants = true
-    suggestionsFrame.Visible = false
-    suggestionsFrame.ZIndex = 100
-    suggestionsFrame.Parent = container
-    
-    Instance.new("UICorner", suggestionsFrame).CornerRadius = UDim.new(0, 10)
-    
-    local sugStroke = Instance.new("UIStroke")
-    sugStroke.Color = Colors.Border
-    sugStroke.Thickness = 1
-    sugStroke.Parent = suggestionsFrame
-    
-    local sugLayout = Instance.new("UIListLayout")
-    sugLayout.Padding = UDim.new(0, 2)
-    sugLayout.Parent = suggestionsFrame
-    
-    local sugPad = Instance.new("UIPadding")
-    sugPad.PaddingTop = UDim.new(0, 4)
-    sugPad.PaddingBottom = UDim.new(0, 4)
-    sugPad.PaddingLeft = UDim.new(0, 4)
-    sugPad.PaddingRight = UDim.new(0, 4)
-    sugPad.Parent = suggestionsFrame
 
-    -- ═══ المنطق ═══
-    local lastQuery = ""
-    local suggestions = {}
-    
-    local function ShowSuggestions(query)
-        -- مسح الاقتراحات القديمة
-        for _, child in ipairs(suggestionsFrame:GetChildren()) do
+    local dropdown = Instance.new("ScrollingFrame")
+    dropdown.Name = "Suggestions"
+    dropdown.Size = UDim2.new(1, 0, 0, 0)
+    dropdown.Position = UDim2.new(0, 0, 1, 6)
+    dropdown.BackgroundColor3 = P.BG
+    dropdown.BorderSizePixel = 0
+    dropdown.ScrollBarThickness = 3
+    dropdown.ScrollBarImageColor3 = P.Accent
+    dropdown.ClipsDescendants = true
+    dropdown.Visible = false
+    dropdown.ZIndex = 200
+    dropdown.Parent = container
+    corner(dropdown, 11)
+    local dropStroke = Instance.new("UIStroke")
+    dropStroke.Color = P.Border
+    dropStroke.Parent = dropdown
+    local list = Instance.new("UIListLayout")
+    list.Padding = UDim.new(0, 3)
+    list.Parent = dropdown
+    local padding = Instance.new("UIPadding")
+    padding.PaddingTop, padding.PaddingBottom = UDim.new(0, 5), UDim.new(0, 5)
+    padding.PaddingLeft, padding.PaddingRight = UDim.new(0, 5), UDim.new(0, 5)
+    padding.Parent = dropdown
+
+    local focused = false
+    local api = {}
+
+    local function hideSuggestions()
+        tween(dropdown, {Size = UDim2.new(1, 0, 0, 0)}, 0.12)
+        task.delay(0.13, function() if not focused then dropdown.Visible = false end end)
+    end
+
+    local function choose(value)
+        input.Text = value
+        addHistory(value)
+        focused = false
+        input:ReleaseFocus()
+        hideSuggestions()
+        if options.onSubmit then options.onSubmit(value) end
+        if options.onSearch then options.onSearch(value) end
+    end
+
+    local function showSuggestions(query)
+        for _, child in ipairs(dropdown:GetChildren()) do
             if child:IsA("TextButton") then child:Destroy() end
         end
-        
-        if not query or query == "" then
-            -- عرض التاريخ
-            if #SearchHistory > 0 then
-                suggestions = SearchHistory
-            else
-                suggestionsFrame.Visible = false
-                return
-            end
-        else
-            -- تصفية حسب الاستعلام
-            suggestions = {}
-            if options.suggestions then
-                for _, s in ipairs(options.suggestions) do
-                    if s:lower():find(query:lower(), 1, true) then
-                        table.insert(suggestions, s)
-                    end
-                    if #suggestions >= 8 then break end
-                end
-            end
-            
-            -- إضافة من التاريخ
-            for _, h in ipairs(SearchHistory) do
-                if h:lower():find(query:lower(), 1, true) then
-                    local found = false
-                    for _, s in ipairs(suggestions) do
-                        if s == h then found = true; break end
-                    end
-                    if not found then
-                        table.insert(suggestions, h)
-                    end
-                end
-                if #suggestions >= 8 then break end
-            end
+        local source = {}
+        for _, item in ipairs(options.suggestions or {}) do
+            if query == "" or contains(item, query) then table.insert(source, {value = item, recent = false}) end
+            if #source >= 8 then break end
         end
-        
-        if #suggestions == 0 then
-            suggestionsFrame.Visible = false
-            return
+        for _, item in ipairs(SearchHistory) do
+            if (query == "" or contains(item, query)) then
+                local duplicate = false
+                for _, existing in ipairs(source) do if existing.value == item then duplicate = true break end end
+                if not duplicate then table.insert(source, 1, {value = item, recent = true}) end
+            end
+            if #source >= 8 then break end
         end
-        
-        -- إنشاء عناصر الاقتراحات
-        local totalHeight = 0
-        for i, sug in ipairs(suggestions) do
-            local btn = Instance.new("TextButton")
-            btn.Name = "Sug_" .. i
-            btn.Size = UDim2.new(1, -8, 0, 30)
-            btn.BackgroundColor3 = Colors.Suggestion
-            btn.BackgroundTransparency = 1
-            btn.Text = ""
-            btn.AutoButtonColor = false
-            btn.ZIndex = 101
-            btn.Parent = suggestionsFrame
-            Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-            
-            local icon = Instance.new("TextLabel")
-            icon.Size = UDim2.new(0, 25, 1, 0)
-            icon.Position = UDim2.new(0, 5, 0, 0)
-            icon.Text = i <= #SearchHistory and "🕐" or "🔍"
-            icon.TextSize = 12
-            icon.BackgroundTransparency = 1
-            icon.ZIndex = 102
-            icon.Parent = btn
-            
-            local text = Instance.new("TextLabel")
-            text.Size = UDim2.new(1, -35, 1, 0)
-            text.Position = UDim2.new(0, 30, 0, 0)
-            text.Text = HighlightText(sug, query)
-            text.TextColor3 = Colors.Text
-            text.TextSize = 12
-            text.Font = Enum.Font.Gotham
-            text.TextXAlignment = Enum.TextXAlignment.Left
-            text.TextTruncate = Enum.TextTruncate.AtEnd
-            text.BackgroundTransparency = 1
-            text.ZIndex = 102
-            text.Parent = btn
-            
-            btn.MouseEnter:Connect(function()
-                Tween(btn, {BackgroundTransparency = 0}, 0.1)
-            end)
-            btn.MouseLeave:Connect(function()
-                Tween(btn, {BackgroundTransparency = 1}, 0.1)
-            end)
-            
-            btn.MouseButton1Click:Connect(function()
-                input.Text = sug
-                AddToHistory(sug)
-                suggestionsFrame.Visible = false
-                if options.onSearch then options.onSearch(sug) end
-            end)
-            
-            totalHeight = totalHeight + 32
+        if #source == 0 or not focused then hideSuggestions() return end
+
+        for index, suggestion in ipairs(source) do
+            if index > 8 then break end
+            local row = Instance.new("TextButton")
+            row.Size = UDim2.new(1, -10, 0, 36)
+            row.BackgroundColor3 = P.Raised
+            row.BackgroundTransparency = 1
+            row.Text = (suggestion.recent and "↻  " or "⌕  ") .. suggestion.value
+            row.TextColor3 = P.Text
+            row.TextSize = 12
+            row.Font = Enum.Font.Gotham
+            row.TextXAlignment = Enum.TextXAlignment.Left
+            row.TextTruncate = Enum.TextTruncate.AtEnd
+            row.ZIndex = 201
+            row.Parent = dropdown
+            corner(row, 7)
+            local rowPad = Instance.new("UIPadding")
+            rowPad.PaddingLeft = UDim.new(0, 10)
+            rowPad.PaddingRight = UDim.new(0, 10)
+            rowPad.Parent = row
+            row.MouseEnter:Connect(function() tween(row, {BackgroundTransparency = 0}, 0.1) end)
+            row.MouseLeave:Connect(function() tween(row, {BackgroundTransparency = 1}, 0.1) end)
+            row.MouseButton1Click:Connect(function() choose(suggestion.value) end)
         end
-        
-        suggestionsFrame.Size = UDim2.new(1, 0, 0, math.min(totalHeight, 200))
-        suggestionsFrame.Visible = true
-        
-        Tween(suggestionsFrame, {Size = UDim2.new(1, 0, 0, math.min(totalHeight, 200))}, 0.2)
+        local height = math.min(#source, 8) * 39 + 10
+        dropdown.CanvasSize = UDim2.new(0, 0, 0, height)
+        dropdown.Visible = true
+        tween(dropdown, {Size = UDim2.new(1, 0, 0, math.min(height, 205))}, 0.16)
     end
-    
-    local function HideSuggestions()
-        Tween(suggestionsFrame, {Size = UDim2.new(1, 0, 0, 0)}, 0.2)
-        task.delay(0.2, function()
-            suggestionsFrame.Visible = false
-        end)
-    end
-    
-    -- ═══ الأحداث ═══
+
     input.Focused:Connect(function()
-        Tween(container, {BackgroundColor3 = Colors.BGFocus}, 0.2)
-        Tween(stroke, {Color = Colors.BorderFocus}, 0.2)
-        ShowSuggestions(input.Text)
+        focused = true
+        tween(stroke, {Color = P.Accent, Thickness = 2})
+        tween(icon, {TextColor3 = P.Accent})
+        showSuggestions(input.Text)
     end)
-    
-    input.FocusLost:Connect(function()
-        Tween(container, {BackgroundColor3 = Colors.BG}, 0.2)
-        Tween(stroke, {Color = Colors.Border}, 0.2)
-        task.delay(0.2, function()
-            HideSuggestions()
+    input.FocusLost:Connect(function(enterPressed)
+        if enterPressed and input.Text ~= "" then addHistory(input.Text) end
+        task.delay(0.12, function()
+            focused = false
+            tween(stroke, {Color = P.Border, Thickness = 1})
+            tween(icon, {TextColor3 = P.Muted})
+            hideSuggestions()
         end)
     end)
-    
     input:GetPropertyChangedSignal("Text"):Connect(function()
-        local query = input.Text
-        clearBtn.Visible = query ~= ""
-        
-        if query ~= lastQuery then
-            lastQuery = query
-            ShowSuggestions(query)
-            
-            if options.onSearch then
-                options.onSearch(query)
-            end
-        end
+        clear.Visible = input.Text ~= ""
+        if focused then showSuggestions(input.Text) end
+        if options.onSearch then options.onSearch(input.Text) end
     end)
-    
-    clearBtn.MouseButton1Click:Connect(function()
-        input.Text = ""
-        clearBtn.Visible = false
-        if options.onSearch then options.onSearch("") end
-    end)
-    
-    filterBtn.MouseButton1Click:Connect(function()
+    clear.MouseButton1Click:Connect(function() input.Text = "" input:CaptureFocus() end)
+    filter.MouseButton1Click:Connect(function()
+        filter.TextColor3 = P.Accent
         if options.onFilter then options.onFilter() end
     end)
-    
-    -- ═══ API ═══
-    local api = {}
-    
-    function api:GetText()
-        return input.Text
+
+    function api:GetText() return input.Text end
+    function api:SetText(value) input.Text = tostring(value or "") end
+    function api:Focus() input:CaptureFocus() end
+    function api:Submit() choose(input.Text) end
+    function api:ClearHistory() SearchHistory = {} end
+    function api:GetHistory() return SearchHistory end
+    function api:SetSuggestions(values) options.suggestions = values or {} end
+    function api:SetFilterActive(active) filter.TextColor3 = active and P.Accent or P.Muted end
+    function api:Destroy() container:Destroy() end
+
+    if options.shortcut ~= false then
+        UserInputService.InputBegan:Connect(function(key, processed)
+            if not processed and key.KeyCode == Enum.KeyCode.F and UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+                input:CaptureFocus()
+            end
+        end)
     end
-    
-    function api:SetText(text)
-        input.Text = text
-    end
-    
-    function api:Focus()
-        input:CaptureFocus()
-    end
-    
-    function api:ClearHistory()
-        SearchHistory = {}
-    end
-    
-    function api:GetHistory()
-        return SearchHistory
-    end
-    
-    function api:SetSuggestions(sugs)
-        options.suggestions = sugs
-    end
-    
-    function api:Destroy()
-        container:Destroy()
-    end
-    
     return api, container
 end
 
--- ═══════════════════════════════════════════════════════════════════════
--- 🔍 بحث متقدم (Filter)
--- ═══════════════════════════════════════════════════════════════════════
-function SearchBar.CreateFilter(parent, filters)
-    local container = Instance.new("Frame")
-    container.Name = "FilterContainer"
-    container.Size = UDim2.new(1, 0, 0, 35)
-    container.BackgroundColor3 = Color3.fromRGB(15, 15, 30)
+function SearchBar.CreateFilter(parent, filters, options)
+    options = options or {}
+    filters = filters or {}
+    local container = Instance.new("ScrollingFrame")
+    container.Name = "FilterChips"
+    container.Size = options.size or UDim2.new(1, 0, 0, 42)
+    container.BackgroundTransparency = 1
     container.BorderSizePixel = 0
+    container.ScrollBarThickness = 0
+    container.ScrollingDirection = Enum.ScrollingDirection.X
+    container.AutomaticCanvasSize = Enum.AutomaticSize.X
     container.Parent = parent
-    Instance.new("UICorner", container).CornerRadius = UDim.new(0, 8)
-    
+
     local layout = Instance.new("UIListLayout")
     layout.FillDirection = Enum.FillDirection.Horizontal
-    layout.Padding = UDim.new(0, 4)
+    layout.VerticalAlignment = Enum.VerticalAlignment.Center
+    layout.Padding = UDim.new(0, 7)
     layout.Parent = container
-    
     local pad = Instance.new("UIPadding")
-    pad.PaddingLeft = UDim.new(0, 4)
-    pad.PaddingTop = UDim.new(0, 4)
+    pad.PaddingLeft, pad.PaddingRight = UDim.new(0, 2), UDim.new(0, 8)
     pad.Parent = container
-    
-    local activeFilters = {}
-    
-    for i, filter in ipairs(filters) do
-        local btn = Instance.new("TextButton")
-        btn.Name = "Filter_" .. i
-        btn.Size = UDim2.new(0, 70, 0, 25)
-        btn.Text = filter.icon .. " " .. filter.name
-        btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-        btn.TextSize = 10
-        btn.Font = Enum.Font.Gotham
-        btn.BackgroundColor3 = Color3.fromRGB(25, 25, 50)
-        btn.ZIndex = 10
-        btn.Parent = container
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-        
-        local isActive = false
-        
-        btn.MouseButton1Click:Connect(function()
-            isActive = not isActive
-            activeFilters[filter.name] = isActive
-            
-            if isActive then
-                Tween(btn, {BackgroundColor3 = filter.color or Colors.Accent}, 0.15)
-                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            else
-                Tween(btn, {BackgroundColor3 = Color3.fromRGB(25, 25, 50)}, 0.15)
-                btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+
+    local state, buttons = {}, {}
+    local api = {}
+    local function emit()
+        if options.onChange then options.onChange(state) end
+    end
+
+    for index, item in ipairs(filters) do
+        local id = item.id or item.name or tostring(index)
+        state[id] = item.active == true
+        local button = Instance.new("TextButton")
+        button.Name = "Filter_" .. id
+        button.AutomaticSize = Enum.AutomaticSize.X
+        button.Size = UDim2.new(0, 0, 0, 32)
+        button.BackgroundColor3 = state[id] and (item.color or P.AccentStrong) or P.Raised
+        button.Text = (item.icon and item.icon .. "  " or "") .. (item.label or item.name or id)
+        button.TextColor3 = P.Text
+        button.TextSize = 11
+        button.Font = Enum.Font.GothamBold
+        button.Parent = container
+        corner(button, 9)
+        local bp = Instance.new("UIPadding")
+        bp.PaddingLeft, bp.PaddingRight = UDim.new(0, 12), UDim.new(0, 12)
+        bp.Parent = button
+        buttons[id] = button
+        button.MouseButton1Click:Connect(function()
+            if options.single then
+                for key in pairs(state) do
+                    state[key] = false
+                    buttons[key].BackgroundColor3 = P.Raised
+                end
             end
+            state[id] = not state[id]
+            tween(button, {BackgroundColor3 = state[id] and (item.color or P.AccentStrong) or P.Raised})
+            emit()
         end)
     end
-    
-    return container, activeFilters
+
+    function api:GetActive()
+        local active = {}
+        for id, value in pairs(state) do if value then table.insert(active, id) end end
+        return active
+    end
+    function api:IsActive(id) return state[id] == true end
+    function api:SetActive(id, active)
+        if state[id] == nil then return end
+        state[id] = active == true
+        buttons[id].BackgroundColor3 = state[id] and P.AccentStrong or P.Raised
+        emit()
+    end
+    function api:Clear()
+        for id in pairs(state) do state[id] = false buttons[id].BackgroundColor3 = P.Raised end
+        emit()
+    end
+
+    -- Keep the legacy second return value (state table), add a richer third return.
+    return container, state, api
 end
 
-print("🔍 Search Bar v1.0 Loaded!")
+function SearchBar.Match(item, query, activeFilters)
+    query = tostring(query or ""):lower():match("^%s*(.-)%s*$")
+    local name = tostring(item.Name or item.name or "")
+    local className = tostring(item.ClassName or item.className or item.type or "")
+    local path = tostring(item.Path or item.path or "")
+    local queryMatch = query == "" or contains(name, query) or contains(className, query) or contains(path, query)
+    if not queryMatch then return false end
+    if not activeFilters then return true end
+    local hasActive = false
+    for _, active in pairs(activeFilters) do if active then hasActive = true break end end
+    if not hasActive then return true end
+    return activeFilters[className] == true or activeFilters[className:lower()] == true
+end
 
 return SearchBar

@@ -1,6 +1,6 @@
 --[[
     ═══════════════════════════════════════════════════════════════════════════
-    🚀 WiliExplorer - Loader v4.0 (Ultimate Edition)
+    🚀 WiliExplorer - Loader v6.0 (Responsive Edition)
     ═══════════════════════════════════════════════════════════════════════════
     
     ✅ تحميل ذكي مع معالجة أخطاء
@@ -18,7 +18,7 @@ if _G.WiliExplorerLoaded then
 end
 _G.WiliExplorerLoaded = true
 
-local VERSION = "5.0.0"
+local VERSION = "6.0.0"
 local BASE_URL = "https://raw.githubusercontent.com/ilyesguers/WiliExplorer/main/src/"
 
 print("═══════════════════════════════════════════════")
@@ -81,6 +81,9 @@ Modules.Language = LoadModule("Utils/Language.lua", "Language", true)
 task.wait(0.05)
 
 Modules.Icons = LoadModule("Utils/Icons.lua", "Icons", false)
+task.wait(0.05)
+
+Modules.DesignSystem = LoadModule("Utils/DesignSystem.lua", "DesignSystem", false)
 task.wait(0.05)
 
 -- المرحلة 2: الأمان
