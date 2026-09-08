@@ -1,7 +1,7 @@
 return {
     Name = "WiliExplorer",
-    Version = "6.1.0",
-    Build = "2026.08.16",
+    Version = "7.0.0",
+    Build = "2026.09.08",
     DefaultLanguage = "ar",
     Theme = "space",
     LOADED = false,
@@ -15,7 +15,7 @@ return {
         -- الواجهة
         language = "ar",
         theme = "space",
-        version = "6.1.0",
+        version = "7.0.0",
         uiScale = 1,
         responsiveLayout = true,
         compactMode = "auto",
@@ -57,7 +57,8 @@ return {
     Modules = {
         Core = {
             "FileScanner",
-            "GameAnalyzer"
+            "GameAnalyzer",
+            "PropertyEditor"
         },
         Security = {
             "KeySystem",
@@ -66,16 +67,19 @@ return {
         Theme = {
             "Colors",
             "Assets",
+            "Animations",
             "Stars"
         },
         UI = {
             "MainFrame",
             "Sidebar",
             "FileViewer",
+            "ContextMenu",
             "TreeView",
+            "DeepAnalysis",
+            "SettingsPanel",
             "KlimboMenu",
             "AnalyzerUI",
-            "ContextMenu",
             "ErrorPopup",
             "ImageEditor",
             "Notifications",
@@ -92,7 +96,8 @@ return {
             "Logger",
             "Lifecycle",
             "Language",
-            "SaveSystem"
+            "SaveSystem",
+            "Router"
         }
     }
 }

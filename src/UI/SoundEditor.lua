@@ -17,6 +17,17 @@
 
 local SoundEditor = {}
 
+local function GetModule(name)
+    if _G.WiliModules and _G.WiliModules[name] then return _G.WiliModules[name] end
+    return nil
+end
+
+local function T(key)
+    local lang = GetModule("Language")
+    if lang then return lang.Get(key, key) end
+    return key
+end
+
 -- Services
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
@@ -132,7 +143,8 @@ function SoundEditor.Open(parent, instance, onClose)
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(0.7, 0, 1, 0)
     title.Position = UDim2.new(0, 15, 0, 0)
-    title.Text = "🔊 " .. instance.Name
+    title.Text = instance.Name
+    title.Position = UDim2.new(0, 44, 0, 0)
     title.TextColor3 = Colors.Accent
     title.TextSize = 18
     title.Font = Enum.Font.GothamBold
@@ -140,6 +152,15 @@ function SoundEditor.Open(parent, instance, onClose)
     title.BackgroundTransparency = 1
     title.ZIndex = 1001
     title.Parent = header
+
+    local titleIcon = Instance.new("TextLabel")
+    titleIcon.Size = UDim2.new(0, 30, 1, 0)
+    titleIcon.Position = UDim2.new(0, 12, 0, 0)
+    titleIcon.BackgroundTransparency = 1
+    titleIcon.Text = "♫"
+    titleIcon.TextSize = 16
+    titleIcon.ZIndex = 1002
+    titleIcon.Parent = header
     
     -- زر إغلاق
     local closeBtn = Instance.new("TextButton")
@@ -431,7 +452,7 @@ function SoundEditor.Open(parent, instance, onClose)
     local loopLabel = Instance.new("TextLabel")
     loopLabel.Size = UDim2.new(0.7, 0, 1, 0)
     loopLabel.Position = UDim2.new(0, 10, 0, 0)
-    loopLabel.Text = "🔄 Loop"
+    loopLabel.Text = "↻ " .. T("LoopOn")
     loopLabel.TextColor3 = Colors.Text
     loopLabel.TextSize = 12
     loopLabel.Font = Enum.Font.GothamBold
@@ -443,7 +464,7 @@ function SoundEditor.Open(parent, instance, onClose)
     local loopToggle = Instance.new("TextButton")
     loopToggle.Size = UDim2.new(0, 50, 0, 25)
     loopToggle.Position = UDim2.new(1, -60, 0.5, -12)
-    loopToggle.Text = instance.Looped and "ON ✅" or "OFF ❌"
+    loopToggle.Text = instance.Looped and "✓ " .. T("On") or "× " .. T("Off")
     loopToggle.TextColor3 = instance.Looped and Colors.Accent or Colors.Stop
     loopToggle.TextSize = 10
     loopToggle.Font = Enum.Font.GothamBold
@@ -454,7 +475,7 @@ function SoundEditor.Open(parent, instance, onClose)
     
     loopToggle.MouseButton1Click:Connect(function()
         instance.Looped = not instance.Looped
-        loopToggle.Text = instance.Looped and "ON ✅" or "OFF ❌"
+        loopToggle.Text = instance.Looped and "✓ " .. T("On") or "× " .. T("Off")
         loopToggle.TextColor3 = instance.Looped and Colors.Accent or Colors.Stop
         Tween(loopToggle, {
             BackgroundColor3 = instance.Looped and Color3.fromRGB(20, 50, 30) or Color3.fromRGB(50, 20, 20)
@@ -485,7 +506,7 @@ function SoundEditor.Open(parent, instance, onClose)
     local idLabel = Instance.new("TextLabel")
     idLabel.Size = UDim2.new(1, -10, 0, 18)
     idLabel.Position = UDim2.new(0, 5, 0, 3)
-    idLabel.Text = "🎵 Sound ID"
+    idLabel.Text = "♫ " .. T("SoundId")
     idLabel.TextColor3 = Colors.TextDim
     idLabel.TextSize = 10
     idLabel.Font = Enum.Font.Gotham

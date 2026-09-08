@@ -114,7 +114,7 @@ local FrozenValues = setmetatable({}, {__mode = "k"})
 
 local function Notify(message, icon, color)
     pcall(function()
-        StarterGui:SetCore("SendNotification", {Title = icon or "🔬", Text = message, Duration = 2})
+        StarterGui:SetCore("SendNotification", {Title = icon or "⌁", Text = message, Duration = 2})
     end)
 end
 

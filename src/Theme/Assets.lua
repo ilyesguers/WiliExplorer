@@ -22,8 +22,14 @@ end
 
 function Assets.Apply(imageObject, name)
     local asset = Assets.Get(name)
-    if imageObject and asset then imageObject.Image = asset imageObject.Visible = true return true end
-    if imageObject then imageObject.Visible = false end
+    if imageObject and asset then
+        imageObject.Image = asset
+        imageObject.Visible = true
+        return true
+    end
+    if imageObject then
+        imageObject.Visible = false
+    end
     return false
 end
 

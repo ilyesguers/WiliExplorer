@@ -28,37 +28,37 @@ local LocalPlayer = Players.LocalPlayer
 -- ═══════════════════════════════════════════════════════════════════════
 local NotifTypes = {
     success = {
-        icon = "✅",
+        icon = "✓",
         color = Color3.fromRGB(0, 255, 100),
         bgColor = Color3.fromRGB(10, 40, 25),
         borderColor = Color3.fromRGB(0, 200, 80)
     },
     error = {
-        icon = "❌",
+        icon = "×",
         color = Color3.fromRGB(255, 50, 50),
         bgColor = Color3.fromRGB(40, 10, 10),
         borderColor = Color3.fromRGB(200, 40, 40)
     },
     warning = {
-        icon = "⚠️",
+        icon = "!",
         color = Color3.fromRGB(255, 165, 0),
         bgColor = Color3.fromRGB(40, 30, 10),
         borderColor = Color3.fromRGB(200, 130, 0)
     },
     info = {
-        icon = "ℹ️",
+        icon = "i",
         color = Color3.fromRGB(100, 200, 255),
         bgColor = Color3.fromRGB(10, 25, 40),
         borderColor = Color3.fromRGB(80, 160, 200)
     },
     vip = {
-        icon = "👑",
+        icon = "✦",
         color = Color3.fromRGB(255, 215, 0),
         bgColor = Color3.fromRGB(40, 35, 15),
         borderColor = Color3.fromRGB(200, 170, 0)
     },
     game = {
-        icon = "🎮",
+        icon = "◆",
         color = Color3.fromRGB(138, 43, 226),
         bgColor = Color3.fromRGB(30, 15, 45),
         borderColor = Color3.fromRGB(110, 35, 180)
@@ -411,7 +411,7 @@ function Notifications.CreateFloatingButton(callback)
     
     local icon = Instance.new("TextLabel")
     icon.Size = UDim2.new(1, 0, 1, 0)
-    icon.Text = "👑"
+    icon.Text = "✦"
     icon.TextSize = 24
     icon.BackgroundTransparency = 1
     icon.ZIndex = 10
