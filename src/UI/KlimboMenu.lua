@@ -136,12 +136,35 @@ function KlimboMenu.Create(parent)
         end
     end
     local function translate(label, key, prefix)
-        table.insert(translated, {label = label, key = key, prefix = prefix or ""})
-        label.Text = (prefix or "") .. T(key)
+        table.insert(translated, {label = label, key = key})
+        label.Text = T(key)
+        -- أيقونة مستقلة تماماً — لا تشابك بين الأيقونة والنص (RTL آمن)
+        if prefix and prefix:gsub("%s+$", "") ~= "" then
+            local iconLabel = label:FindFirstChild("WiliIcon")
+            if not iconLabel then
+                iconLabel = Instance.new("TextLabel")
+                iconLabel.Name = "WiliIcon"
+                iconLabel.BackgroundTransparency = 1
+                iconLabel.TextSize = label.TextSize
+                iconLabel.Font = label.Font
+                iconLabel.ZIndex = label.ZIndex + 1
+                iconLabel.Parent = label
+            end
+            iconLabel.TextColor3 = label.TextColor3
+            iconLabel.Text = prefix:gsub("%s+$", "")
+            iconLabel.Size = UDim2.new(0, iconLabel.TextSize + 10, 1, 0)
+            iconLabel.Position = UDim2.new(0, 1, 0, 0)
+            local pad = label:FindFirstChildOfClass("UIPadding")
+            if not pad then
+                pad = Instance.new("UIPadding")
+                pad.Parent = label
+            end
+            pad.PaddingLeft = UDim.new(0, iconLabel.TextSize + 16)
+        end
     end
     local function refreshLanguage()
         for _, item in ipairs(translated) do
-            if item.label and item.label.Parent then item.label.Text = item.prefix .. T(item.key) end
+            if item.label and item.label.Parent then item.label.Text = T(item.key) end
         end
         if Language and Language.Apply then Language.Apply(Main) end
     end
@@ -308,6 +331,10 @@ function KlimboMenu.Create(parent)
         for id, button in pairs(tabButtons) do
             tween(button, {BackgroundColor3 = id == name and C.Accent or C.Raised})
             button.TextColor3 = id == name and C.Canvas or C.Text
+            local iconLabel = button:FindFirstChild("WiliIcon")
+            if iconLabel then
+                iconLabel.TextColor3 = id == name and C.Canvas or C.Text
+            end
         end
         if name == "inspect" and renderResults then renderResults() end
     end

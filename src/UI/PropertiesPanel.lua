@@ -225,7 +225,8 @@ function PropertiesPanel.Open(parent, instance, onClose)
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(0.7, 0, 1, 0)
     title.Position = UDim2.new(0, 15, 0, 0)
-    title.Text = "⚙️ Properties - " .. instance.Name
+    title.Text = instance.Name
+    title.Position = UDim2.new(0, 44, 0, 0)
     title.TextColor3 = Colors.Accent
     title.TextSize = 18
     title.Font = Enum.Font.GothamBold
@@ -233,6 +234,15 @@ function PropertiesPanel.Open(parent, instance, onClose)
     title.BackgroundTransparency = 1
     title.ZIndex = 1001
     title.Parent = header
+
+    local titleIcon = Instance.new("TextLabel")
+    titleIcon.Size = UDim2.new(0, 30, 1, 0)
+    titleIcon.Position = UDim2.new(0, 12, 0, 0)
+    titleIcon.BackgroundTransparency = 1
+    titleIcon.Text = "⚙️"
+    titleIcon.TextSize = 16
+    titleIcon.ZIndex = 1002
+    titleIcon.Parent = header
     
     -- زر إغلاق
     local closeBtn = Instance.new("TextButton")

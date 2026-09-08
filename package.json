@@ -1,12 +1,13 @@
 {
   "name": "wiliexplorer-tooling",
   "private": true,
-  "version": "6.1.0",
+  "version": "7.0.0",
   "scripts": {
-    "check": "node tools/check-lua.js",
+    "check": "node tools/check-lua.js && node tools/check-lua-strict.js",
     "build": "python3 tools/build_manifest.py"
   },
   "devDependencies": {
-    "luaparse": "0.3.1"
+    "luaparse": "0.3.1",
+    "fengari": "0.1.5"
   }
 }

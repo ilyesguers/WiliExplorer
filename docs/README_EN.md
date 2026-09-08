@@ -1,10 +1,26 @@
-# WiliExplorer 6.1 Guide
+# WiliExplorer 7.0 Guide
 
 ## Quick start
 1. Open Explorer and select a service.
-2. Search by item name, class, or full path.
-3. Use filter chips to focus on scripts, models, images, sounds, or values.
-4. Select an item to open its type-specific preview and tools.
+2. Search by item name, class, or full path, filter by any of 13 categories, or sort by name/type.
+3. Select an item to open the **Universal Viewer** — a real preview for every type.
+4. Long-press any row for the context menu (copy/clone/delete).
+
+## Universal Viewer v7
+Every file gets a real preview, whatever its type:
+
+- **Scripts:** fully syntax-highlighted code with edit/save/run.
+- **Sounds:** embedded player (play/pause/loop/volume/speed).
+- **Images & video:** large preview + asset ID copy.
+- **Models & parts:** auto-rotating 3D preview.
+- **Animations:** metadata + play on your character.
+- **GUI:** scaled miniature preview with zoom control.
+- **Effects & lights:** live preview with direct controls.
+- **Values & remotes:** inline editor + fire/invoke.
+- **Anything else:** rich info + editable Properties tab + tags + attributes.
+
+## Window controls
+Top-bar buttons (language/DEV/minimize/close) live in an automatic `UIListLayout` cluster — no overlaps — with hover tooltips and icons separated from text.
 
 ## New Developer Console
 The `DEV` button opens a self-contained workspace with no third-party scripts:

@@ -481,26 +481,140 @@ function MainFrame.Create()
     LogoVIP.ZIndex = 102
     LogoVIP.Parent = TopBar
     AddCorner(LogoVIP, 4)
+    -- ═══════════════════════════════
+    -- مجموعة أزرار النافذة (ترتيب تلقائي — بلا مواضع عشوائية)
+    -- ═══════════════════════════════
+    local IconGlyphs = GetModule("Icons")
 
-    -- ═══════════════════════════════
-    -- زر KLIMBO
-    -- ═══════════════════════════════
+    local TopControls = Instance.new("Frame")
+    TopControls.Name = "TopControls"
+    TopControls.AutomaticSize = Enum.AutomaticSize.X
+    TopControls.Size = UDim2.new(0, 0, 0, 44)
+    TopControls.AnchorPoint = Vector2.new(1, 0)
+    TopControls.Position = UDim2.new(1, -8, 0, 2)
+    TopControls.BackgroundTransparency = 1
+    TopControls.ZIndex = 101
+    TopControls.Parent = TopBar
+
+    local ControlsLayout = Instance.new("UIListLayout")
+    ControlsLayout.FillDirection = Enum.FillDirection.Horizontal
+    ControlsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    ControlsLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    ControlsLayout.Padding = UDim.new(0, 6)
+    ControlsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    ControlsLayout.Parent = TopControls
+
+    -- تلميح موحّد يظهر عند التمرير فوق أي زر
+    local Tooltip = Instance.new("Frame")
+    Tooltip.Name = "Tooltip"
+    Tooltip.Size = UDim2.new(0, 130, 0, 24)
+    Tooltip.Position = UDim2.new(1, -8, 1, 6)
+    Tooltip.BackgroundColor3 = C.BG_Card
+    Tooltip.ZIndex = 110
+    Tooltip.Visible = false
+    Tooltip.Parent = TopBar
+    AddCorner(Tooltip, 7)
+    local TooltipLabel = Instance.new("TextLabel")
+    TooltipLabel.Size = UDim2.new(1, -8, 1, 0)
+    TooltipLabel.Position = UDim2.new(0, 4, 0, 0)
+    TooltipLabel.BackgroundTransparency = 1
+    TooltipLabel.TextColor3 = C.Text_Primary
+    TooltipLabel.TextSize = 10
+    TooltipLabel.Font = Enum.Font.GothamBold
+    TooltipLabel.TextXAlignment = Enum.TextXAlignment.Center
+    TooltipLabel.ZIndex = 111
+    TooltipLabel.Parent = Tooltip
+
+    local function BindTooltip(button, key)
+        button.MouseEnter:Connect(function()
+            TooltipLabel.Text = Lang.Get(key)
+            Tooltip.Visible = true
+            Tween(Tooltip, {BackgroundTransparency = 0.05}, 0.1)
+        end)
+        button.MouseLeave:Connect(function()
+            Tooltip.Visible = false
+        end)
+    end
+
+    -- زر أيقوني قياسي: أيقونة منفصلة تماماً عن النص
+    local function WindowButton(name, glyph, bgColor, order, tooltipKey)
+        local btn = Instance.new("TextButton")
+        btn.Name = name
+        btn.Size = UDim2.new(0, 36, 0, 34)
+        btn.BackgroundColor3 = bgColor
+        btn.Text = ""
+        btn.AutoButtonColor = false
+        btn.LayoutOrder = order
+        btn.ZIndex = 101
+        btn.Parent = TopControls
+        AddCorner(btn, 9)
+        AddStroke(btn, C.Border, 1, 0.4)
+        local ic = Instance.new("TextLabel")
+        ic.Size = UDim2.new(1, 0, 1, 0)
+        ic.BackgroundTransparency = 1
+        ic.Text = glyph
+        ic.TextColor3 = C.Text_Primary
+        ic.TextSize = 16
+        ic.Font = Enum.Font.GothamBold
+        ic.ZIndex = 102
+        ic.Parent = btn
+        local hover = Color3.fromRGB(
+            math.clamp(math.floor(bgColor.R * 255) + 26, 0, 255),
+            math.clamp(math.floor(bgColor.G * 255) + 26, 0, 255),
+            math.clamp(math.floor(bgColor.B * 255) + 26, 0, 255)
+        )
+        btn.MouseEnter:Connect(function()
+            Tween(btn, {BackgroundColor3 = hover}, 0.12)
+        end)
+        btn.MouseLeave:Connect(function()
+            Tween(btn, {BackgroundColor3 = bgColor}, 0.12)
+        end)
+        if tooltipKey then BindTooltip(btn, tooltipKey) end
+        return btn, ic
+    end
+
+    -- ═══ زر المطوّر (DEV) ═══
     local KlimboBtn = Instance.new("TextButton")
     KlimboBtn.Name = "KlimboBtn"
-    KlimboBtn.Size = UDim2.new(0, 90, 0, 30)
-    KlimboBtn.Position = UDim2.new(1, -350, 0.5, -15)
-    KlimboBtn.Text = "◈ DEV"
-    KlimboBtn.TextColor3 = C.Gold
-    KlimboBtn.TextSize = 10
-    KlimboBtn.Font = Enum.Font.GothamBlack
+    KlimboBtn.Size = UDim2.new(0, 78, 0, 34)
     KlimboBtn.BackgroundColor3 = C.BG_Secondary
+    KlimboBtn.Text = ""
+    KlimboBtn.AutoButtonColor = false
+    KlimboBtn.LayoutOrder = 2
     KlimboBtn.ZIndex = 101
     KlimboBtn.Visible = false
-    KlimboBtn.Parent = TopBar
-    AddCorner(KlimboBtn, 8)
-    
+    KlimboBtn.Parent = TopControls
+    AddCorner(KlimboBtn, 9)
+
+    local DevIcon = Instance.new("TextLabel")
+    DevIcon.Size = UDim2.new(0, 20, 1, 0)
+    DevIcon.Position = UDim2.new(0, 8, 0, 0)
+    DevIcon.BackgroundTransparency = 1
+    DevIcon.Text = "◈"
+    DevIcon.TextColor3 = C.Gold
+    DevIcon.TextSize = 14
+    DevIcon.Font = Enum.Font.GothamBlack
+    DevIcon.ZIndex = 102
+    DevIcon.Parent = KlimboBtn
+
+    local DevLabel = Instance.new("TextLabel")
+    DevLabel.Size = UDim2.new(1, -30, 1, 0)
+    DevLabel.Position = UDim2.new(0, 30, 0, 0)
+    DevLabel.BackgroundTransparency = 1
+    DevLabel.Text = "DEV"
+    DevLabel.TextColor3 = C.Gold
+    DevLabel.TextSize = 10
+    DevLabel.Font = Enum.Font.GothamBlack
+    DevLabel.TextXAlignment = Enum.TextXAlignment.Left
+    DevLabel.ZIndex = 102
+    DevLabel.Parent = KlimboBtn
+
+    local function SetDevText(text)
+        DevLabel.Text = text
+    end
+
     local KlimboStroke = AddStroke(KlimboBtn, C.Gold, 2)
-    
+
     task.spawn(function()
         while KlimboBtn and KlimboBtn.Parent do
             Tween(KlimboStroke, {Color = C.Primary}, 1)
@@ -513,67 +627,61 @@ function MainFrame.Create()
             task.wait(1)
         end
     end)
-    
+
     KlimboBtn.MouseEnter:Connect(function()
-        Tween(KlimboBtn, {Size = UDim2.new(0, 100, 0, 34)}, 0.15)
+        Tween(KlimboBtn, {BackgroundColor3 = C.BG_CardActive}, 0.12)
     end)
     KlimboBtn.MouseLeave:Connect(function()
-        Tween(KlimboBtn, {Size = UDim2.new(0, 90, 0, 30)}, 0.15)
+        Tween(KlimboBtn, {BackgroundColor3 = C.BG_Secondary}, 0.12)
     end)
+    BindTooltip(KlimboBtn, "TooltipDev")
 
-    -- زر اللغة
+    -- ═══ زر اللغة ═══
     local LangBtn = Instance.new("TextButton")
-    LangBtn.Size = UDim2.new(0, 75, 0, 30)
-    LangBtn.Position = UDim2.new(1, -250, 0.5, -15)
-    LangBtn.Text = "🌐 عربي"
-    LangBtn.TextColor3 = C.Text_Primary
-    LangBtn.TextSize = 11
-    LangBtn.Font = Enum.Font.GothamBold
+    LangBtn.Size = UDim2.new(0, 92, 0, 34)
     LangBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 170)
+    LangBtn.Text = ""
+    LangBtn.AutoButtonColor = false
+    LangBtn.LayoutOrder = 3
     LangBtn.ZIndex = 101
-    LangBtn.Parent = TopBar
-    AddCorner(LangBtn, 8)
+    LangBtn.Parent = TopControls
+    AddCorner(LangBtn, 9)
     AddStroke(LangBtn, C.Accent, 1, 0.5)
 
-    -- زر التصغير
-    local MinBtn = Instance.new("TextButton")
-    MinBtn.Size = UDim2.new(0, 30, 0, 30)
-    MinBtn.Position = UDim2.new(1, -165, 0.5, -15)
-    MinBtn.Text = "—"
-    MinBtn.TextColor3 = C.Text_Primary
-    MinBtn.TextSize = 18
-    MinBtn.Font = Enum.Font.GothamBold
-    MinBtn.BackgroundColor3 = Color3.fromRGB(55, 65, 110)
-    MinBtn.ZIndex = 101
-    MinBtn.Parent = TopBar
-    AddCorner(MinBtn, 8)
-    
-    MinBtn.MouseEnter:Connect(function()
-        Tween(MinBtn, {BackgroundColor3 = Color3.fromRGB(70, 80, 130)}, 0.15)
-    end)
-    MinBtn.MouseLeave:Connect(function()
-        Tween(MinBtn, {BackgroundColor3 = Color3.fromRGB(55, 65, 110)}, 0.15)
-    end)
+    local LangIcon = Instance.new("TextLabel")
+    LangIcon.Size = UDim2.new(0, 20, 1, 0)
+    LangIcon.Position = UDim2.new(0, 8, 0, 0)
+    LangIcon.BackgroundTransparency = 1
+    LangIcon.Text = "🌐"
+    LangIcon.TextSize = 13
+    LangIcon.ZIndex = 102
+    LangIcon.Parent = LangBtn
 
-    -- زر الإغلاق
-    local CloseBtn = Instance.new("TextButton")
-    CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-    CloseBtn.Position = UDim2.new(1, -125, 0.5, -15)
-    CloseBtn.Text = "✕"
-    CloseBtn.TextColor3 = C.Text_Primary
-    CloseBtn.TextSize = 14
-    CloseBtn.Font = Enum.Font.GothamBold
-    CloseBtn.BackgroundColor3 = C.Error
-    CloseBtn.ZIndex = 101
-    CloseBtn.Parent = TopBar
-    AddCorner(CloseBtn, 8)
-    
-    CloseBtn.MouseEnter:Connect(function()
-        Tween(CloseBtn, {BackgroundColor3 = Color3.fromRGB(255, 90, 100)}, 0.15)
+    local LangLabel = Instance.new("TextLabel")
+    LangLabel.Size = UDim2.new(1, -32, 1, 0)
+    LangLabel.Position = UDim2.new(0, 30, 0, 0)
+    LangLabel.BackgroundTransparency = 1
+    LangLabel.Text = Lang.Current == "en" and "العربية" or "English"
+    LangLabel.TextColor3 = C.Text_Primary
+    LangLabel.TextSize = 10
+    LangLabel.Font = Enum.Font.GothamBold
+    LangLabel.TextXAlignment = Enum.TextXAlignment.Left
+    LangLabel.ZIndex = 102
+    LangLabel.Parent = LangBtn
+
+    LangBtn.MouseEnter:Connect(function()
+        Tween(LangBtn, {BackgroundColor3 = Color3.fromRGB(0, 150, 205)}, 0.12)
     end)
-    CloseBtn.MouseLeave:Connect(function()
-        Tween(CloseBtn, {BackgroundColor3 = C.Error}, 0.15)
+    LangBtn.MouseLeave:Connect(function()
+        Tween(LangBtn, {BackgroundColor3 = Color3.fromRGB(0, 120, 170)}, 0.12)
     end)
+    BindTooltip(LangBtn, "TooltipLanguage")
+
+    -- ═══ زر التصغير ═══
+    local MinBtn, MinIcon = WindowButton("MinBtn", "−", Color3.fromRGB(55, 65, 110), 4, "TooltipMinimize")
+
+    -- ═══ زر الإغلاق ═══
+    local CloseBtn, CloseIcon = WindowButton("CloseBtn", "×", C.Error, 5, "TooltipClose")
 
     CloseBtn.MouseButton1Click:Connect(function()
         Tween(Frame, {Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)}, 0.3)
@@ -586,28 +694,28 @@ function MainFrame.Create()
         minimized = not minimized
         if minimized then
             Tween(Frame, {Size = UDim2.new(0, frameWidth, 0, 48)}, 0.3, Enum.EasingStyle.Back)
-            MinBtn.Text = "+"
+            MinIcon.Text = "+"
         else
             Tween(Frame, {Size = UDim2.new(0, frameWidth, 0, frameHeight)}, 0.3, Enum.EasingStyle.Back)
-            MinBtn.Text = "—"
+            MinIcon.Text = "−"
         end
     end)
 
-    -- معلومات المستخدم
+    -- ═══ معلومات المستخدم ═══
     local UserInfo = Instance.new("Frame")
     UserInfo.Name = "UserInfo"
-    UserInfo.Size = UDim2.new(0, 130, 0, 30)
-    UserInfo.Position = UDim2.new(1, -65, 0.5, -15)
+    UserInfo.Size = UDim2.new(0, 124, 0, 32)
     UserInfo.BackgroundColor3 = Color3.fromRGB(22, 22, 45)
     UserInfo.BackgroundTransparency = 0.4
+    UserInfo.LayoutOrder = 1
     UserInfo.ZIndex = 101
     UserInfo.Visible = false
-    UserInfo.Parent = TopBar
+    UserInfo.Parent = TopControls
     AddCorner(UserInfo, 8)
-    
+
     local UserAvatar = Instance.new("ImageLabel")
     UserAvatar.Size = UDim2.new(0, 24, 0, 24)
-    UserAvatar.Position = UDim2.new(0, 3, 0.5, -12)
+    UserAvatar.Position = UDim2.new(0, 4, 0.5, -12)
     UserAvatar.BackgroundColor3 = C.Accent
     UserAvatar.ZIndex = 102
     UserAvatar.Parent = UserInfo
@@ -615,10 +723,10 @@ function MainFrame.Create()
     pcall(function()
         UserAvatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
     end)
-    
+
     local UserName = Instance.new("TextLabel")
-    UserName.Size = UDim2.new(1, -30, 1, 0)
-    UserName.Position = UDim2.new(0, 30, 0, 0)
+    UserName.Size = UDim2.new(1, -32, 1, 0)
+    UserName.Position = UDim2.new(0, 32, 0, 0)
     UserName.Text = LocalPlayer.Name:sub(1, 10)
     UserName.TextColor3 = C.Text_Primary
     UserName.TextSize = 9
@@ -627,8 +735,8 @@ function MainFrame.Create()
     UserName.BackgroundTransparency = 1
     UserName.ZIndex = 102
     UserName.Parent = UserInfo
+    BindTooltip(UserInfo, "TooltipUser")
 
-    -- ═══════════════════════════════
     -- منطقة المحتوى
     -- ═══════════════════════════════
     local Content = Instance.new("Frame")
@@ -739,7 +847,7 @@ function MainFrame.Create()
     end)
 
     local LoginBtn = Instance.new("TextButton")
-    LoginBtn.Text = "🔓 " .. Lang.Get("Verify")
+    LoginBtn.Text = ""
     LoginBtn.Size = UDim2.new(0.6, 0, 0, 45)
     LoginBtn.Position = UDim2.new(0.2, 0, 0.57, 0)
     LoginBtn.BackgroundColor3 = C.Accent
@@ -749,6 +857,33 @@ function MainFrame.Create()
     LoginBtn.ZIndex = 51
     LoginBtn.Parent = KeyScreen
     AddCorner(LoginBtn, 12)
+
+    -- أيقونة ونص منفصلان — لا تشابك مع RTL
+    local LoginIcon = Instance.new("TextLabel")
+    LoginIcon.Size = UDim2.new(0, 26, 1, 0)
+    LoginIcon.Position = UDim2.new(0, 12, 0, 0)
+    LoginIcon.BackgroundTransparency = 1
+    LoginIcon.Text = "🔓"
+    LoginIcon.TextSize = 15
+    LoginIcon.ZIndex = 52
+    LoginIcon.Parent = LoginBtn
+
+    local LoginLabel = Instance.new("TextLabel")
+    LoginLabel.Size = UDim2.new(1, -40, 1, 0)
+    LoginLabel.Position = UDim2.new(0, 40, 0, 0)
+    LoginLabel.BackgroundTransparency = 1
+    LoginLabel.Text = Lang.Get("Verify")
+    LoginLabel.TextColor3 = C.BG_Primary
+    LoginLabel.TextSize = 15
+    LoginLabel.Font = Enum.Font.GothamBlack
+    LoginLabel.TextXAlignment = Enum.TextXAlignment.Left
+    LoginLabel.ZIndex = 52
+    LoginLabel.Parent = LoginBtn
+
+    local function SetLoginText(icon, text)
+        LoginIcon.Text = icon
+        LoginLabel.Text = text
+    end
 
     local LoginGrad = Instance.new("UIGradient")
     LoginGrad.Color = ColorSequence.new({
@@ -836,28 +971,21 @@ function MainFrame.Create()
         LoginBtn.Size = UDim2.new(mobile and 0.9 or 0.5, 0, 0, 46)
         LoginBtn.Position = UDim2.new(mobile and 0.05 or 0.25, 0, 0.57, 0)
 
-        CloseBtn.Position = UDim2.new(1, -40, 0.5, -15)
-        MinBtn.Position = UDim2.new(1, -76, 0.5, -15)
+        -- أزرار الشريط تُرتَّب تلقائياً بواسطة TopControls — لا مواضع عشوائية
+        LangLabel.Text = compact
+            and (Lang.Current == "en" and "AR" or "EN")
+            or (Lang.Current == "en" and "العربية" or "English")
+        LangLabel.Visible = not compact
         if compact then
-            LangBtn.Size = UDim2.new(0, 34, 0, 30)
-            LangBtn.Position = UDim2.new(1, -112, 0.5, -15)
-            LangBtn.Text = Lang.Current == "en" and "AR" or "EN"
-            KlimboBtn.Size = UDim2.new(0, 68, 0, 30)
-            KlimboBtn.Position = UDim2.new(1, -184, 0.5, -15)
-            KlimboBtn.Text = KlimboContainer.Visible and "‹ BACK" or "✦ MENU"
-        elseif mobile then
-            LangBtn.Size = UDim2.new(0, 68, 0, 30)
-            LangBtn.Position = UDim2.new(1, -150, 0.5, -15)
-            LangBtn.Text = Lang.Current == "en" and "AR عربي" or "EN English"
-            KlimboBtn.Position = UDim2.new(1, -246, 0.5, -15)
+            LangBtn.Size = UDim2.new(0, 36, 0, 34)
+            KlimboBtn.Size = UDim2.new(0, 44, 0, 34)
+            DevLabel.Visible = false
+            SetDevText("DEV")
         else
-            LangBtn.Size = UDim2.new(0, 78, 0, 30)
-            LangBtn.Position = UDim2.new(1, -166, 0.5, -15)
-            LangBtn.Text = Lang.Current == "en" and "AR  عربي" or "EN  English"
-            KlimboBtn.Position = UDim2.new(1, -264, 0.5, -15)
-            if UserInfo.Visible then
-                UserInfo.Position = UDim2.new(1, -410, 0.5, -15)
-            end
+            LangBtn.Size = UDim2.new(0, 92, 0, 34)
+            KlimboBtn.Size = UDim2.new(0, 78, 0, 34)
+            DevLabel.Visible = true
+            SetDevText(KlimboContainer.Visible and "‹ BACK" or "DEV")
         end
     end
 
@@ -879,8 +1007,8 @@ function MainFrame.Create()
         ExplorerScreen:ClearAllChildren()
         ApplyResponsiveLayout(Design and Design.GetMode() or (isMobile and "mobile" or "desktop"), Design and Design.GetViewport() or viewport)
         if animated then
-            KlimboBtn.Size = UDim2.new(0, 0, 0, 30)
-            Tween(KlimboBtn, {Size = UDim2.new(0, 90, 0, 30)}, 0.35, Enum.EasingStyle.Back)
+            KlimboBtn.Size = UDim2.new(0, 0, 0, 34)
+            Tween(KlimboBtn, {Size = UDim2.new(0, 78, 0, 34)}, 0.35, Enum.EasingStyle.Back)
             ExplorerScreen.Position = UDim2.new(0, 0, 1, 0)
             Tween(ExplorerScreen, {Position = UDim2.new(0, 0, 0, 0)}, 0.4, Enum.EasingStyle.Back)
         else
@@ -902,7 +1030,7 @@ function MainFrame.Create()
             ApplyResponsiveLayout(Design and Design.GetMode() or (isMobile and "mobile" or "desktop"), Design and Design.GetViewport() or viewport)
             Subtitle.Text = Lang.Get("Welcome")
             KeyInput.PlaceholderText = Lang.Get("EnterKey")
-            LoginBtn.Text = "🔓 " .. Lang.Get("Verify")
+            SetLoginText("🔓", Lang.Get("Verify"))
             if Lang.Apply then Lang.Apply(Frame) end
             ShowNotification(Lang.Current == "ar" and "تم تغيير اللغة" or "Language changed", "info", 2)
             
@@ -920,7 +1048,7 @@ function MainFrame.Create()
         task.wait(0.1)
         Tween(LoginBtn, {Size = UDim2.new(0.6, 0, 0, 45)}, 0.1)
         
-        LoginBtn.Text = "⏳ " .. Lang.Get("Verifying")
+        SetLoginText("⏳", Lang.Get("Verifying"))
         Tween(LoginBtn, {BackgroundColor3 = Color3.fromRGB(90, 140, 190)}, 0.3)
         Tween(KeyInputStroke, {Color = C.Warning}, 0.3)
         task.wait(0.8)
@@ -928,7 +1056,7 @@ function MainFrame.Create()
         local keySuccess, data = KeySystem.Verify(KeyInput.Text)
         
         if keySuccess then
-            LoginBtn.Text = "✅ " .. Lang.Get("Launching")
+            SetLoginText("✅", Lang.Get("Launching"))
             Tween(LoginBtn, {BackgroundColor3 = C.Success}, 0.3)
             Tween(KeyInputStroke, {Color = C.Success}, 0.3)
             ShowNotification("🎉 Welcome VIP!", "success", 3)
@@ -938,7 +1066,7 @@ function MainFrame.Create()
             task.wait(0.35)
             LaunchExplorer(true)
         else
-            LoginBtn.Text = "❌ " .. Lang.Get("Invalid")
+            SetLoginText("❌", Lang.Get("Invalid"))
             Tween(LoginBtn, {BackgroundColor3 = C.Error}, 0.3)
             Tween(KeyInputStroke, {Color = C.Error}, 0.3)
             
@@ -953,7 +1081,7 @@ function MainFrame.Create()
             ShowNotification(tostring(data or Lang.Get("Invalid")), "error", 4)
             
             task.wait(2)
-            LoginBtn.Text = "🔓 " .. Lang.Get("Verify")
+            SetLoginText("🔓", Lang.Get("Verify"))
             Tween(LoginBtn, {BackgroundColor3 = C.Accent}, 0.3)
             Tween(KeyInputStroke, {Color = C.Accent, Transparency = 0.3}, 0.3)
         end
@@ -963,22 +1091,22 @@ function MainFrame.Create()
     -- 👑 زر KLIMBO
     -- ═══════════════════════════════════════════════════════════════════════
     local function ToggleDeveloperConsole()
-        Tween(KlimboBtn, {Size = UDim2.new(0, 85, 0, 28)}, 0.1)
+        Tween(KlimboBtn, {BackgroundColor3 = C.BG_CardActive}, 0.1)
         task.wait(0.1)
-        Tween(KlimboBtn, {Size = UDim2.new(0, 90, 0, 30)}, 0.1)
+        Tween(KlimboBtn, {BackgroundColor3 = C.BG_Secondary}, 0.1)
         
         if KlimboContainer.Visible then
             KlimboContainer:ClearAllChildren()
             KlimboContainer.Visible = false
             ExplorerScreen.Visible = true
-            KlimboBtn.Text = "◈ DEV"
+            SetDevText("DEV")
             return
         end
         
         if klimboLoading then return end
         klimboLoading = true
         
-        KlimboBtn.Text = "⏳ Loading"
+        SetDevText("⏳")
         ShowNotification("Loading Developer Console...", "info", 2)
         
         task.spawn(function()
@@ -989,7 +1117,7 @@ function MainFrame.Create()
             if loadSuccess then
                 KlimboContainer.Visible = true
                 ExplorerScreen.Visible = false
-                KlimboBtn.Text = "‹ BACK"
+                SetDevText("‹ BACK")
                 
                 local createOk = pcall(function()
                     KlimboMenu.Create(KlimboContainer)
@@ -1001,14 +1129,14 @@ function MainFrame.Create()
                     KlimboContainer:ClearAllChildren()
                     KlimboContainer.Visible = false
                     ExplorerScreen.Visible = true
-                    KlimboBtn.Text = "◈ DEV"
+                    SetDevText("DEV")
                     ShowNotification("❌ Error loading menu", "error", 3)
                 end
             else
                 ShowNotification("Failed to load Developer Console", "error", 3)
                 KlimboContainer.Visible = false
                 ExplorerScreen.Visible = true
-                KlimboBtn.Text = "◈ DEV"
+                SetDevText("DEV")
             end
             
             klimboLoading = false
@@ -1052,15 +1180,15 @@ function MainFrame.Create()
                 KlimboContainer:ClearAllChildren()
                 KlimboContainer.Visible = false
                 ExplorerScreen.Visible = true
-                KlimboBtn.Text = "◈ DEV"
+                SetDevText("DEV")
             else
                 minimized = not minimized
                 if minimized then
                     Tween(Frame, {Size = UDim2.new(0, frameWidth, 0, 48)}, 0.3, Enum.EasingStyle.Back)
-                    MinBtn.Text = "+"
+                    MinIcon.Text = "+"
                 else
                     Tween(Frame, {Size = UDim2.new(0, frameWidth, 0, frameHeight)}, 0.3, Enum.EasingStyle.Back)
-                    MinBtn.Text = "—"
+                    MinIcon.Text = "−"
                 end
             end
         end

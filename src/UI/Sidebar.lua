@@ -21,6 +21,8 @@ function Sidebar.Create(parent)
     local UI = GetModule("UIHelpers")
     local Assets = GetModule("Assets")
     local C = theme()
+    local okAnim, Animations = pcall(GetModule, "Animations")
+    if not okAnim then Animations = nil end
 
     local Header = Instance.new("Frame")
     Header.Size = UDim2.new(1, -20, 0, 72)
@@ -258,6 +260,22 @@ function Sidebar.Create(parent)
 
     for index, data in ipairs(services) do serviceCard(data, index) end
     if Language.Apply then Language.Apply(parent) end
+
+    -- ═══ حياة: حركات دخول متتابعة ═══
+    if Animations then
+        pcall(function() Animations.SlideInTop(Header, 0.3) end)
+        task.delay(0.06, function()
+            if Analysis.Parent then pcall(function() Animations.SlideInLeft(Analysis, 0.25) end) end
+        end)
+        local cards = ServicesGrid:GetChildren()
+        for index, card in ipairs(cards) do
+            if card:IsA("GuiButton") then
+                task.delay(0.14 + index * 0.035, function()
+                    if card.Parent then pcall(function() Animations.FadeIn(card, 0.18) end) end
+                end)
+            end
+        end
+    end
 end
 
 return Sidebar
