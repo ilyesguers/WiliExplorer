@@ -239,7 +239,7 @@ function PropertiesPanel.Open(parent, instance, onClose)
     titleIcon.Size = UDim2.new(0, 30, 1, 0)
     titleIcon.Position = UDim2.new(0, 12, 0, 0)
     titleIcon.BackgroundTransparency = 1
-    titleIcon.Text = "⚙️"
+    titleIcon.Text = "⚙"
     titleIcon.TextSize = 16
     titleIcon.ZIndex = 1002
     titleIcon.Parent = header
@@ -273,7 +273,7 @@ function PropertiesPanel.Open(parent, instance, onClose)
     
     local searchIcon = Instance.new("TextLabel")
     searchIcon.Size = UDim2.new(0, 30, 1, 0)
-    searchIcon.Text = "🔍"
+    searchIcon.Text = "⌕"
     searchIcon.TextSize = 14
     searchIcon.BackgroundTransparency = 1
     searchIcon.ZIndex = 1001
@@ -282,7 +282,7 @@ function PropertiesPanel.Open(parent, instance, onClose)
     local searchInput = Instance.new("TextBox")
     searchInput.Size = UDim2.new(1, -35, 1, -6)
     searchInput.Position = UDim2.new(0, 35, 0, 3)
-    searchInput.PlaceholderText = "🔍 Search properties..."
+    searchInput.PlaceholderText = "⌕ " .. Language.Get("SearchPropsPlaceholder")
     searchInput.Text = ""
     searchInput.TextColor3 = Colors.Text
     searchInput.PlaceholderColor3 = Colors.TextDim
@@ -331,7 +331,7 @@ function PropertiesPanel.Open(parent, instance, onClose)
         local catLabel = Instance.new("TextLabel")
         catLabel.Size = UDim2.new(1, -10, 1, 0)
         catLabel.Position = UDim2.new(0, 8, 0, 0)
-        catLabel.Text = "📂 " .. name
+        catLabel.Text = "▰ " .. name
         catLabel.TextColor3 = Colors.Accent
         catLabel.TextSize = 11
         catLabel.Font = Enum.Font.GothamBold

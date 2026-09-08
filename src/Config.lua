@@ -74,10 +74,12 @@ return {
             "MainFrame",
             "Sidebar",
             "FileViewer",
+            "ContextMenu",
             "TreeView",
+            "DeepAnalysis",
+            "SettingsPanel",
             "KlimboMenu",
             "AnalyzerUI",
-            "ContextMenu",
             "ErrorPopup",
             "ImageEditor",
             "Notifications",
@@ -94,7 +96,8 @@ return {
             "Logger",
             "Lifecycle",
             "Language",
-            "SaveSystem"
+            "SaveSystem",
+            "Router"
         }
     }
 }

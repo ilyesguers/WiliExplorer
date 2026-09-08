@@ -1,16 +1,13 @@
 --[[
     ═══════════════════════════════════════════════════════════════════════════
-    📋 WiliExplorer - Context Menu v1.0
+    ▤ WiliExplorer - Context Menu v2.0 (v7.1)
     ═══════════════════════════════════════════════════════════════════════════
-    
-    ✅ قائمة منبثقة عند النقر (Long Press للهاتف)
-    ✅ خيارات ذكية حسب نوع العنصر
-    ✅ نسخ/لصق/حذف/تعديل
-    ✅ فتح في محرر الكود
-    ✅ نسخ المسار
-    ✅ معلومات العنصر
-    ✅ متوافق مع الهاتف
-    
+
+    ✓ قائمة منبثقة عند النقر (Long Press للهاتف)
+    ✓ خيارات ذكية حسب نوع العنصر
+    ✓ صفوف بارتفاع 44px مناسبة للمس
+    ✓ أيقونات رموز بدل الإيموجي + نصوص مترجمة
+
     ═══════════════════════════════════════════════════════════════════════════
 ]]
 
@@ -24,8 +21,27 @@ local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
 
+local function GetModule(name)
+    if _G.WiliModules and _G.WiliModules[name] then
+        return _G.WiliModules[name]
+    end
+    return nil
+end
+
+local function T(key)
+    local lang = GetModule("Language")
+    if lang then return lang.Get(key, key) end
+    return key
+end
+
+local function Icon(key, fallback)
+    local icons = GetModule("Icons")
+    if icons and icons[key] then return icons[key] end
+    return fallback or "?"
+end
+
 -- ═══════════════════════════════════════════════════════════════════════
--- 🎨 الألوان
+-- ◈ الألوان
 -- ═══════════════════════════════════════════════════════════════════════
 local Colors = {
     BG = Color3.fromRGB(15, 15, 30),
@@ -41,13 +57,13 @@ local Colors = {
 }
 
 -- ═══════════════════════════════════════════════════════════════════════
--- 📦 المتغيرات
+-- ▤ المتغيرات
 -- ═══════════════════════════════════════════════════════════════════════
 local CurrentMenu = nil
 local MenuGui = nil
 
 -- ═══════════════════════════════════════════════════════════════════════
--- 🛠️ دوال مساعدة
+-- ◆ دوال مساعدة
 -- ═══════════════════════════════════════════════════════════════════════
 local function Tween(obj, props, duration, style)
     if not obj or not obj.Parent then return end
@@ -56,29 +72,34 @@ end
 
 local function CreateGui()
     if MenuGui and MenuGui.Parent then return MenuGui end
-    
+
     local gui = Instance.new("ScreenGui")
     gui.Name = "WiliContextMenu"
     gui.ResetOnSpawn = false
     gui.IgnoreGuiInset = true
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    
+
     pcall(function() gui.Parent = CoreGui end)
     if not gui.Parent then gui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
-    
+
     MenuGui = gui
     return gui
 end
 
 -- ═══════════════════════════════════════════════════════════════════════
--- 📋 إنشاء القائمة المنبثقة
+-- ▤ إنشاء القائمة المنبثقة
 -- ═══════════════════════════════════════════════════════════════════════
+local ROW_HEIGHT = 44
+
 function ContextMenu.Open(options, position)
     -- إغلاق القائمة السابقة
     ContextMenu.Close()
-    
+
     local gui = CreateGui()
-    
+    local align = Enum.TextXAlignment.Left
+    local lang = GetModule("Language")
+    if lang then align = lang.Alignment() end
+
     -- خلفية شفافة للإغلاق
     local overlay = Instance.new("TextButton")
     overlay.Name = "Overlay"
@@ -88,27 +109,27 @@ function ContextMenu.Open(options, position)
     overlay.Text = ""
     overlay.ZIndex = 9998
     overlay.Parent = gui
-    
+
     -- القائمة الرئيسية
     local menu = Instance.new("Frame")
     menu.Name = "Menu"
-    menu.Size = UDim2.new(0, 200, 0, 0) -- يبدأ بحجم 0
-    menu.Position = position or UDim2.new(0.5, -100, 0.5, 0)
+    menu.Size = UDim2.new(0, 220, 0, 0) -- يبدأ بحجم 0
+    menu.Position = position or UDim2.new(0.5, -110, 0.5, 0)
     menu.BackgroundColor3 = Colors.BG
     menu.BorderSizePixel = 0
     menu.ClipsDescendants = true
     menu.ZIndex = 9999
     menu.Parent = gui
-    
+
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 12)
     corner.Parent = menu
-    
+
     local stroke = Instance.new("UIStroke")
     stroke.Color = Colors.Border
     stroke.Thickness = 1.5
     stroke.Parent = menu
-    
+
     -- حاوية العناصر
     local container = Instance.new("Frame")
     container.Name = "Container"
@@ -117,18 +138,18 @@ function ContextMenu.Open(options, position)
     container.BackgroundTransparency = 1
     container.ZIndex = 10000
     container.Parent = menu
-    
+
     local layout = Instance.new("UIListLayout")
     layout.Padding = UDim.new(0, 2)
     layout.Parent = container
-    
+
     local pad = Instance.new("UIPadding")
     pad.PaddingTop = UDim.new(0, 4)
     pad.PaddingBottom = UDim.new(0, 4)
     pad.PaddingLeft = UDim.new(0, 4)
     pad.PaddingRight = UDim.new(0, 4)
     pad.Parent = container
-    
+
     -- إضافة العناصر
     local totalHeight = 8
     for i, option in ipairs(options) do
@@ -144,7 +165,7 @@ function ContextMenu.Open(options, position)
         else
             local btn = Instance.new("TextButton")
             btn.Name = "Option_" .. i
-            btn.Size = UDim2.new(1, 0, 0, 32)
+            btn.Size = UDim2.new(1, 0, 0, ROW_HEIGHT)
             btn.BackgroundColor3 = Colors.BGLight
             btn.BackgroundTransparency = 1
             btn.Text = ""
@@ -152,30 +173,32 @@ function ContextMenu.Open(options, position)
             btn.ZIndex = 10001
             btn.Parent = container
             Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
-            
+
             -- الأيقونة
             local icon = Instance.new("TextLabel")
-            icon.Size = UDim2.new(0, 28, 1, 0)
-            icon.Position = UDim2.new(0, 4, 0, 0)
-            icon.Text = option.icon or "📋"
-            icon.TextSize = 14
+            icon.Size = UDim2.new(0, 30, 1, 0)
+            icon.Position = UDim2.new(0, 6, 0, 0)
+            icon.Text = option.icon or Icon("Info", "?")
+            icon.TextSize = 15
+            icon.TextColor3 = option.color or Colors.Accent
             icon.BackgroundTransparency = 1
             icon.ZIndex = 10002
             icon.Parent = btn
-            
+
             -- النص
             local text = Instance.new("TextLabel")
-            text.Size = UDim2.new(1, -40, 1, 0)
-            text.Position = UDim2.new(0, 35, 0, 0)
-            text.Text = option.text or "Option"
+            text.Size = UDim2.new(1, -42, 1, 0)
+            text.Position = UDim2.new(0, 38, 0, 0)
+            text.Text = option.text or T("MenuOption")
             text.TextColor3 = option.color or Colors.Text
-            text.TextSize = 12
+            text.TextSize = 13
             text.Font = Enum.Font.Gotham
-            text.TextXAlignment = Enum.TextXAlignment.Left
+            text.TextXAlignment = align
+            text.TextTruncate = Enum.TextTruncate.AtEnd
             text.BackgroundTransparency = 1
             text.ZIndex = 10002
             text.Parent = btn
-            
+
             -- اللون عند التمرير
             btn.MouseEnter:Connect(function()
                 Tween(btn, {BackgroundTransparency = 0}, 0.15)
@@ -183,7 +206,7 @@ function ContextMenu.Open(options, position)
             btn.MouseLeave:Connect(function()
                 Tween(btn, {BackgroundTransparency = 1}, 0.15)
             end)
-            
+
             -- النقر
             btn.MouseButton1Click:Connect(function()
                 if option.callback then
@@ -191,41 +214,41 @@ function ContextMenu.Open(options, position)
                 end
                 ContextMenu.Close()
             end)
-            
-            totalHeight = totalHeight + 34
+
+            totalHeight = totalHeight + ROW_HEIGHT + 2
         end
     end
-    
+
     -- تحديد الحجم النهائي
-    local finalHeight = math.min(totalHeight, 300)
-    local finalWidth = 200
-    
+    local finalHeight = math.min(totalHeight, 400)
+    local finalWidth = 220
+
     -- ضبط الموضع ليكون داخل الشاشة
     local screenSize = workspace.CurrentCamera.ViewportSize
     local posX = position and position.X.Offset or (screenSize.X / 2 - finalWidth / 2)
     local posY = position and position.Y.Offset or (screenSize.Y / 2 - finalHeight / 2)
-    
+
     posX = math.clamp(posX, 5, screenSize.X - finalWidth - 5)
     posY = math.clamp(posY, 5, screenSize.Y - finalHeight - 5)
-    
+
     menu.Position = UDim2.new(0, posX, 0, posY)
-    
+
     -- أنيميشن الظهور
     menu.Size = UDim2.new(0, finalWidth, 0, 0)
     menu.BackgroundTransparency = 1
     stroke.Transparency = 1
-    
+
     Tween(menu, {
         Size = UDim2.new(0, finalWidth, 0, finalHeight),
         BackgroundTransparency = 0
     }, 0.3, Enum.EasingStyle.Back)
     Tween(stroke, {Transparency = 0}, 0.2)
-    
+
     -- إغلاق عند النقر على الخلفية
     overlay.MouseButton1Click:Connect(function()
         ContextMenu.Close()
     end)
-    
+
     -- إغلاق عند الضغط على Escape
     local escapeConn
     escapeConn = UserInputService.InputBegan:Connect(function(input)
@@ -234,18 +257,18 @@ function ContextMenu.Open(options, position)
             escapeConn:Disconnect()
         end
     end)
-    
+
     CurrentMenu = {
         overlay = overlay,
         menu = menu,
         connections = {escapeConn}
     }
-    
+
     return menu
 end
 
 -- ═══════════════════════════════════════════════════════════════════════
--- ❌ إغلاق القائمة
+-- × إغلاق القائمة
 -- ═══════════════════════════════════════════════════════════════════════
 function ContextMenu.Close()
     if CurrentMenu then
@@ -261,73 +284,73 @@ function ContextMenu.Close()
                 end
             end)
         end
-        
+
         -- قطع الاتصالات
         if CurrentMenu.connections then
             for _, conn in ipairs(CurrentMenu.connections) do
                 pcall(function() conn:Disconnect() end)
             end
         end
-        
+
         CurrentMenu = nil
     end
 end
 
 -- ═══════════════════════════════════════════════════════════════════════
--- 📋 قوائم جاهزة حسب نوع العنصر
+-- ▤ قوائم جاهزة حسب نوع العنصر
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- قائمة السكريبتات
 function ContextMenu.ScriptMenu(instance, callbacks)
     local options = {
         {
-            icon = "📜",
-            text = "View Source",
+            icon = Icon("Edit", "⌘"),
+            text = T("MenuViewSource"),
             color = Colors.Accent,
             callback = callbacks.viewSource
         },
         {
-            icon = "📋",
-            text = "Copy Source",
+            icon = Icon("Copy", "⧉"),
+            text = T("MenuCopySource"),
             color = Colors.Text,
             callback = callbacks.copySource
         },
         {
-            icon = "✏️",
-            text = "Edit Source",
+            icon = Icon("Edit", "✎"),
+            text = T("MenuEditSource"),
             color = Colors.Warning,
             callback = callbacks.editSource
         },
         {type = "separator"},
         {
-            icon = "▶️",
-            text = "Run Script",
+            icon = Icon("Run", "▶"),
+            text = T("MenuRunScript"),
             color = Colors.Success,
             callback = callbacks.runScript
         },
         {
-            icon = "⏸️",
-            text = "Toggle Disable",
+            icon = Icon("Pause", "Ⅱ"),
+            text = T("MenuToggleDisable"),
             color = Colors.Warning,
             callback = callbacks.toggleDisable
         },
         {type = "separator"},
         {
-            icon = "📋",
-            text = "Copy Path",
+            icon = Icon("Location", "⌖"),
+            text = T("MenuCopyPath"),
             color = Colors.Text,
             callback = callbacks.copyPath
         },
         {
-            icon = "📋",
-            text = "Copy Name",
+            icon = Icon("Copy", "⧉"),
+            text = T("MenuCopyName"),
             color = Colors.Text,
             callback = callbacks.copyName
         },
         {type = "separator"},
         {
-            icon = "🗑️",
-            text = "Delete",
+            icon = Icon("Delete", "⌫"),
+            text = T("MenuDelete"),
             color = Colors.Danger,
             callback = callbacks.delete
         }
@@ -339,65 +362,65 @@ end
 function ContextMenu.PartMenu(instance, callbacks)
     local options = {
         {
-            icon = "📋",
-            text = "Copy Position",
+            icon = Icon("Location", "⌖"),
+            text = T("MenuCopyPosition"),
             color = Colors.Accent,
             callback = callbacks.copyPosition
         },
         {
-            icon = "📋",
-            text = "Copy Size",
+            icon = Icon("Copy", "⧉"),
+            text = T("MenuCopySize"),
             color = Colors.Text,
             callback = callbacks.copySize
         },
         {
-            icon = "📋",
-            text = "Copy CFrame",
+            icon = Icon("Copy", "⧉"),
+            text = T("MenuCopyCFrame"),
             color = Colors.Text,
             callback = callbacks.copyCFrame
         },
         {type = "separator"},
         {
-            icon = "📍",
-            text = "Teleport To",
+            icon = Icon("Location", "⌖"),
+            text = T("MenuTeleportTo"),
             color = Colors.Success,
             callback = callbacks.teleportTo
         },
         {
-            icon = "🎨",
-            text = "Copy Color",
+            icon = Icon("Contrast", "◐"),
+            text = T("MenuCopyColor"),
             color = Colors.Warning,
             callback = callbacks.copyColor
         },
         {
-            icon = "🧱",
-            text = "Copy Material",
+            icon = "◫",
+            text = T("MenuCopyMaterial"),
             color = Colors.Text,
             callback = callbacks.copyMaterial
         },
         {type = "separator"},
         {
-            icon = "📌",
-            text = "Toggle Anchored",
+            icon = "⚓",
+            text = T("MenuToggleAnchored"),
             color = Colors.Warning,
             callback = callbacks.toggleAnchored
         },
         {
-            icon = "👻",
-            text = "Toggle CanCollide",
+            icon = "◌",
+            text = T("MenuToggleCanCollide"),
             color = Colors.Text,
             callback = callbacks.toggleCanCollide
         },
         {type = "separator"},
         {
-            icon = "📋",
-            text = "Copy Path",
+            icon = Icon("Location", "⌖"),
+            text = T("MenuCopyPath"),
             color = Colors.Text,
             callback = callbacks.copyPath
         },
         {
-            icon = "🗑️",
-            text = "Delete",
+            icon = Icon("Delete", "⌫"),
+            text = T("MenuDelete"),
             color = Colors.Danger,
             callback = callbacks.delete
         }
@@ -409,46 +432,46 @@ end
 function ContextMenu.ValueMenu(instance, callbacks)
     local options = {
         {
-            icon = "📊",
-            text = "View Value",
+            icon = Icon("Stats", "≡"),
+            text = T("MenuViewValue"),
             color = Colors.Accent,
             callback = callbacks.viewValue
         },
         {
-            icon = "✏️",
-            text = "Edit Value",
+            icon = Icon("Edit", "✎"),
+            text = T("MenuEditValue"),
             color = Colors.Warning,
             callback = callbacks.editValue
         },
         {
-            icon = "📋",
-            text = "Copy Value",
+            icon = Icon("Copy", "⧉"),
+            text = T("MenuCopyValue"),
             color = Colors.Text,
             callback = callbacks.copyValue
         },
         {type = "separator"},
         {
-            icon = "❄️",
-            text = "Freeze Value",
-            color = Colors.Info,
+            icon = "❄",
+            text = T("MenuFreezeValue"),
+            color = Colors.Accent,
             callback = callbacks.freezeValue
         },
         {
-            icon = "🔄",
-            text = "Reset Value",
+            icon = Icon("Restart", "↺"),
+            text = T("MenuResetValue"),
             color = Colors.Warning,
             callback = callbacks.resetValue
         },
         {type = "separator"},
         {
-            icon = "📋",
-            text = "Copy Path",
+            icon = Icon("Location", "⌖"),
+            text = T("MenuCopyPath"),
             color = Colors.Text,
             callback = callbacks.copyPath
         },
         {
-            icon = "🗑️",
-            text = "Delete",
+            icon = Icon("Delete", "⌫"),
+            text = T("MenuDelete"),
             color = Colors.Danger,
             callback = callbacks.delete
         }
@@ -460,33 +483,33 @@ end
 function ContextMenu.RemoteMenu(instance, callbacks)
     local options = {
         {
-            icon = "📡",
-            text = "View Info",
+            icon = "↯",
+            text = T("MenuViewInfo"),
             color = Colors.Accent,
             callback = callbacks.viewInfo
         },
         {
-            icon = "🔥",
-            text = "Fire Remote",
+            icon = "➤",
+            text = T("MenuFireRemote"),
             color = Colors.Danger,
             callback = callbacks.fireRemote
         },
         {
-            icon = "📋",
-            text = "Copy Path",
+            icon = Icon("Location", "⌖"),
+            text = T("MenuCopyPath"),
             color = Colors.Text,
             callback = callbacks.copyPath
         },
         {type = "separator"},
         {
-            icon = "🕵️",
-            text = "Spy This Remote",
+            icon = "◔",
+            text = T("MenuSpyRemote"),
             color = Colors.Warning,
             callback = callbacks.spyRemote
         },
         {
-            icon = "📋",
-            text = "Copy Fire Code",
+            icon = Icon("Copy", "⧉"),
+            text = T("MenuCopyFireCode"),
             color = Colors.Text,
             callback = callbacks.copyFireCode
         }
@@ -498,39 +521,39 @@ end
 function ContextMenu.GeneralMenu(instance, callbacks)
     local options = {
         {
-            icon = "ℹ️",
-            text = "View Info",
+            icon = Icon("Info", "i"),
+            text = T("MenuViewInfo"),
             color = Colors.Accent,
             callback = callbacks.viewInfo
         },
         {
-            icon = "📋",
-            text = "Copy Name",
+            icon = Icon("Copy", "⧉"),
+            text = T("MenuCopyName"),
             color = Colors.Text,
             callback = callbacks.copyName
         },
         {
-            icon = "📋",
-            text = "Copy Path",
+            icon = Icon("Location", "⌖"),
+            text = T("MenuCopyPath"),
             color = Colors.Text,
             callback = callbacks.copyPath
         },
         {
-            icon = "📋",
-            text = "Copy ClassName",
+            icon = Icon("Copy", "⧉"),
+            text = T("MenuCopyClassName"),
             color = Colors.Text,
             callback = callbacks.copyClassName
         },
         {type = "separator"},
         {
-            icon = "📑",
-            text = "Clone",
+            icon = "⧉",
+            text = T("MenuClone"),
             color = Colors.Warning,
             callback = callbacks.clone
         },
         {
-            icon = "🗑️",
-            text = "Delete",
+            icon = Icon("Delete", "⌫"),
+            text = T("MenuDelete"),
             color = Colors.Danger,
             callback = callbacks.delete
         }
@@ -539,25 +562,25 @@ function ContextMenu.GeneralMenu(instance, callbacks)
 end
 
 -- ═══════════════════════════════════════════════════════════════════════
--- 🎯 إغلاق عند النقر خارج القائمة
+-- ◈ هل القائمة مفتوحة؟
 -- ═══════════════════════════════════════════════════════════════════════
 function ContextMenu.IsOpen()
     return CurrentMenu ~= nil
 end
 
 -- ═══════════════════════════════════════════════════════════════════════
--- 📱 دعم اللمس (Long Press)
+-- ◉ دعم اللمس (Long Press)
 -- ═══════════════════════════════════════════════════════════════════════
 function ContextMenu.AddLongPress(frame, callback, duration)
     local pressTime = 0
     local pressing = false
     local longPressDuration = duration or 0.5
-    
+
     frame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
             pressing = true
             pressTime = tick()
-            
+
             task.delay(longPressDuration, function()
                 if pressing and (tick() - pressTime) >= longPressDuration then
                     local pos = UDim2.new(0, input.Position.X, 0, input.Position.Y)
@@ -566,7 +589,7 @@ function ContextMenu.AddLongPress(frame, callback, duration)
             end)
         end
     end)
-    
+
     frame.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
             pressing = false
@@ -574,6 +597,6 @@ function ContextMenu.AddLongPress(frame, callback, duration)
     end)
 end
 
-print("📋 Context Menu v1.0 Loaded!")
+print("▤ Context Menu v2.0 Loaded!")
 
 return ContextMenu

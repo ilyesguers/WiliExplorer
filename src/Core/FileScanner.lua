@@ -1523,31 +1523,31 @@ local TypeData = {
 -- ═══════════════════════════════════════════════════════════════════════════
 
 local CategoryInfo = {
-    Scripts = {icon = "📜", color = Color3.fromRGB(255, 100, 100), priority = 1},
-    Organization = {icon = "📁", color = Color3.fromRGB(255, 200, 80), priority = 2},
-    GUI = {icon = "🎮", color = Color3.fromRGB(0, 200, 255), priority = 3},
-    UILayout = {icon = "📐", color = Color3.fromRGB(150, 150, 255), priority = 4},
-    Parts = {icon = "🧱", color = Color3.fromRGB(100, 180, 255), priority = 5},
-    Models = {icon = "📦", color = Color3.fromRGB(200, 150, 100), priority = 6},
-    Characters = {icon = "🧍", color = Color3.fromRGB(255, 200, 150), priority = 7},
-    Clothing = {icon = "👕", color = Color3.fromRGB(255, 150, 200), priority = 8},
-    Audio = {icon = "🔊", color = Color3.fromRGB(100, 255, 150), priority = 9},
-    Images = {icon = "🖼️", color = Color3.fromRGB(255, 150, 200), priority = 10},
-    Lighting = {icon = "💡", color = Color3.fromRGB(255, 255, 150), priority = 11},
-    Effects = {icon = "✨", color = Color3.fromRGB(255, 200, 255), priority = 12},
-    Animation = {icon = "🎬", color = Color3.fromRGB(255, 100, 200), priority = 13},
-    Networking = {icon = "📡", color = Color3.fromRGB(255, 100, 100), priority = 14},
-    Constraints = {icon = "🔗", color = Color3.fromRGB(200, 200, 200), priority = 15},
-    Physics = {icon = "🚀", color = Color3.fromRGB(100, 255, 200), priority = 16},
-    Values = {icon = "🔢", color = Color3.fromRGB(100, 200, 255), priority = 17},
-    Players = {icon = "👥", color = Color3.fromRGB(0, 200, 255), priority = 18},
-    Teams = {icon = "🚩", color = Color3.fromRGB(255, 100, 100), priority = 19},
-    Tools = {icon = "🔧", color = Color3.fromRGB(255, 180, 100), priority = 20},
-    Camera = {icon = "📷", color = Color3.fromRGB(100, 200, 255), priority = 21},
-    Services = {icon = "🌐", color = Color3.fromRGB(100, 200, 100), priority = 22},
-    Interaction = {icon = "👆", color = Color3.fromRGB(255, 200, 100), priority = 23},
-    PostEffects = {icon = "🌈", color = Color3.fromRGB(255, 200, 200), priority = 24},
-    Unknown = {icon = "❓", color = Color3.fromRGB(150, 150, 150), priority = 99}
+    Scripts = {icon = "⌘", color = Color3.fromRGB(255, 100, 100), priority = 1},
+    Organization = {icon = "▰", color = Color3.fromRGB(255, 200, 80), priority = 2},
+    GUI = {icon = "▣", color = Color3.fromRGB(0, 200, 255), priority = 3},
+    UILayout = {icon = "≡", color = Color3.fromRGB(150, 150, 255), priority = 4},
+    Parts = {icon = "◫", color = Color3.fromRGB(100, 180, 255), priority = 5},
+    Models = {icon = "⬡", color = Color3.fromRGB(200, 150, 100), priority = 6},
+    Characters = {icon = "●", color = Color3.fromRGB(255, 200, 150), priority = 7},
+    Clothing = {icon = "◒", color = Color3.fromRGB(255, 150, 200), priority = 8},
+    Audio = {icon = "♫", color = Color3.fromRGB(100, 255, 150), priority = 9},
+    Images = {icon = "▧", color = Color3.fromRGB(255, 150, 200), priority = 10},
+    Lighting = {icon = "☼", color = Color3.fromRGB(255, 255, 150), priority = 11},
+    Effects = {icon = "✦", color = Color3.fromRGB(255, 200, 255), priority = 12},
+    Animation = {icon = "♢", color = Color3.fromRGB(255, 100, 200), priority = 13},
+    Networking = {icon = "↯", color = Color3.fromRGB(255, 100, 100), priority = 14},
+    Constraints = {icon = "⛓", color = Color3.fromRGB(200, 200, 200), priority = 15},
+    Physics = {icon = "➤", color = Color3.fromRGB(100, 255, 200), priority = 16},
+    Values = {icon = "#", color = Color3.fromRGB(100, 200, 255), priority = 17},
+    Players = {icon = "●", color = Color3.fromRGB(0, 200, 255), priority = 18},
+    Teams = {icon = "⚑", color = Color3.fromRGB(255, 100, 100), priority = 19},
+    Tools = {icon = "◆", color = Color3.fromRGB(255, 180, 100), priority = 20},
+    Camera = {icon = "◉", color = Color3.fromRGB(100, 200, 255), priority = 21},
+    Services = {icon = "◌", color = Color3.fromRGB(100, 200, 100), priority = 22},
+    Interaction = {icon = "◉", color = Color3.fromRGB(255, 200, 100), priority = 23},
+    PostEffects = {icon = "◐", color = Color3.fromRGB(255, 200, 200), priority = 24},
+    Unknown = {icon = "?", color = Color3.fromRGB(150, 150, 150), priority = 99}
 }
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -2483,7 +2483,220 @@ function FileScanner.SortChildren(children, sortBy)
 end
 
 -- ═══════════════════════════════════════════════════════════════════════════
+-- 📍 معلومات ذكية: الهدف، الموقع، الروابط (v7.1)
+-- ═══════════════════════════════════════════════════════════════════════════
 
-print("✅ FileScanner v3.0 Loaded!")
+-- أوصاف الهدف لكل فئة — تُعرض في العارض وتشرح "ما وظيفة هذا العنصر"
+local PurposeByCategory = {
+    Scripts = "منطق اللعبة — يعمل في الخادم",
+    Models = "مجموعة أجزاء منظمة",
+    Parts = "جسم فيزيائي في العالم",
+    Physics = "تحكم فيزيائي بالحركة",
+    Constraints = "ربط فيزيائي بين الأجزاء",
+    Images = "سطح/صورة معروضة",
+    Audio = "صوت يُشغَّل للاعبين",
+    GUI = "عنصر واجهة مرئي للاعب",
+    UILayout = "ترتيب تلقائي للواجهة",
+    Effects = "تأثير بصري حي",
+    PostEffects = "فلاتر ما بعد المعالجة على الكاميرا",
+    Lighting = "مصدر إضاءة للمشهد",
+    Animation = "حركة لهيكل أو شخصية",
+    Values = "بيانات قابلة للتعديل أثناء التشغيل",
+    Networking = "قناة اتصال بين العميل والخادم",
+    Interaction = "نقطة تفاعل مع اللاعب",
+    Characters = "مكوّن شخصية/أفاتار",
+    Clothing = "مظهر شخصية",
+    Tools = "أداة يمسكها اللاعب",
+    Camera = "كاميرا مشهد",
+    Players = "لاعب متصل",
+    Teams = "مجموعة لاعبين",
+    Services = "خدمة إطار Roblox",
+    Organization = "حاوية تنظيمية"
+}
+
+-- تصنيف حسب الدور الدقيق (أدق من الفئة العامة)
+local function RoleOf(instance)
+    local cn = instance.ClassName
+    if cn == "Script" then return "سكربت خادم (Server)" end
+    if cn == "LocalScript" then return "سكربت عميل (Client)" end
+    if cn == "ModuleScript" then return "وحدة كود مشتركة" end
+    if cn == "Folder" or cn == "Configuration" then return "مجلد تنظيم" end
+    if cn == "Model" then return "مجسم/مجموعة" end
+    if cn == "MeshPart" then return "جزء بشبكة مخصصة" end
+    if cn == "UnionOperation" then return "جزء مدموج" end
+    if cn == "WedgePart" then return "إسفين" end
+    if cn == "SpawnLocation" then return "نقطة ظهور اللاعبين" end
+    if cn == "Seat" or cn == "VehicleSeat" then return "مقعد/مركبة" end
+    if cn == "Sound" then return "مقطع صوتي" end
+    if cn == "SoundGroup" then return "مجموعة تحكم بالصوت" end
+    if cn == "Decal" then return "ملصق على سطح" end
+    if cn == "Texture" then return "نسيج متكرر" end
+    if cn == "ImageLabel" or cn == "ImageButton" then return "صورة واجهة" end
+    if cn == "TextLabel" then return "نص واجهة" end
+    if cn == "TextBox" then return "حقل إدخال" end
+    if cn == "TextButton" then return "زر واجهة" end
+    if cn == "Frame" then return "حاوية واجهة" end
+    if cn == "ScreenGui" then return "طبقة واجهة كاملة" end
+    if cn == "SurfaceGui" then return "واجهة على سطح جسم" end
+    if cn == "BillboardGui" then return "واجهة تتبع جسماً" end
+    if cn == "ViewportFrame" then return "نافذة ثلاثية الأبعاد" end
+    if cn == "VideoFrame" then return "فيديو" end
+    if cn == "ParticleEmitter" then return "انبعاث جزيئات" end
+    if cn == "Fire" then return "نار" end
+    if cn == "Smoke" then return "دخان" end
+    if cn == "Sparkles" then return "بريق" end
+    if cn == "Beam" then return "شعاع بين نقطتين" end
+    if cn == "Trail" then return "أثر حركة" end
+    if cn == "PointLight" then return "ضوء نقطي" end
+    if cn == "SpotLight" then return "كشّاف ضوئي" end
+    if cn == "SurfaceLight" then return "ضوء سطحي" end
+    if cn == "RemoteEvent" then return "إشارة → الخادم" end
+    if cn == "RemoteFunction" then return "استدعاء → الخادم" end
+    if cn == "BindableEvent" then return "إشارة محلية" end
+    if cn == "BindableFunction" then return "استدعاء محلي" end
+    if cn == "NumberValue" then return "قيمة رقمية" end
+    if cn == "IntValue" then return "قيمة صحيحة" end
+    if cn == "StringValue" then return "قيمة نصية" end
+    if cn == "BoolValue" then return "قيمة منطقية" end
+    if cn == "ObjectValue" then return "مرجع لكائن" end
+    if cn == "KeyframeSequence" then return "حركة جاهزة" end
+    if cn == "Animator" then return "مشغّل حركات" end
+    if cn == "Humanoid" then return "متحكم الشخصية" end
+    if cn == "ProximityPrompt" then return "زر تفاعل قربي" end
+    if cn == "ClickDetector" then return "كشف نقر" end
+    if cn == "Tool" then return "أداة في الحقيبة" end
+    if cn == "Camera" then return "كاميرا مشهد" end
+    if cn == "WeldConstraint" or cn == "Weld" then return "لحام أجزاء" end
+    if cn == "HingeConstraint" then return "مفصل دوّار" end
+    if cn == "SpringConstraint" then return "نابض" end
+    if cn == "Attachment" then return "نقطة ربط" end
+    if cn == "BodyVelocity" then return "دفع سرعة" end
+    if cn == "BodyPosition" then return "تثبيت موضع" end
+    if cn == "BodyGyro" then return "تثبيت اتجاه" end
+    if cn == "VectorForce" then return "قوة موجهة" end
+    if cn == "AnimationController" then return "متحكم حركة" end
+    return nil
+end
+
+-- من يتأثر بهذا العنصر (مستهلكوه المباشرون)
+local function ConsumersOf(instance)
+    local consumers = {}
+    local cn = instance.ClassName
+
+    local allDescendants = {}
+    pcall(function() allDescendants = game:GetDescendants() end)
+    local escaped = tostring(instance.Name):gsub("([^%w])", "%%%1")
+
+    local isScriptScan = instance:IsA("ModuleScript") or instance:IsA("Sound")
+        or instance:IsA("ValueBase") or instance:IsA("RemoteEvent") or instance:IsA("RemoteFunction")
+
+    if isScriptScan then
+        for i, d in ipairs(allDescendants) do
+            if d:IsA("BaseScript") and d ~= instance then
+                local src = ""
+                pcall(function() src = d.Source or "" end)
+                if src ~= "" and src:find(escaped) then
+                    table.insert(consumers, d)
+                end
+            end
+            if i % 2000 == 0 then task.wait() end
+        end
+    end
+
+    return consumers
+end
+
+-- روابط مباشرة من خصائص العنصر (قيم/أدوات/أصوات...)
+local function DirectLinksOf(instance)
+    local links = {}
+    pcall(function()
+        if instance:IsA("ObjectValue") and instance.Value then
+            table.insert(links, instance.Value)
+        end
+    end)
+    pcall(function()
+        if instance:IsA("Tool") and instance.ToolTip then
+            local target = workspace:FindFirstChild(instance.ToolTip)
+            if target then table.insert(links, target) end
+        end
+    end)
+    pcall(function()
+        if instance:IsA("Animator") and instance.Parent and instance.Parent:IsA("Humanoid") then
+            table.insert(links, instance.Parent)
+        end
+    end)
+    pcall(function()
+        if instance:IsA("Sound") and instance.SoundGroup then
+            table.insert(links, instance.SoundGroup)
+        end
+    end)
+    return links
+end
+
+-- العارض الشامل يستدعيها دفعة واحدة (غير متزامن)
+function FileScanner.GetInsights(instance)
+    local insights = {
+        role = nil,
+        purpose = nil,
+        consumers = {},
+        links = {},
+        sameName = {}
+    }
+    if not instance then return insights end
+
+    insights.role = RoleOf(instance)
+    insights.purpose = PurposeByCategory[FileScanner.GetCategory(instance)] or nil
+    insights.links = DirectLinksOf(instance)
+
+    -- أشقاء بنفس الاسم/النوع (للبحث العميق)
+    local parent = instance.Parent
+    if parent then
+        pcall(function()
+            for _, sib in ipairs(parent:GetChildren()) do
+                if sib ~= instance and (sib.Name == instance.Name or sib.ClassName == instance.ClassName) then
+                    table.insert(insights.sameName, sib)
+                end
+            end
+        end)
+    end
+
+    return insights
+end
+
+-- البحث العميق في الشجرة كاملة عن مراجع/مستهلكي هذا العنصر (غير متزامن)
+function FileScanner.FindReferences(instance, callback, maxResults)
+    if not instance or not callback then return end
+    task.spawn(function()
+        local results = ConsumersOf(instance)
+        local name = tostring(instance.Name)
+        local escaped = name:gsub("([^%w])", "%%%1")
+        local limit = maxResults or 25
+        local scanned = 0
+        local allDescendants = {}
+        pcall(function() allDescendants = game:GetDescendants() end)
+
+        for _, d in ipairs(allDescendants) do
+            if #results >= limit then break end
+            scanned = scanned + 1
+            if d ~= instance and d:IsA("BaseScript") then
+                local src = ""
+                pcall(function() src = d.Source or "" end)
+                if src ~= "" and src:find(escaped) then
+                    local already = false
+                    for _, r in ipairs(results) do
+                        if r == d then already = true break end
+                    end
+                    if not already then table.insert(results, d) end
+                end
+            end
+            if scanned % 2000 == 0 then task.wait() end
+        end
+        callback(results)
+    end)
+end
+
+-- ═══════════════════════════════════════════════════════════════════════════
+
+print("✅ FileScanner v3.1 Loaded!")
 
 return FileScanner

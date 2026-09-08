@@ -1623,7 +1623,7 @@ local function BuildDefaultPreview(content, instance, info, window, mainParent)
     InfoRow(scroll, T("ClassLabel"), info.ClassName, 2)
     InfoRow(scroll, T("ParentLabel"), info.Parent ~= "" and info.Parent or "-", 3)
     InfoRow(scroll, T("Path"), info.FullName, 4)
-    InfoRow(scroll, T("Children"), tostring(info.Children), 5)
+    InfoRow(scroll, T("TabChildren"), tostring(info.Children), 5)
     InfoRow(scroll, T("DescendantsLabel"), tostring(info.Descendants), 6)
     InfoRow(scroll, T("CategoryLabel"), info.Category, 7)
     if info.Description and info.Description ~= "" then
@@ -1801,6 +1801,185 @@ end
 -- ═══════════════════════════════════════════════════════════════════════════
 -- النافذة الرئيسية
 -- ═══════════════════════════════════════════════════════════════════════════
+-- ═══════════════════════════════════════════════════════════════════════
+-- ⇄ تبويب الروابط (v7.1): الدور / الهدف / الموقع / المراجع / المرتبط / المشابه
+-- ═══════════════════════════════════════════════════════════════════════
+local function LinksRow(parent, icon, name, detail, color, order, onClick)
+    local row = Instance.new("TextButton")
+    row.Size = UDim2.new(1, -2, 0, 46)
+    row.BackgroundColor3 = P.Surface
+    row.Text = ""
+    row.AutoButtonColor = false
+    row.LayoutOrder = order
+    row.Parent = parent
+    Corner(row, 8)
+
+    local ic = IconLabel(row, icon, 16, color or P.Accent, 4)
+    ic.Size = UDim2.new(0, 28, 0, 28)
+    ic.Position = UDim2.new(0, 8, 0.5, -14)
+
+    local nm = TextLabel(row, name, 12, P.Text, Enum.Font.GothamBold, Language.Alignment())
+    nm.Size = UDim2.new(1, -140, 0, 22)
+    nm.Position = UDim2.new(0, 42, 0, 5)
+    nm.TextTruncate = Enum.TextTruncate.AtEnd
+
+    local dt = TextLabel(row, detail, 10, P.Muted, Enum.Font.Gotham, Language.Alignment())
+    dt.Size = UDim2.new(1, -140, 0, 15)
+    dt.Position = UDim2.new(0, 42, 0, 28)
+    dt.TextTruncate = Enum.TextTruncate.AtEnd
+
+    local arrow = IconLabel(row, Icons.UI.Forward, 14, P.Accent, 4)
+    arrow.Size = UDim2.new(0, 22, 0, 22)
+    arrow.Position = UDim2.new(1, -30, 0.5, -11)
+
+    row.MouseEnter:Connect(function() Tween(row, {BackgroundColor3 = P.Hover}, 0.12) end)
+    row.MouseLeave:Connect(function() Tween(row, {BackgroundColor3 = P.Surface}, 0.12) end)
+    if onClick then row.MouseButton1Click:Connect(onClick) end
+    return row
+end
+
+local function LinksHeader(scroll, icon, title, value, order)
+    local box = Instance.new("Frame")
+    box.Size = UDim2.new(1, -2, 0, 42)
+    box.BackgroundColor3 = P.Raised
+    box.BorderSizePixel = 0
+    box.LayoutOrder = order
+    box.Parent = scroll
+    Corner(box, 8)
+
+    local ic = IconLabel(box, icon, 15, P.Accent, 4)
+    ic.Size = UDim2.new(0, 26, 0, 26)
+    ic.Position = UDim2.new(0, 8, 0.5, -13)
+
+    local tt = TextLabel(box, title, 10, P.Muted, Enum.Font.GothamBold, Language.Alignment())
+    tt.Size = UDim2.new(0.3, -10, 1, 0)
+    tt.Position = UDim2.new(0, 38, 0, 0)
+
+    local vv = TextLabel(box, value, 11, P.Text, Enum.Font.GothamBold, Language.Alignment())
+    vv.Size = UDim2.new(0.66, -8, 1, 0)
+    vv.Position = UDim2.new(0.32, 0, 0, 0)
+    vv.TextTruncate = Enum.TextTruncate.AtEnd
+    return box
+end
+
+local function BuildLinksTab(content, instance, info, window, closeViewer, mainParent)
+    local scroll = Scroller(content, UDim2.new(1, -4, 1, 0), UDim2.new(0, 2, 0, 0))
+    local order = 0
+
+    -- الرؤية الفورية (بدون مسح كامل للشجرة)
+    local insights = FileScanner.GetInsights(instance)
+
+    order = order + 1
+    LinksHeader(scroll, Icons.UI.Purpose, T("RoleLabel"),
+        insights.role or T("UnknownCategory") or "—", order)
+
+    order = order + 1
+    LinksHeader(scroll, Icons.UI.Tag, T("PurposeLabel"),
+        insights.purpose or T("UnknownCategory") or "—", order)
+
+    order = order + 1
+    LinksHeader(scroll, Icons.UI.Location, T("LocationLabel"),
+        info.FullName or instance.Name, order)
+
+    -- عناصر مرتبطة مباشرة (خصائص تربطها بهذا العنصر)
+    order = order + 1
+    local relatedTitle = TextLabel(scroll, T("RelatedLabel"), 11, P.Accent, Enum.Font.GothamBold, Language.Alignment())
+    relatedTitle.Size = UDim2.new(1, 0, 0, 22)
+    relatedTitle.LayoutOrder = order
+    if #insights.links == 0 then
+        order = order + 1
+        local empty = TextLabel(scroll, T("NoRelated"), 10, P.Dim, Enum.Font.Gotham, Language.Alignment())
+        empty.Size = UDim2.new(1, 0, 0, 22)
+        empty.LayoutOrder = order
+    else
+        for _, linked in ipairs(insights.links) do
+            order = order + 1
+            local lInfo = FileScanner.GetBasicInfo(linked)
+            LinksRow(scroll, lInfo.Icon, linked.Name, linked.ClassName .. " • " .. (lInfo.Children or 0) .. " " .. T("ItemsCount"),
+                lInfo.Color, order, function()
+                    closeViewer()
+                    task.delay(0.22, function()
+                        FileViewer.Open(mainParent, linked)
+                    end)
+                end)
+        end
+    end
+
+    -- عناصر مشابهة (نفس الاسم/الصنف في نفس الأب)
+    order = order + 1
+    local sibTitle = TextLabel(scroll, T("SiblingsLabel"), 11, P.Accent, Enum.Font.GothamBold, Language.Alignment())
+    sibTitle.Size = UDim2.new(1, 0, 0, 22)
+    sibTitle.LayoutOrder = order
+    if #insights.sameName == 0 then
+        order = order + 1
+        local empty = TextLabel(scroll, T("NoSiblings"), 10, P.Dim, Enum.Font.Gotham, Language.Alignment())
+        empty.Size = UDim2.new(1, 0, 0, 22)
+        empty.LayoutOrder = order
+    else
+        for _, sib in ipairs(insights.sameName) do
+            order = order + 1
+            local sInfo = FileScanner.GetBasicInfo(sib)
+            LinksRow(scroll, sInfo.Icon, sib.Name, sib.ClassName .. " • " .. (sInfo.Children or 0) .. " " .. T("ItemsCount"),
+                sInfo.Color, order, function()
+                    closeViewer()
+                    task.delay(0.22, function()
+                        FileViewer.Open(mainParent, sib)
+                    end)
+                end)
+        end
+    end
+
+    -- المراجع في السكربتات (بحث عميق غير متزامن)
+    order = order + 1
+    local refTitle = TextLabel(scroll, T("ReferencesLabel"), 11, P.Accent, Enum.Font.GothamBold, Language.Alignment())
+    refTitle.Size = UDim2.new(1, 0, 0, 22)
+    refTitle.LayoutOrder = order
+
+    order = order + 1
+    local searchBtn = ActionButton(scroll, Icons.UI.Search, T("SearchReferences"), P.Surface, {
+        size = UDim2.new(1, -2, 0, 42), textSize = 12, radius = 8
+    })
+    searchBtn.LayoutOrder = order
+    searchBtn.MouseButton1Click:Connect(function()
+        -- حالة البحث
+        searchBtn.TextLabel.Text = T("SearchingReferences")
+        searchBtn.AutoButtonColor = false
+
+        -- تدمير صفوف النتائج القديمة
+        for _, child in ipairs(scroll:GetChildren()) do
+            if child:IsA("TextButton") and child ~= searchBtn and child.Name ~= "LinksRow_Header" then
+                if child:GetAttribute("SourceRef") then child:Destroy() end
+            end
+        end
+
+        FileScanner.FindReferences(instance, function(results)
+            searchBtn.TextLabel.Text = T("SearchReferences")
+            if #results == 0 then
+                local empty = TextLabel(scroll, T("NoReferences"), 10, P.Dim, Enum.Font.Gotham, Language.Alignment())
+                empty.Size = UDim2.new(1, 0, 0, 22)
+                empty.LayoutOrder = 100 + order
+                empty:SetAttribute("SourceRef", true)
+                return
+            end
+            for i, ref in ipairs(results) do
+                local rInfo = FileScanner.GetBasicInfo(ref)
+                local parentName = ""
+                pcall(function() if ref.Parent then parentName = ref.Parent.Name end end)
+                local row = LinksRow(scroll, Icons.UI.Script, ref.Name,
+                    ref.ClassName .. " • " .. parentName, rInfo.Color, 100 + i,
+                    function()
+                        closeViewer()
+                        task.delay(0.22, function()
+                            FileViewer.Open(mainParent, ref)
+                        end)
+                    end)
+                row:SetAttribute("SourceRef", true)
+                row.Name = "SourceRef_" .. i
+            end
+        end, 25)
+    end)
+end
+
 function FileViewer.Open(mainParent, instance, onClose)
     if not instance then return end
     local info = FileScanner.GetInfo(instance)
@@ -1988,7 +2167,7 @@ function FileViewer.Open(mainParent, instance, onClose)
     local tabs = {}
     local function CreateTab(name, iconName, previewKey)
         local btn, ic, txt = ActionButton(TabBar, iconName, name, P.Surface, {
-            size = UDim2.new(0, 118, 0, 30), textSize = 11
+            size = UDim2.new(0.235, -8, 0, 30), textSize = 10
         })
         local contentFrame = Instance.new("Frame")
         contentFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -2004,6 +2183,7 @@ function FileViewer.Open(mainParent, instance, onClose)
     local previewTab, previewContent = CreateTab(T("TabPreview"), Icons.UI.Preview, "preview")
     local propsTab, propsContent = CreateTab(T("TabProperties"), Icons.UI.Properties, "props")
     local childrenTab, childrenContent = CreateTab(T("TabChildren"), Icons.UI.Tree, "children")
+    local linksTab, linksContent = CreateTab(T("TabLinks"), Icons.UI.Links, "links")
 
     local function SwitchTab(key)
         for k, data in pairs(tabs) do
@@ -2106,6 +2286,8 @@ function FileViewer.Open(mainParent, instance, onClose)
     else
         EmptyState(childrenContent, Icons.UI.Empty, T("NoChildren"), info.Name)
     end
+
+    BuildLinksTab(linksContent, instance, info, Window, closeViewer, mainParent)
 
     SwitchTab("preview")
 

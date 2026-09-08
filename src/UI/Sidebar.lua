@@ -16,7 +16,11 @@ local function theme()
     }
 end
 
-function Sidebar.Create(parent)
+-- يبني محتوى الصفحة الرئيسية (المستكشف) داخل حاوية
+local function BuildHome(content, options)
+    options = options or {}
+    local router = options.router
+    local viewerParent = options.viewerParent or content
     local Language = GetModule("Language")
     local UI = GetModule("UIHelpers")
     local Assets = GetModule("Assets")
@@ -26,10 +30,10 @@ function Sidebar.Create(parent)
 
     local Header = Instance.new("Frame")
     Header.Size = UDim2.new(1, -20, 0, 72)
-    Header.Position = UDim2.new(0, 10, 0, 10)
+    Header.Position = UDim2.new(0, 10, 0, 0)
     Header.BackgroundColor3 = C.Surface
     Header.BorderSizePixel = 0
-    Header.Parent = parent
+    Header.Parent = content
     UI.Corner(Header, 13)
     UI.Stroke(Header, C.Border, 0.2)
 
@@ -76,15 +80,15 @@ function Sidebar.Create(parent)
     Subtitle.Parent = Header
 
     local Scroll = Instance.new("ScrollingFrame")
-    Scroll.Size = UDim2.new(1, -20, 1, -98)
-    Scroll.Position = UDim2.new(0, 10, 0, 90)
+    Scroll.Size = UDim2.new(1, -20, 1, -84)
+    Scroll.Position = UDim2.new(0, 10, 0, 80)
     Scroll.BackgroundTransparency = 1
     Scroll.BorderSizePixel = 0
     Scroll.ScrollBarThickness = 4
     Scroll.ScrollBarImageColor3 = C.Accent
     Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
     Scroll.CanvasSize = UDim2.new()
-    Scroll.Parent = parent
+    Scroll.Parent = content
 
     local Layout = Instance.new("UIListLayout")
     Layout.Padding = UDim.new(0, 10)
@@ -96,15 +100,77 @@ function Sidebar.Create(parent)
     Padding.PaddingRight = UDim.new(0, 5)
     Padding.Parent = Scroll
 
+    -- زر الإعدادات (دخول ثانٍ من الصفحة الرئيسية)
+    local SettingsCard = Instance.new("TextButton")
+    SettingsCard.Name = "SettingsEntry"
+    SettingsCard.Size = UDim2.new(1, -2, 0, 52)
+    SettingsCard.LayoutOrder = 0
+    SettingsCard.BackgroundColor3 = C.Surface
+    SettingsCard.Text = ""
+    SettingsCard.AutoButtonColor = false
+    SettingsCard.Parent = Scroll
+    UI.Corner(SettingsCard, 12)
+    UI.Stroke(SettingsCard, C.Warning, 0.25)
+
+    local settingsIcon = Instance.new("TextLabel")
+    settingsIcon.Size = UDim2.new(0, 34, 0, 34)
+    settingsIcon.Position = UDim2.new(0, 12, 0.5, -17)
+    settingsIcon.BackgroundTransparency = 1
+    settingsIcon.Text = "⚙"
+    settingsIcon.TextColor3 = C.Warning
+    settingsIcon.TextSize = 20
+    settingsIcon.Parent = SettingsCard
+
+    local settingsTitle = Instance.new("TextLabel")
+    settingsTitle.Size = UDim2.new(1, -70, 0, 26)
+    settingsTitle.Position = UDim2.new(0, 56, 0, 5)
+    settingsTitle.BackgroundTransparency = 1
+    settingsTitle.Text = Language.Get("SettingsTitle")
+    settingsTitle.TextColor3 = C.Text
+    settingsTitle.TextSize = 14
+    settingsTitle.Font = Enum.Font.GothamBold
+    settingsTitle.TextXAlignment = Language.Alignment()
+    settingsTitle.Parent = SettingsCard
+
+    local settingsSubtitle = Instance.new("TextLabel")
+    settingsSubtitle.Size = UDim2.new(1, -70, 0, 16)
+    settingsSubtitle.Position = UDim2.new(0, 56, 0, 31)
+    settingsSubtitle.BackgroundTransparency = 1
+    settingsSubtitle.Text = Language.Get("SettingsSubtitle")
+    settingsSubtitle.TextColor3 = C.Muted
+    settingsSubtitle.TextSize = 9
+    settingsSubtitle.Font = Enum.Font.Gotham
+    settingsSubtitle.TextXAlignment = Language.Alignment()
+    settingsSubtitle.TextTruncate = Enum.TextTruncate.AtEnd
+    settingsSubtitle.Parent = SettingsCard
+
+    local settingsArrow = Instance.new("TextLabel")
+    settingsArrow.Size = UDim2.new(0, 22, 1, 0)
+    settingsArrow.Position = UDim2.new(1, -28, 0, 0)
+    settingsArrow.BackgroundTransparency = 1
+    settingsArrow.Text = "›"
+    settingsArrow.TextColor3 = C.Muted
+    settingsArrow.TextSize = 20
+    settingsArrow.Font = Enum.Font.GothamBold
+    settingsArrow.Parent = SettingsCard
+
+    SettingsCard.MouseEnter:Connect(function() UI.Tween(SettingsCard, {BackgroundColor3 = C.Hover}) end)
+    SettingsCard.MouseLeave:Connect(function() UI.Tween(SettingsCard, {BackgroundColor3 = C.Surface}) end)
+    SettingsCard.MouseButton1Click:Connect(function()
+        if router and options.settingsPage then
+            router.Push(options.settingsPage())
+        end
+    end)
+
     local function safeNavigate(moduleName, callback)
         local ok, err = pcall(function()
             local module = GetModule(moduleName)
             callback(module)
         end)
-        if not ok then UI.Notify(Language.Get("NavigationFailed") .. ": " .. tostring(err), "Error") end
+        if not ok then UI.Notify(Language.Get("NavigationFailed") .. ": " .. tostring(err), "error") end
     end
 
-    -- A single analysis entry point replaces the removed duplicate analyzer pages.
+    -- نقطة تحليل واحدة
     local Analysis = Instance.new("TextButton")
     Analysis.Name = "UnifiedAnalysis"
     Analysis.Size = UDim2.new(1, -2, 0, 92)
@@ -161,8 +227,21 @@ function Sidebar.Create(parent)
     Analysis.MouseLeave:Connect(function() UI.Tween(Analysis, {BackgroundColor3 = C.Surface}) end)
     Analysis.MouseButton1Click:Connect(function()
         safeNavigate("AnalyzerUI", function(AnalyzerUI)
-            parent:ClearAllChildren()
-            AnalyzerUI.Create(parent, function() parent:ClearAllChildren() Sidebar.Create(parent) end)
+            if router then
+                router.Push({
+                    name = "analysis",
+                    title = Language.Get("GameAnalyzer"),
+                    subtitle = Language.Get("AnalysisWorkspaceDescription"),
+                    icon = "⌁",
+                    color = C.Purple,
+                    builder = function(c)
+                        AnalyzerUI.Create(c, function() router.Back() end)
+                    end
+                })
+            else
+                content:ClearAllChildren()
+                AnalyzerUI.Create(content, function() content:ClearAllChildren() BuildHome(content, options) end)
+            end
         end)
     end)
 
@@ -250,31 +329,86 @@ function Sidebar.Create(parent)
         Card.MouseEnter:Connect(function() UI.Tween(Card, {BackgroundColor3 = C.Hover}); UI.Tween(CardStroke, {Transparency = 0.1}) end)
         Card.MouseLeave:Connect(function() UI.Tween(Card, {BackgroundColor3 = C.Surface}); UI.Tween(CardStroke, {Transparency = 0.5}) end)
         Card.MouseButton1Click:Connect(function()
-            if not service then UI.Notify(Language.Get("ServiceUnavailable"), "Warning") return end
+            if not service then UI.Notify(Language.Get("ServiceUnavailable"), "warning") return end
             safeNavigate("TreeView", function(TreeView)
-                parent:ClearAllChildren()
-                TreeView.Create(parent, service, function() parent:ClearAllChildren() Sidebar.Create(parent) end)
+                local treeOptions = {
+                    router = router,
+                    viewerParent = viewerParent,
+                    onBack = function()
+                        if router then router.Back() end
+                    end
+                }
+                if router then
+                    router.Push({
+                        name = "tree",
+                        title = serviceName,
+                        subtitle = Language.Get("GameServices"),
+                        icon = icon,
+                        color = accent,
+                        builder = function(c)
+                            TreeView.Create(c, service, treeOptions)
+                        end
+                    })
+                else
+                    content:ClearAllChildren()
+                    TreeView.Create(content, service, {
+                        onBack = function()
+                            content:ClearAllChildren()
+                            BuildHome(content, options)
+                        end
+                    })
+                end
             end)
         end)
     end
 
     for index, data in ipairs(services) do serviceCard(data, index) end
-    if Language.Apply then Language.Apply(parent) end
+    if Language.Apply then Language.Apply(content) end
 
     -- ═══ حياة: حركات دخول متتابعة ═══
     if Animations then
         pcall(function() Animations.SlideInTop(Header, 0.3) end)
         task.delay(0.06, function()
+            if SettingsCard.Parent then pcall(function() Animations.SlideInLeft(SettingsCard, 0.25) end) end
+        end)
+        task.delay(0.1, function()
             if Analysis.Parent then pcall(function() Animations.SlideInLeft(Analysis, 0.25) end) end
         end)
         local cards = ServicesGrid:GetChildren()
         for index, card in ipairs(cards) do
             if card:IsA("GuiButton") then
-                task.delay(0.14 + index * 0.035, function()
+                task.delay(0.16 + index * 0.035, function()
                     if card.Parent then pcall(function() Animations.FadeIn(card, 0.18) end) end
                 end)
             end
         end
+    end
+end
+
+-- تعريف صفحة المستكشف (للراوتر)
+function Sidebar.GetPage(options)
+    options = options or {}
+    local Language = GetModule("Language")
+    local C = theme()
+    return {
+        name = "home",
+        title = Language.Get("Explorer"),
+        subtitle = Language.Get("SelectService"),
+        icon = "⌘",
+        color = C.Accent,
+        builder = function(content)
+            BuildHome(content, options)
+        end
+    }
+end
+
+function Sidebar.Create(parent, options)
+    options = options or {}
+    local router = options.router
+    if router then
+        router.Push(Sidebar.GetPage(options))
+    else
+        BuildHome(parent, options)
     end
 end
 

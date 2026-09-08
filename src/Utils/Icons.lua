@@ -33,15 +33,22 @@ Icons.UI = {
     Fire = "↯", Invoke = "⇄", ZoomIn = "+", ZoomOut = "−",
     Grid = "▦", List = "≡", Tree = "▨", Code = "⌘", Console = ">_",
     Camera = "◉", Light = "☼", Cube = "◫", Wireframe = "▥",
-    Palette = "◐", Tag = "⚑", Attribute = "◆", Lock = "🔒", Unlock = "🔓",
-    Language = "🌐", User = "●", Calendar = "▤", Clock = "◔",
+    Palette = "◐", Tag = "⚑", Attribute = "◆", Lock = "◇", Unlock = "◆",
+    Language = "Aa", User = "●", Calendar = "▤", Clock = "◔",
     FolderOpen = "▰", FolderClosed = "▱", File = "▤", Image = "▧",
     Sound = "♫", Video = "▣", Animation = "♢", Model = "⬡",
     Script = "⌘", Module = "◇", Value = "#", Remote = "↯",
     Part = "◫", Terrain = "▲", Attachment = "◈", Constraint = "⛓",
     Force = "➤", Player = "●", Team = "◐", Service = "◌",
     Effect = "✦", Sparkle = "✧", Beam = "━", Trail = "⌇",
-    Gui = "▣", Text = "T", Unknown = "?", Empty = "◇"
+    Gui = "▣", Text = "T", Unknown = "?", Empty = "◇",
+    -- v7.1 إضافات
+    Up = "↑", Down = "↓", Links = "⇄", Recent = "◔",
+    CopyTree = "▨", Duplicates = "⧉", Stats = "≡",
+    Purpose = "◉", Location = "⌖", Breadcrumb = "›",
+    Touch = "◉", Motion = "≋", Power = "⚡", Notifications = "◔",
+    Scan = "⌁", Limit = "▭", About = "i", Repository = "↗",
+    Scale = "⤢", Contrast = "◐", Compact = "▦", Auto = "◒"
 }
 
 -- ─────────────────────────────────────────────────────────────

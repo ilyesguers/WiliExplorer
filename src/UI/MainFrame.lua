@@ -114,11 +114,11 @@ local function ShowNotification(message, notifType, duration)
         warning = C.Warning, info = C.Accent
     }
     local iconMap = {
-        success = "✅", error = "❌", warning = "⚠️", info = "ℹ️"
+        success = "✓", error = "×", warning = "!", info = "i"
     }
     
     local color = colorMap[notifType] or C.Accent
-    local icon = iconMap[notifType] or "ℹ️"
+    local icon = iconMap[notifType] or "i"
     
     if not NotifContainer or not NotifContainer.Parent then
         local gui = Instance.new("ScreenGui")
@@ -260,7 +260,7 @@ local function CreateLoadingScreen(parent)
     local logo = Instance.new("TextLabel")
     logo.Size = UDim2.new(1, 0, 0, 65)
     logo.Position = UDim2.new(0, 0, 0.3, 0)
-    logo.Text = "🚀 WiliExplorer"
+    logo.Text = "◈ WiliExplorer"
     logo.TextColor3 = C.Accent
     logo.TextSize = 38
     logo.Font = Enum.Font.GothamBlack
@@ -281,7 +281,7 @@ local function CreateLoadingScreen(parent)
     local vipBadge = Instance.new("TextLabel")
     vipBadge.Size = UDim2.new(0, 125, 0, 30)
     vipBadge.Position = UDim2.new(0.5, -62, 0.44, 0)
-    vipBadge.Text = "👑 VIP ACCESS"
+    vipBadge.Text = "✦ " .. Lang.Get("VIPLabel")
     vipBadge.TextColor3 = C.Gold
     vipBadge.TextSize = 12
     vipBadge.Font = Enum.Font.GothamBlack
@@ -326,13 +326,13 @@ local function CreateLoadingScreen(parent)
     loadingText.Parent = loading
     
     local loadSteps = {
-        {text = "📦 جاري تحميل الوحدات...", progress = 0.15},
-        {text = "🔐 فحص الأمان...", progress = 0.3},
-        {text = "🎨 تحميل المظهر...", progress = 0.45},
-        {text = "⚙️ تهيئة النظام...", progress = 0.6},
-        {text = "🖥️ إنشاء الواجهة...", progress = 0.8},
-        {text = "✨ تقريباً جاهز...", progress = 0.95},
-        {text = "🚀 مرحباً بك!", progress = 1}
+        {text = "▦ " .. Lang.Get("LoadingModules"), progress = 0.15},
+        {text = "◇ " .. Lang.Get("SecurityCheck"), progress = 0.3},
+        {text = "◐ " .. Lang.Get("LoadingTheme"), progress = 0.45},
+        {text = "⚙ " .. Lang.Get("InitSystem"), progress = 0.6},
+        {text = "▣ " .. Lang.Get("BuildingUI"), progress = 0.8},
+        {text = "✦ " .. Lang.Get("AlmostReady"), progress = 0.95},
+        {text = "◈ " .. Lang.Get("Welcome"), progress = 1}
     }
     
     task.spawn(function()
@@ -642,7 +642,7 @@ function MainFrame.Create()
     LangBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 170)
     LangBtn.Text = ""
     LangBtn.AutoButtonColor = false
-    LangBtn.LayoutOrder = 3
+    LangBtn.LayoutOrder = 2
     LangBtn.ZIndex = 101
     LangBtn.Parent = TopControls
     AddCorner(LangBtn, 9)
@@ -652,7 +652,7 @@ function MainFrame.Create()
     LangIcon.Size = UDim2.new(0, 20, 1, 0)
     LangIcon.Position = UDim2.new(0, 8, 0, 0)
     LangIcon.BackgroundTransparency = 1
-    LangIcon.Text = "🌐"
+    LangIcon.Text = "Aa"
     LangIcon.TextSize = 13
     LangIcon.ZIndex = 102
     LangIcon.Parent = LangBtn
@@ -676,6 +676,15 @@ function MainFrame.Create()
         Tween(LangBtn, {BackgroundColor3 = Color3.fromRGB(0, 120, 170)}, 0.12)
     end)
     BindTooltip(LangBtn, "TooltipLanguage")
+
+    -- ═══ زر الإعدادات ═══
+    local SettingsBtn = WindowButton("SettingsBtn", "⚙", Color3.fromRGB(40, 50, 80), 3, "TooltipSettings")
+
+    SettingsBtn.MouseButton1Click:Connect(function()
+        if not explorerRouter then return end
+        if not ExplorerScreen.Visible then return end
+        explorerRouter.Push(BuildSettingsPage())
+    end)
 
     -- ═══ زر التصغير ═══
     local MinBtn, MinIcon = WindowButton("MinBtn", "−", Color3.fromRGB(55, 65, 110), 4, "TooltipMinimize")
@@ -792,7 +801,7 @@ function MainFrame.Create()
     local VIPLabel = Instance.new("TextLabel")
     VIPLabel.Size = UDim2.new(0, 130, 0, 28)
     VIPLabel.Position = UDim2.new(0.5, -65, 0.3, 0)
-    VIPLabel.Text = "👑 VIP EXCLUSIVE"
+    VIPLabel.Text = "✦ " .. Lang.Get("VIPLabel")
     VIPLabel.TextColor3 = C.Gold
     VIPLabel.TextSize = 11
     VIPLabel.Font = Enum.Font.GothamBlack
@@ -814,7 +823,7 @@ function MainFrame.Create()
     
     local KeyIcon = Instance.new("TextLabel")
     KeyIcon.Size = UDim2.new(0, 40, 1, 0)
-    KeyIcon.Text = "🔑"
+    KeyIcon.Text = "◆"
     KeyIcon.TextSize = 20
     KeyIcon.BackgroundTransparency = 1
     KeyIcon.ZIndex = 52
@@ -863,7 +872,7 @@ function MainFrame.Create()
     LoginIcon.Size = UDim2.new(0, 26, 1, 0)
     LoginIcon.Position = UDim2.new(0, 12, 0, 0)
     LoginIcon.BackgroundTransparency = 1
-    LoginIcon.Text = "🔓"
+    LoginIcon.Text = "◇"
     LoginIcon.TextSize = 15
     LoginIcon.ZIndex = 52
     LoginIcon.Parent = LoginBtn
@@ -904,7 +913,7 @@ function MainFrame.Create()
     local HelpText = Instance.new("TextLabel")
     HelpText.Size = UDim2.new(1, 0, 0, 20)
     HelpText.Position = UDim2.new(0, 0, 0.74, 0)
-    HelpText.Text = "💬 Need a key? Contact: @WiliExplorer"
+    HelpText.Text = "◉ " .. Lang.Get("NeedKeyHelp")
     HelpText.TextColor3 = C.Text_Secondary
     HelpText.TextSize = 10
     HelpText.Font = Enum.Font.Gotham
@@ -947,6 +956,54 @@ function MainFrame.Create()
     
     local klimboLoading = false
     local authenticated = false
+
+    -- ═══════════════════════════════
+    -- نظام التنقل بالصفحات (كل ميزة صفحة مستقلة + رجوع)
+    -- ═══════════════════════════════
+    local RouterModule = GetModule("Router")
+    local explorerRouter = RouterModule and RouterModule.Create(ExplorerScreen, function(msg, kind)
+        ShowNotification(tostring(msg), kind == "Error" and "error" or kind == "Warning" and "warning" or "info", 2)
+    end)
+
+    local function BuildSettingsPage()
+        return {
+            name = "settings",
+            title = Lang.Get("SettingsTitle"),
+            subtitle = Lang.Get("SettingsSubtitle"),
+            icon = "⚙",
+            color = C.Warning,
+            builder = function(c)
+                local SettingsPanel = GetModule("SettingsPanel")
+                if SettingsPanel then
+                    SettingsPanel.Create(c, {
+                        router = explorerRouter,
+                        notify = function(msg, kind)
+                            ShowNotification(tostring(msg), kind == "Error" and "error" or kind == "Warning" and "warning" or "info", 2)
+                        end,
+                        onLanguageChanged = function() end,
+                        onThemeChanged = function() end
+                    })
+                end
+            end
+        }
+    end
+
+    local function RebuildHome()
+        if not explorerRouter then
+            ExplorerScreen:ClearAllChildren()
+            local Sidebar = GetModule("Sidebar")
+            if Sidebar and Sidebar.Create then Sidebar.Create(ExplorerScreen) end
+            return
+        end
+        local Sidebar = GetModule("Sidebar")
+        if Sidebar and Sidebar.GetPage then
+            explorerRouter.Reset(Sidebar.GetPage({
+                router = explorerRouter,
+                viewerParent = Frame,
+                settingsPage = BuildSettingsPage
+            }))
+        end
+    end
 
     -- تخطيط تكيفي حقيقي: يعاد حسابه عند تدوير الهاتف أو تغيير حجم النافذة.
     local function ApplyResponsiveLayout(mode, currentViewport)
@@ -1015,7 +1072,13 @@ function MainFrame.Create()
             ExplorerScreen.Position = UDim2.new(0, 0, 0, 0)
         end
         local Sidebar = GetModule("Sidebar")
-        if Sidebar and Sidebar.Create then Sidebar.Create(ExplorerScreen) end
+        if Sidebar and Sidebar.Create then
+            Sidebar.Create(ExplorerScreen, {
+                router = explorerRouter,
+                viewerParent = Frame,
+                settingsPage = BuildSettingsPage
+            })
+        end
     end
 
     local securityConfig = (_G.WiliConfig and _G.WiliConfig.Security) or {}
@@ -1030,14 +1093,12 @@ function MainFrame.Create()
             ApplyResponsiveLayout(Design and Design.GetMode() or (isMobile and "mobile" or "desktop"), Design and Design.GetViewport() or viewport)
             Subtitle.Text = Lang.Get("Welcome")
             KeyInput.PlaceholderText = Lang.Get("EnterKey")
-            SetLoginText("🔓", Lang.Get("Verify"))
+            SetLoginText("◇", Lang.Get("Verify"))
             if Lang.Apply then Lang.Apply(Frame) end
             ShowNotification(Lang.Current == "ar" and "تم تغيير اللغة" or "Language changed", "info", 2)
             
             if ExplorerScreen.Visible then
-                ExplorerScreen:ClearAllChildren()
-                local Sidebar = SafeLoadModule("UI/Sidebar.lua", "Sidebar")
-                if Sidebar and Sidebar.Create then Sidebar.Create(ExplorerScreen) end
+                RebuildHome()
             end
         end)
     end
@@ -1048,7 +1109,7 @@ function MainFrame.Create()
         task.wait(0.1)
         Tween(LoginBtn, {Size = UDim2.new(0.6, 0, 0, 45)}, 0.1)
         
-        SetLoginText("⏳", Lang.Get("Verifying"))
+        SetLoginText("◔", Lang.Get("Verifying"))
         Tween(LoginBtn, {BackgroundColor3 = Color3.fromRGB(90, 140, 190)}, 0.3)
         Tween(KeyInputStroke, {Color = C.Warning}, 0.3)
         task.wait(0.8)
@@ -1056,17 +1117,17 @@ function MainFrame.Create()
         local keySuccess, data = KeySystem.Verify(KeyInput.Text)
         
         if keySuccess then
-            SetLoginText("✅", Lang.Get("Launching"))
+            SetLoginText("✓", Lang.Get("Launching"))
             Tween(LoginBtn, {BackgroundColor3 = C.Success}, 0.3)
             Tween(KeyInputStroke, {Color = C.Success}, 0.3)
-            ShowNotification("🎉 Welcome VIP!", "success", 3)
+            ShowNotification(Lang.Get("WelcomeVIP"), "success", 3)
             
             task.wait(0.6)
             Tween(KeyScreen, {Position = UDim2.new(0, 0, -1, 0)}, 0.35, Enum.EasingStyle.Back)
             task.wait(0.35)
             LaunchExplorer(true)
         else
-            SetLoginText("❌", Lang.Get("Invalid"))
+            SetLoginText("×", Lang.Get("Invalid"))
             Tween(LoginBtn, {BackgroundColor3 = C.Error}, 0.3)
             Tween(KeyInputStroke, {Color = C.Error}, 0.3)
             
@@ -1081,7 +1142,7 @@ function MainFrame.Create()
             ShowNotification(tostring(data or Lang.Get("Invalid")), "error", 4)
             
             task.wait(2)
-            SetLoginText("🔓", Lang.Get("Verify"))
+            SetLoginText("◇", Lang.Get("Verify"))
             Tween(LoginBtn, {BackgroundColor3 = C.Accent}, 0.3)
             Tween(KeyInputStroke, {Color = C.Accent, Transparency = 0.3}, 0.3)
         end
@@ -1124,16 +1185,16 @@ function MainFrame.Create()
                 end)
                 
                 if createOk then
-                    ShowNotification("Developer Console ready", "success", 2)
+                    ShowNotification(Lang.Get("ConsoleReady"), "success", 2)
                 else
                     KlimboContainer:ClearAllChildren()
                     KlimboContainer.Visible = false
                     ExplorerScreen.Visible = true
                     SetDevText("DEV")
-                    ShowNotification("❌ Error loading menu", "error", 3)
+                    ShowNotification(Lang.Get("ConsoleLoadFailed"), "error", 3)
                 end
             else
-                ShowNotification("Failed to load Developer Console", "error", 3)
+                ShowNotification(Lang.Get("ConsoleLoadFailed"), "error", 3)
                 KlimboContainer.Visible = false
                 ExplorerScreen.Visible = true
                 SetDevText("DEV")
@@ -1181,6 +1242,8 @@ function MainFrame.Create()
                 KlimboContainer.Visible = false
                 ExplorerScreen.Visible = true
                 SetDevText("DEV")
+            elseif explorerRouter and explorerRouter.Depth() > 1 then
+                explorerRouter.Back()
             else
                 minimized = not minimized
                 if minimized then

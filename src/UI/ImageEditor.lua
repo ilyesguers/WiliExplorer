@@ -153,7 +153,7 @@ function ImageEditor.Open(parent, instance, onClose)
     titleIcon.Size = UDim2.new(0, 30, 1, 0)
     titleIcon.Position = UDim2.new(0, 12, 0, 0)
     titleIcon.BackgroundTransparency = 1
-    titleIcon.Text = "🖼️"
+    titleIcon.Text = "▧"
     titleIcon.TextSize = 16
     titleIcon.ZIndex = 1002
     titleIcon.Parent = header

@@ -150,7 +150,7 @@ function AnalyzerUI.Create(parent, onBack)
     local Title = Instance.new("TextLabel")
     Title.Size = UDim2.new(0.5, 0, 1, 0)
     Title.Position = UDim2.new(0, 12, 0, 0)
-    Title.Text = "🔬 " .. Language.Get("GameAnalyzer")
+    Title.Text = "⌁ " .. Language.Get("GameAnalyzer")
     Title.TextColor3 = C.Accent
     Title.TextSize = 18
     Title.Font = Enum.Font.GothamBold
@@ -347,7 +347,7 @@ function AnalyzerUI.Create(parent, onBack)
         
         -- ═══ تعبئة حسب النوع ═══
         if itemType == "script" then
-            typeIcon.Text = item.className == "LocalScript" and "📱" or item.className == "ModuleScript" and "📦" or "📜"
+            typeIcon.Text = item.className == "LocalScript" and "⌘" or item.className == "ModuleScript" and "◇" or "⌘"
             nameLbl.Text = item.name
             infoLbl.Text = item.path
             
@@ -378,7 +378,7 @@ function AnalyzerUI.Create(parent, onBack)
             end)
             
         elseif itemType == "sound" then
-            typeIcon.Text = "🔊"
+            typeIcon.Text = "♫"
             nameLbl.Text = item.name
             infoLbl.Text = item.soundId ~= "" and item.soundId or item.path
             
@@ -405,7 +405,7 @@ function AnalyzerUI.Create(parent, onBack)
             end)
             
         elseif itemType == "image" then
-            typeIcon.Text = "🖼️"
+            typeIcon.Text = "▧"
             nameLbl.Text = item.name
             infoLbl.Text = item.imageId ~= "" and item.imageId or item.path
             
@@ -418,7 +418,7 @@ function AnalyzerUI.Create(parent, onBack)
             end)
             
         elseif itemType == "remote" then
-            typeIcon.Text = item.isEvent and "📡" or "📞"
+            typeIcon.Text = item.isEvent and "↯" or "⇄"
             nameLbl.Text = item.name
             infoLbl.Text = item.path
             
@@ -443,7 +443,7 @@ function AnalyzerUI.Create(parent, onBack)
             end)
             
         elseif itemType == "value" then
-            typeIcon.Text = "📊"
+            typeIcon.Text = "≡"
             nameLbl.Text = item.name
             infoLbl.Text = item.className .. " = " .. item.valueStr
             
@@ -564,7 +564,7 @@ function AnalyzerUI.Create(parent, onBack)
             local pName = Instance.new("TextLabel")
             pName.Size = UDim2.new(0.5, 0, 0, 16)
             pName.Position = UDim2.new(0, 8, 0, 4)
-            pName.Text = "👤 " .. player.name
+            pName.Text = "● " .. player.name
             pName.TextColor3 = C.Text
             pName.TextSize = 10
             pName.Font = Enum.Font.GothamBold
@@ -616,7 +616,7 @@ function AnalyzerUI.Create(parent, onBack)
             
             isScanning = false
             ScanBtn.Text = "⌕ " .. Language.Get("ScanGame")
-            Title.Text = "🔬 " .. Language.Get("GameAnalyzer")
+            Title.Text = "⌁ " .. Language.Get("GameAnalyzer")
             
             Notify("تم الفحص! " .. results.summary.totalScanned .. " عنصر")
         end)

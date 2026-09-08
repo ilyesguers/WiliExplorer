@@ -50,7 +50,14 @@ local function Tween(obj, props, duration)
     end
 end
 
-function TreeView.Create(parent, rootInstance, onBack)
+function TreeView.Create(parent, rootInstance, options)
+    -- خيارات: دالة (onBack قديمة) أو جدول {router, viewerParent, onBack}
+    local isLegacy = type(options) == "function"
+    local onBack = isLegacy and options or (options and options.onBack)
+    local viewerParent = (not isLegacy and options and options.viewerParent) or parent.Parent or parent
+    local router = (not isLegacy and options and options.router) or nil
+    local DeepAnalysis = GetModule("DeepAnalysis")
+
     -- ═══════════════════════════════
     -- الشريط العلوي
     -- ═══════════════════════════════
@@ -182,6 +189,64 @@ function TreeView.Create(parent, rootInstance, onBack)
     end)
     SortBtn.MouseLeave:Connect(function()
         Tween(SortBtn, {BackgroundColor3 = Color3.fromRGB(30, 38, 70)}, 0.12)
+    end)
+
+    -- زر الفحص العميق
+    local DeepBtn = Instance.new("TextButton")
+    DeepBtn.Size = UDim2.new(0, 92, 0, 35)
+    DeepBtn.Position = UDim2.new(1, -200, 0.5, -17)
+    DeepBtn.Text = ""
+    DeepBtn.AutoButtonColor = false
+    DeepBtn.BackgroundColor3 = Color3.fromRGB(30, 38, 70)
+    DeepBtn.ZIndex = 26
+    DeepBtn.Parent = TopBar
+    Corner(DeepBtn, 8)
+
+    local DeepIcon = Instance.new("TextLabel")
+    DeepIcon.Size = UDim2.new(0, 22, 1, 0)
+    DeepIcon.Position = UDim2.new(0, 7, 0, 0)
+    DeepIcon.BackgroundTransparency = 1
+    DeepIcon.Text = "⌁"
+    DeepIcon.TextColor3 = P.Success
+    DeepIcon.TextSize = 15
+    DeepIcon.Font = Enum.Font.GothamBold
+    DeepIcon.ZIndex = 27
+    DeepIcon.Parent = DeepBtn
+
+    local DeepLabel = Instance.new("TextLabel")
+    DeepLabel.Size = UDim2.new(1, -32, 1, 0)
+    DeepLabel.Position = UDim2.new(0, 28, 0, 0)
+    DeepLabel.BackgroundTransparency = 1
+    DeepLabel.Text = T("DeepScan")
+    DeepLabel.TextColor3 = P.Text
+    DeepLabel.TextSize = 11
+    DeepLabel.Font = Enum.Font.GothamBold
+    DeepLabel.TextXAlignment = Language.Alignment()
+    DeepLabel.ZIndex = 27
+    DeepLabel.Parent = DeepBtn
+
+    DeepBtn.MouseEnter:Connect(function()
+        Tween(DeepBtn, {BackgroundColor3 = Color3.fromRGB(42, 52, 95)}, 0.12)
+    end)
+    DeepBtn.MouseLeave:Connect(function()
+        Tween(DeepBtn, {BackgroundColor3 = Color3.fromRGB(30, 38, 70)}, 0.12)
+    end)
+    DeepBtn.MouseButton1Click:Connect(function()
+        if router then
+            router.Push({
+                name = "deep",
+                title = T("DeepScan"),
+                subtitle = T("DeepScanSubtitle"),
+                icon = "⌁",
+                color = P.Success,
+                builder = function(c, page)
+                    if DeepAnalysis then
+                        local cleanupFn = DeepAnalysis.Create(c, rootInstance, {})
+                        page.cleanup = cleanupFn
+                    end
+                end
+            })
+        end
     end)
 
     -- ═══════════════════════════════
@@ -593,7 +658,7 @@ function TreeView.Create(parent, rootInstance, onBack)
                 ContextMenu.GeneralMenu(instance, {
                     viewInfo = function()
                         local FileViewer = GetModule("FileViewer")
-                        FileViewer.Open(parent.Parent, instance)
+                        FileViewer.Open(viewerParent, instance)
                     end,
                     copyName = function()
                         local ok = pcall(function()
@@ -664,7 +729,7 @@ function TreeView.Create(parent, rootInstance, onBack)
 
             OpenBtn.MouseButton1Click:Connect(function()
                 local FileViewer = GetModule("FileViewer")
-                FileViewer.Open(parent.Parent, child)
+                FileViewer.Open(viewerParent, child)
             end)
 
             if hasChildren then
@@ -686,7 +751,7 @@ function TreeView.Create(parent, rootInstance, onBack)
             else
                 Item.MouseButton1Click:Connect(function()
                     local FileViewer = GetModule("FileViewer")
-                    FileViewer.Open(parent.Parent, child)
+                    FileViewer.Open(viewerParent, child)
                 end)
             end
         end
@@ -753,7 +818,7 @@ function TreeView.Create(parent, rootInstance, onBack)
             table.insert(allItems, entry)
             OpenBtn.MouseButton1Click:Connect(function()
                 local FileViewer = GetModule("FileViewer")
-                FileViewer.Open(parent.Parent, child)
+                FileViewer.Open(viewerParent, child)
             end)
             if hasChildren then
                 Item.MouseButton1Click:Connect(function()
@@ -774,7 +839,7 @@ function TreeView.Create(parent, rootInstance, onBack)
             else
                 Item.MouseButton1Click:Connect(function()
                     local FileViewer = GetModule("FileViewer")
-                    FileViewer.Open(parent.Parent, child)
+                    FileViewer.Open(viewerParent, child)
                 end)
             end
         end
@@ -880,7 +945,7 @@ function TreeView.Create(parent, rootInstance, onBack)
                     end)
                     row.MouseButton1Click:Connect(function()
                         local FileViewer = GetModule("FileViewer")
-                        FileViewer.Open(parent.Parent, instance)
+                        FileViewer.Open(viewerParent, instance)
                     end)
                 end
             end
